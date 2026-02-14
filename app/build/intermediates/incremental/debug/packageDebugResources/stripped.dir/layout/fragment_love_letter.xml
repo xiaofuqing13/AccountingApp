@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/pink_bg"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_gradient_pink"
+        android:gravity="center_vertical"
+        android:padding="@dimen/page_margin">
+        <TextView android:id="@+id/btn_back" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="← " android:textColor="@color/text_white" android:textSize="18sp" />
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/love_letter_title" android:textColor="@color/text_white" android:textSize="@dimen/title_size" android:textStyle="bold" />
+    </LinearLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="20dp">
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="💌" android:textSize="48sp" android:layout_gravity="center" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="写给最特别的你" android:textColor="@color/pink_primary" android:textSize="20sp" android:textStyle="bold" android:layout_gravity="center" android:layout_marginTop="8dp" />
+            <TextView android:id="@+id/tv_letter_date" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="@color/text_hint" android:textSize="12sp" android:layout_gravity="center" android:layout_marginTop="4dp" />
+
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="2dp"
+                xmlns:app="http://schemas.android.com/apk/res-auto">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="20dp">
+
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="亲爱的：" android:textColor="@color/text_secondary" android:textSize="@dimen/body_size" android:lineSpacingMultiplier="2.0" />
+                    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/love_letter_body" android:textColor="@color/text_secondary" android:textSize="@dimen/body_size" android:lineSpacingMultiplier="2.0" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="永远爱你的我 ❤️"
+                        android:textColor="@color/pink_primary"
+                        android:textSize="@dimen/body_size"
+                        android:textStyle="italic"
+                        android:layout_gravity="end"
+                        android:layout_marginTop="16dp" />
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- 承诺卡片 -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🤙 我对你的承诺"
+                android:textColor="@color/pink_primary"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:layout_gravity="center"
+                android:layout_marginTop="24dp" />
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chip_promises"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                app:chipSpacingVertical="8dp"
+                xmlns:app="http://schemas.android.com/apk/res-auto" />
+
+            <View android:layout_width="1dp" android:layout_height="40dp" />
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

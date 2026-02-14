@@ -1,0 +1,118 @@
+[
+    {
+        "merged": "com.loveapp.accountbook.app-merged_res-50:/navigation_nav_graph.xml.flat",
+        "source": "com.loveapp.accountbook.app-main-52:/navigation/nav_graph.xml"
+    },
+    {
+        "merged": "com.loveapp.accountbook.app-merged_res-50:/layout_fragment_account_add.xml.flat",
+        "source": "com.loveapp.accountbook.app-main-52:/layout/fragment_account_add.xml"
+    },
+    {
+        "merged": "com.loveapp.accountbook.app-merged_res-50:/layout_item_account.xml.flat",
+        "source": "com.loveapp.accountbook.app-main-52:/layout/item_account.xml"
+    },
+    {
+        "merged": "com.loveapp.accountbook.app-merged_res-50:/mipmap-hdpi_ic_launcher.xml.flat",
+        "source": "com.loveapp.accountbook.app-main-52:/mipmap-hdpi/ic_launcher.xml"
+    },
+    {
+        "merged": "com.loveapp.accountbook.app-merged_res-50:/layout_fragment_diary_add.xml.flat",
+        "source": "com.loveapp.accountbook.app-main-52:/layout/fragment_diary_add.xml"
+    },
+    {
+        "merged": "com.loveapp.accountbook.app-merged_res-50:/layout_fragment_home.xml.flat",
+        "source": "com.loveapp.accountbook.app-main-52:/layout/fragment_home.xml"
+    },
+    {
+        "merged": "com.loveapp.accountbook.app-merged_res-50:/layout_item_diary.xml.flat",
+        "source": "com.loveapp.accountbook.app-main-52:/layout/item_diary.xml"
+    },
+    {
+        "merged": "com.loveapp.accountbook.app-merged_res-50:/mipmap-anydpi-v26_ic_launcher.xml.flat",
+        "source": "com.loveapp.accountbook.app-main-52:/mipmap-anydpi-v26/ic_launcher.xml"
+    },
+    {
+        "merged": "com.loveapp.accountbook.app-merged_res-50:/layout_fragment_diary_list.xml.flat",
+        "source": "com.loveapp.accountbook.app-main-52:/layout/fragment_diary_list.xml"
+    },
+    {
+        "merged": "com.loveapp.accountbook.app-merged_res-50:/layout_fragment_settings.xml.flat",
+        "source": "com.loveapp.accountbook.app-main-52:/layout/fragment_settings.xml"
+    },
+    {
+        "merged": "com.loveapp.accountbook.app-merged_res-50:/layout_fragment_meeting_list.xml.flat",
+        "source": "com.loveapp.accountbook.app-main-52:/layout/fragment_meeting_list.xml"
+    },
+    {
+        "merged": "com.loveapp.accountbook.app-merged_res-50:/layout_fragment_account_list.xml.flat",
+        "source": "com.loveapp.accountbook.app-main-52:/layout/fragment_account_list.xml"
+    },
+    {
+        "merged": "com.loveapp.accountbook.app-merged_res-50:/drawable_ic_launcher_foreground.xml.flat",
+        "source": "com.loveapp.accountbook.app-main-52:/drawable/ic_launcher_foreground.xml"
+    },
+    {
+        "merged": "com.loveapp.accountbook.app-merged_res-50:/layout_item_meeting.xml.flat",
+        "source": "com.loveapp.accountbook.app-main-52:/layout/item_meeting.xml"
+    },
+    {
+        "merged": "com.loveapp.accountbook.app-merged_res-50:/layout_fragment_love_letter.xml.flat",
+        "source": "com.loveapp.accountbook.app-main-52:/layout/fragment_love_letter.xml"
+    },
+    {
+        "merged": "com.loveapp.accountbook.app-merged_res-50:/mipmap-anydpi-v26_ic_launcher_round.xml.flat",
+        "source": "com.loveapp.accountbook.app-main-52:/mipmap-anydpi-v26/ic_launcher_round.xml"
+    },
+    {
+        "merged": "com.loveapp.accountbook.app-merged_res-50:/layout_fragment_account_stats.xml.flat",
+        "source": "com.loveapp.accountbook.app-main-52:/layout/fragment_account_stats.xml"
+    },
+    {
+        "merged": "com.loveapp.accountbook.app-merged_res-50:/drawable_bg_tag_pink.xml.flat",
+        "source": "com.loveapp.accountbook.app-main-52:/drawable/bg_tag_pink.xml"
+    },
+    {
+        "merged": "com.loveapp.accountbook.app-merged_res-50:/layout_activity_splash.xml.flat",
+        "source": "com.loveapp.accountbook.app-main-52:/layout/activity_splash.xml"
+    },
+    {
+        "merged": "com.loveapp.accountbook.app-merged_res-50:/drawable_bg_card_rounded.xml.flat",
+        "source": "com.loveapp.accountbook.app-main-52:/drawable/bg_card_rounded.xml"
+    },
+    {
+        "merged": "com.loveapp.accountbook.app-merged_res-50:/xml_file_paths.xml.flat",
+        "source": "com.loveapp.accountbook.app-main-52:/xml/file_paths.xml"
+    },
+    {
+        "merged": "com.loveapp.accountbook.app-merged_res-50:/drawable_bg_fab_pink.xml.flat",
+        "source": "com.loveapp.accountbook.app-main-52:/drawable/bg_fab_pink.xml"
+    },
+    {
+        "merged": "com.loveapp.accountbook.app-merged_res-50:/menu_bottom_nav_menu.xml.flat",
+        "source": "com.loveapp.accountbook.app-main-52:/menu/bottom_nav_menu.xml"
+    },
+    {
+        "merged": "com.loveapp.accountbook.app-merged_res-50:/drawable_bg_button_pink.xml.flat",
+        "source": "com.loveapp.accountbook.app-main-52:/drawable/bg_button_pink.xml"
+    },
+    {
+        "merged": "com.loveapp.accountbook.app-merged_res-50:/drawable_bg_gradient_pink.xml.flat",
+        "source": "com.loveapp.accountbook.app-main-52:/drawable/bg_gradient_pink.xml"
+    },
+    {
+        "merged": "com.loveapp.accountbook.app-merged_res-50:/layout_activity_main.xml.flat",
+        "source": "com.loveapp.accountbook.app-main-52:/layout/activity_main.xml"
+    },
+    {
+        "merged": "com.loveapp.accountbook.app-merged_res-50:/layout_fragment_meeting_add.xml.flat",
+        "source": "com.loveapp.accountbook.app-main-52:/layout/fragment_meeting_add.xml"
+    },
+    {
+        "merged": "com.loveapp.accountbook.app-merged_res-50:/layout_item_recent.xml.flat",
+        "source": "com.loveapp.accountbook.app-main-52:/layout/item_recent.xml"
+    },
+    {
+        "merged": "com.loveapp.accountbook.app-merged_res-50:/layout_dialog_love_popup.xml.flat",
+        "source": "com.loveapp.accountbook.app-main-52:/layout/dialog_love_popup.xml"
+    }
+]

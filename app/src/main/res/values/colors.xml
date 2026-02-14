@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 少女粉色系主题色 -->
+    <color name="pink_primary">#E8729A</color>
+    <color name="pink_primary_dark">#D4608A</color>
+    <color name="pink_light">#FF85A2</color>
+    <color name="pink_soft">#F4A0C0</color>
+    <color name="pink_bg">#FFF0F5</color>
+    <color name="pink_surface">#FFF8FA</color>
+    <color name="pink_card">#FFFFFF</color>
+
+    <!-- 功能色 -->
+    <color name="income_green">#66BB6A</color>
+    <color name="expense_pink">#E8729A</color>
+    <color name="lavender">#D4A0E8</color>
+    <color name="warning_orange">#FF9800</color>
+
+    <!-- 渐变色端点 -->
+    <color name="gradient_start">#FFB6C8</color>
+    <color name="gradient_center">#F4A0C0</color>
+    <color name="gradient_end">#D4A0E8</color>
+
+    <!-- 文字色 -->
+    <color name="text_primary">#333333</color>
+    <color name="text_secondary">#666666</color>
+    <color name="text_hint">#999999</color>
+    <color name="text_white">#FFFFFF</color>
+
+    <!-- 分隔线 -->
+    <color name="divider">#F0F0F0</color>
+    <color name="bg_gray">#F8F8F8</color>
+</resources>

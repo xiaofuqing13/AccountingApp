@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/pink_bg"
+    android:orientation="vertical">
+
+    <!-- 顶部栏 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_gradient_pink"
+        android:gravity="center_vertical"
+        android:padding="@dimen/page_margin">
+        <TextView android:id="@+id/btn_back" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="← " android:textColor="@color/text_white" android:textSize="18sp" />
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/account_add" android:textColor="@color/text_white" android:textSize="@dimen/title_size" android:textStyle="bold" />
+    </LinearLayout>
+
+    <!-- 收入/支出Tab -->
+    <com.google.android.material.tabs.TabLayout
+        android:id="@+id/tab_type"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/pink_card" />
+
+    <!-- 分类网格 -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rv_categories"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/pink_card"
+        android:padding="8dp" />
+
+    <!-- 备注 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/pink_card"
+        android:layout_marginTop="8dp"
+        android:padding="@dimen/page_margin"
+        android:gravity="center_vertical">
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="备注" android:textColor="@color/text_primary" android:textSize="@dimen/body_size" />
+        <EditText android:id="@+id/et_note" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="16dp" android:background="@null" android:hint="@string/account_note_hint" android:textColor="@color/text_primary" android:textColorHint="@color/text_hint" android:textSize="@dimen/body_size" />
+    </LinearLayout>
+
+    <!-- 日期 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/pink_card"
+        android:layout_marginTop="1dp"
+        android:padding="@dimen/page_margin"
+        android:gravity="center_vertical">
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="日期" android:textColor="@color/text_primary" android:textSize="@dimen/body_size" />
+        <TextView android:id="@+id/tv_date" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="16dp" android:textColor="@color/text_primary" android:textSize="@dimen/body_size" />
+    </LinearLayout>
+
+    <View android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" />
+
+    <!-- 金额显示 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/pink_card"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="@dimen/page_margin">
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="金额" android:textColor="@color/pink_primary" android:textSize="@dimen/caption_size" />
+        <TextView android:id="@+id/tv_amount" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="¥ 0.00" android:textColor="@color/text_primary" android:textSize="36sp" android:textStyle="bold" />
+    </LinearLayout>
+
+    <!-- 数字键盘 -->
+    <GridLayout
+        android:id="@+id/numpad"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/pink_card"
+        android:columnCount="4"
+        android:padding="4dp" />
+
+</LinearLayout>

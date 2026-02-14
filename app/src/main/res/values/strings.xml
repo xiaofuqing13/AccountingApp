@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">我们的小账本</string>
+    <string name="app_desc">记录和你在一起的每一天</string>
+
+    <!-- 底部导航 -->
+    <string name="nav_home">首页</string>
+    <string name="nav_account">记账</string>
+    <string name="nav_diary">日记</string>
+    <string name="nav_meeting">会议</string>
+    <string name="nav_settings">设置</string>
+
+    <!-- 首页 -->
+    <string name="home_days_label">在一起的日子</string>
+    <string name="home_diary_count">本月日记</string>
+    <string name="home_account_count">本月记账</string>
+    <string name="home_recent">最近记录</string>
+    <string name="home_quick">快捷操作</string>
+
+    <!-- 记账 -->
+    <string name="account_title">我的账本</string>
+    <string name="account_add">添加记账</string>
+    <string name="account_stats">统计分析</string>
+    <string name="account_income">收入</string>
+    <string name="account_expense">支出</string>
+    <string name="account_balance">结余</string>
+    <string name="account_note_hint">点击添加备注</string>
+    <string name="account_save">保存</string>
+
+    <!-- 记账分类 -->
+    <string name="cat_food">餐饮</string>
+    <string name="cat_transport">交通</string>
+    <string name="cat_shopping">购物</string>
+    <string name="cat_housing">住房</string>
+    <string name="cat_comm">通讯</string>
+    <string name="cat_fun">娱乐</string>
+    <string name="cat_medical">医疗</string>
+    <string name="cat_education">教育</string>
+    <string name="cat_clothing">服饰</string>
+    <string name="cat_salary">工资</string>
+    <string name="cat_bonus">奖金</string>
+    <string name="cat_other">其他</string>
+
+    <!-- 日记 -->
+    <string name="diary_title">我的日记</string>
+    <string name="diary_add">写日记</string>
+    <string name="diary_search_hint">搜索我们的回忆…</string>
+    <string name="diary_title_hint">输入标题…</string>
+    <string name="diary_content_hint">开始写日记…</string>
+    <string name="diary_save">保存</string>
+
+    <!-- 会议 -->
+    <string name="meeting_title">会议纪要</string>
+    <string name="meeting_add">新建会议纪要</string>
+    <string name="meeting_search_hint">搜索会议内容…</string>
+    <string name="meeting_topic_hint">会议主题</string>
+    <string name="meeting_location_hint">会议地点</string>
+    <string name="meeting_attendee_hint">添加参会人员</string>
+    <string name="meeting_content_hint">会议内容</string>
+    <string name="meeting_todo_hint">待办事项</string>
+    <string name="meeting_save">保存</string>
+
+    <!-- 设置 -->
+    <string name="settings_title">设置</string>
+    <string name="settings_export">导出Excel文件</string>
+    <string name="settings_import">导入Excel文件</string>
+    <string name="settings_storage">数据存储位置</string>
+    <string name="settings_auto_backup">自动备份</string>
+    <string name="settings_sheet_account">记账Sheet名称</string>
+    <string name="settings_sheet_diary">日记Sheet名称</string>
+    <string name="settings_sheet_meeting">会议Sheet名称</string>
+    <string name="settings_theme">主题颜色</string>
+    <string name="settings_dark_mode">深色模式</string>
+    <string name="settings_notification">提醒通知</string>
+    <string name="settings_password">密码锁定</string>
+    <string name="settings_version">版本信息</string>
+    <string name="settings_feedback">意见反馈</string>
+    <string name="settings_theme_pink">默认粉</string>
+
+    <!-- 情书 -->
+    <string name="love_letter_title">💌 给你的一封信</string>
+    <string name="love_letter_body">\n\t\t不知不觉，我们已经在一起很久了。写这封信的时候，我坐在电脑前，屏幕上满是粉色的代码，每一行都在说\"我喜欢你\"。\n\n\t\t还记得我们第一次见面吗？那天你穿了一件白色的裙子，笑起来眼睛弯弯的。从那一刻起，我的心里就只住得下一个人了。\n\n\t\t谢谢你愿意在我加班到深夜的时候，给我发一条\"记得吃饭\"；谢谢你在下雨天专门跑来给我送伞；谢谢你假装生气的时候，还是会偷偷看我有没有在哄你。\n\n\t\t我不太会说漂亮话，所以我把想对你说的都写进了这个APP里。你看到的每一个粉色，都是我心里你的颜色。你发现的每一个小彩蛋，都是我偷偷藏给你的小惊喜。\n\n\t\t未来的日子里，我想和你一起记每一笔账（你花的都算我的），写每一篇日记（主角永远是你），开每一场\"两个人的会议\"（议题只有一个：今天去哪吃）。\n\n\t\t最后想跟你说：遇见你，是我这辈子最大的幸运。余生很长，我想一直牵着你的手走下去。</string>
+
+    <!-- 通用 -->
+    <string name="btn_save">保存</string>
+    <string name="btn_cancel">取消</string>
+    <string name="btn_ok">确定</string>
+    <string name="btn_close">我知道啦</string>
+    <string name="btn_start">开始使用</string>
+    <string name="btn_back">返回</string>
+</resources>
