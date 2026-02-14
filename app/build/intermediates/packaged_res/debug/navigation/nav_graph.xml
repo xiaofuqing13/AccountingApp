@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/nav_home">
+
+    <fragment
+        android:id="@+id/nav_home"
+        android:name="com.loveapp.accountbook.ui.home.HomeFragment"
+        android:label="@string/nav_home">
+        <action android:id="@+id/action_home_to_account_add" app:destination="@id/nav_account_add" />
+        <action android:id="@+id/action_home_to_diary_add" app:destination="@id/nav_diary_add" />
+        <action android:id="@+id/action_home_to_meeting_add" app:destination="@id/nav_meeting_add" />
+        <action android:id="@+id/action_home_to_account_stats" app:destination="@id/nav_account_stats" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/nav_account"
+        android:name="com.loveapp.accountbook.ui.account.AccountListFragment"
+        android:label="@string/nav_account">
+        <action
+            android:id="@+id/action_account_to_add"
+            app:destination="@id/nav_account_add" />
+        <action
+            android:id="@+id/action_account_to_stats"
+            app:destination="@id/nav_account_stats" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/nav_account_add"
+        android:name="com.loveapp.accountbook.ui.account.AccountAddFragment"
+        android:label="@string/account_add" />
+
+    <fragment
+        android:id="@+id/nav_account_stats"
+        android:name="com.loveapp.accountbook.ui.account.AccountStatsFragment"
+        android:label="@string/account_stats" />
+
+    <fragment
+        android:id="@+id/nav_diary"
+        android:name="com.loveapp.accountbook.ui.diary.DiaryListFragment"
+        android:label="@string/nav_diary">
+        <action
+            android:id="@+id/action_diary_to_add"
+            app:destination="@id/nav_diary_add" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/nav_diary_add"
+        android:name="com.loveapp.accountbook.ui.diary.DiaryAddFragment"
+        android:label="@string/diary_add" />
+
+    <fragment
+        android:id="@+id/nav_meeting"
+        android:name="com.loveapp.accountbook.ui.meeting.MeetingListFragment"
+        android:label="@string/nav_meeting">
+        <action
+            android:id="@+id/action_meeting_to_add"
+            app:destination="@id/nav_meeting_add" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/nav_meeting_add"
+        android:name="com.loveapp.accountbook.ui.meeting.MeetingAddFragment"
+        android:label="@string/meeting_add" />
+
+    <fragment
+        android:id="@+id/nav_settings"
+        android:name="com.loveapp.accountbook.ui.settings.SettingsFragment"
+        android:label="@string/nav_settings">
+        <action android:id="@+id/action_settings_to_love" app:destination="@id/nav_love_letter" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/nav_love_letter"
+        android:name="com.loveapp.accountbook.ui.love.LoveLetterFragment"
+        android:label="@string/love_letter_title" />
+</navigation>

@@ -1,0 +1,1408 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>多功能数据管理APP - 页面原型设计</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif; background: linear-gradient(135deg, #FFF0F5 0%, #FDE8F0 30%, #F0E6FF 70%, #E8F4FD 100%); display: flex; flex-direction: column; align-items: center; padding: 20px; min-height: 100vh; }
+        
+        h1 { color: #D4619B; margin-bottom: 10px; font-size: 24px; }
+        .subtitle { color: #C88DAE; margin-bottom: 30px; font-size: 14px; letter-spacing: 2px; }
+        
+        .page-nav { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 30px; justify-content: center; }
+        .page-nav button { padding: 8px 16px; border: 2px solid #F4A0C0; background: white; color: #E8729A; border-radius: 20px; cursor: pointer; font-size: 13px; transition: all 0.3s; }
+        .page-nav button.active, .page-nav button:hover { background: linear-gradient(135deg, #FF85A2, #F4A0C0); color: white; border-color: transparent; box-shadow: 0 3px 10px rgba(244,160,192,0.4); }
+        
+        .phone-frame { width: 375px; height: 812px; background: #FFFBFD; border-radius: 40px; box-shadow: 0 10px 40px rgba(212,97,155,0.15), 0 0 0 1px rgba(244,160,192,0.1); overflow: hidden; position: relative; border: 8px solid #2D2D3A; }
+        .status-bar { height: 44px; background: linear-gradient(135deg, #FF85A2, #F4A0C0); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; color: white; font-size: 12px; }
+        .notch { width: 150px; height: 30px; background: #2D2D3A; border-radius: 0 0 20px 20px; position: absolute; top: 0; left: 50%; transform: translateX(-50%); z-index: 10; }
+        
+        .screen { display: none; height: calc(100% - 44px); overflow-y: auto; position: relative; }
+        .screen.active { display: flex; flex-direction: column; }
+        
+        /* 底部导航 */
+        .bottom-nav { height: 65px; background: white; border-top: 1px solid #e0e0e0; display: flex; position: absolute; bottom: 0; left: 0; right: 0; z-index: 5; }
+        .bottom-nav .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #999; font-size: 11px; cursor: pointer; transition: color 0.3s; }
+        .bottom-nav .nav-item.active { color: #E8729A; }
+        .bottom-nav .nav-item .icon { font-size: 22px; margin-bottom: 3px; }
+        
+        /* 顶部标题栏 */
+        .header { height: 50px; background: linear-gradient(135deg, #FF85A2, #F4A0C0); display: flex; align-items: center; padding: 0 16px; color: white; font-size: 17px; font-weight: bold; flex-shrink: 0; }
+        .header .back { margin-right: 10px; cursor: pointer; font-size: 20px; }
+        .header .action { margin-left: auto; font-size: 14px; cursor: pointer; }
+        
+        /* 内容区域 */
+        .content { flex: 1; overflow-y: auto; padding-bottom: 70px; }
+        
+        /* 启动页 */
+        .splash { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; background: linear-gradient(135deg, #FFB6C8 0%, #F4A0C0 30%, #D4A0E8 60%, #B8C6F0 100%); color: white; position: relative; overflow: hidden; }
+        .splash::before { content: ''; position: absolute; width: 200px; height: 200px; background: rgba(255,255,255,0.08); border-radius: 50%; top: -50px; right: -50px; }
+        .splash::after { content: ''; position: absolute; width: 150px; height: 150px; background: rgba(255,255,255,0.06); border-radius: 50%; bottom: 80px; left: -40px; }
+        .splash .logo { width: 100px; height: 100px; background: rgba(255,255,255,0.25); border-radius: 30px; display: flex; align-items: center; justify-content: center; font-size: 50px; margin-bottom: 20px; backdrop-filter: blur(10px); box-shadow: 0 8px 32px rgba(255,133,162,0.3); }
+        .splash .app-name { font-size: 28px; font-weight: bold; margin-bottom: 8px; text-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .splash .app-desc { font-size: 14px; opacity: 0.9; letter-spacing: 3px; }
+        .splash .start-btn { margin-top: 60px; padding: 14px 60px; background: white; color: #E8729A; border-radius: 30px; font-size: 16px; font-weight: bold; cursor: pointer; box-shadow: 0 6px 20px rgba(232,114,154,0.3); }
+        
+        /* 首页 */
+        .home-banner { background: linear-gradient(135deg, #FF85A2, #F4A0C0, #D4A0E8); padding: 20px 16px; color: white; position: relative; overflow: hidden; }
+        .home-banner::after { content: ''; position: absolute; width: 120px; height: 120px; background: rgba(255,255,255,0.1); border-radius: 50%; top: -30px; right: -20px; }
+        .home-banner .greeting { font-size: 20px; font-weight: bold; margin-bottom: 5px; }
+        .home-banner .date { font-size: 13px; opacity: 0.8; }
+        .home-stats { display: flex; gap: 10px; padding: 16px; margin-top: -10px; }
+        .stat-card { flex: 1; background: white; border-radius: 16px; padding: 14px 10px; box-shadow: 0 2px 12px rgba(232,114,154,0.1); text-align: center; border: 1px solid rgba(244,160,192,0.15); }
+        .stat-card .stat-icon { font-size: 28px; margin-bottom: 6px; }
+        .stat-card .stat-num { font-size: 22px; font-weight: bold; color: #333; }
+        .stat-card .stat-label { font-size: 11px; color: #999; margin-top: 2px; }
+        
+        .quick-actions { padding: 16px; }
+        .quick-actions h3 { font-size: 16px; color: #333; margin-bottom: 12px; }
+        .action-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+        .action-item { background: white; border-radius: 16px; padding: 18px 10px; text-align: center; box-shadow: 0 2px 10px rgba(232,114,154,0.08); cursor: pointer; border: 1px solid rgba(244,160,192,0.12); transition: transform 0.2s, box-shadow 0.2s; }
+        .action-item:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(232,114,154,0.15); }
+        .action-item .action-icon { font-size: 32px; margin-bottom: 8px; }
+        .action-item .action-text { font-size: 12px; color: #666; }
+        
+        .recent-section { padding: 16px; }
+        .recent-section h3 { font-size: 16px; color: #333; margin-bottom: 12px; }
+        .recent-item { background: white; border-radius: 14px; padding: 14px; margin-bottom: 10px; box-shadow: 0 2px 8px rgba(232,114,154,0.08); display: flex; align-items: center; border: 1px solid rgba(244,160,192,0.1); }
+        .recent-item .ri-icon { font-size: 28px; margin-right: 12px; }
+        .recent-item .ri-info { flex: 1; }
+        .recent-item .ri-title { font-size: 14px; color: #333; font-weight: 500; }
+        .recent-item .ri-desc { font-size: 12px; color: #999; margin-top: 2px; }
+        .recent-item .ri-time { font-size: 11px; color: #bbb; }
+        
+        /* 记账列表 */
+        .month-selector { display: flex; align-items: center; justify-content: center; padding: 12px; background: #FFF5F8; }
+        .month-selector .arrow { padding: 8px 16px; cursor: pointer; font-size: 18px; color: #E8729A; }
+        .month-selector .month-text { font-size: 16px; font-weight: bold; color: #333; min-width: 120px; text-align: center; }
+        .month-summary { display: flex; padding: 12px 16px; gap: 16px; }
+        .month-summary .ms-item { flex: 1; text-align: center; }
+        .month-summary .ms-label { font-size: 12px; color: #999; }
+        .month-summary .ms-value { font-size: 18px; font-weight: bold; margin-top: 4px; }
+        .ms-value.income { color: #66BB6A; }
+        .ms-value.expense { color: #E8729A; }
+        .ms-value.balance { color: #FFB74D; }
+        
+        .day-group { padding: 0 16px; }
+        .day-header { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f0f0f0; }
+        .day-header .dh-date { font-size: 14px; font-weight: bold; color: #333; }
+        .day-header .dh-total { font-size: 13px; color: #999; }
+        .account-item { display: flex; align-items: center; padding: 14px 0; border-bottom: 1px solid #f5f5f5; }
+        .account-item .ai-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; margin-right: 12px; }
+        .account-item .ai-icon.expense-icon { background: #FFF0F5; }
+        .account-item .ai-icon.income-icon { background: #F0FFF0; }
+        .account-item .ai-info { flex: 1; }
+        .account-item .ai-cat { font-size: 14px; color: #333; }
+        .account-item .ai-note { font-size: 12px; color: #999; margin-top: 2px; }
+        .account-item .ai-amount { font-size: 16px; font-weight: bold; }
+        .ai-amount.expense-amount { color: #E8729A; }
+        .ai-amount.income-amount { color: #66BB6A; }
+        
+        .fab { position: absolute; bottom: 80px; right: 20px; width: 56px; height: 56px; background: linear-gradient(135deg, #FF85A2, #F4A0C0); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 28px; box-shadow: 0 4px 16px rgba(232,114,154,0.4); cursor: pointer; z-index: 5; }
+        
+        /* 添加记账 */
+        .tab-bar { display: flex; background: linear-gradient(135deg, #FF85A2, #F4A0C0); }
+        .tab-bar .tab { flex: 1; text-align: center; padding: 12px; color: rgba(255,255,255,0.7); font-size: 15px; cursor: pointer; position: relative; }
+        .tab-bar .tab.active { color: white; font-weight: bold; }
+        .tab-bar .tab.active::after { content: ''; position: absolute; bottom: 0; left: 30%; right: 30%; height: 3px; background: white; border-radius: 2px; }
+        
+        .category-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; padding: 16px; }
+        .cat-item { display: flex; flex-direction: column; align-items: center; padding: 10px 4px; border-radius: 10px; cursor: pointer; }
+        .cat-item.selected { background: #FFF0F5; }
+        .cat-item .cat-icon { width: 44px; height: 44px; background: #f5f5f5; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px; margin-bottom: 4px; }
+        .cat-item.selected .cat-icon { background: linear-gradient(135deg, #FF85A2, #F4A0C0); }
+        .cat-item .cat-name { font-size: 11px; color: #666; }
+        
+        .input-section { padding: 16px; }
+        .input-row { display: flex; align-items: center; padding: 14px 0; border-bottom: 1px solid #f0f0f0; }
+        .input-row .ir-label { width: 70px; font-size: 14px; color: #666; }
+        .input-row .ir-input { flex: 1; font-size: 14px; color: #333; border: none; outline: none; background: transparent; }
+        .input-row .ir-input::placeholder { color: #ccc; }
+        
+        .amount-display { text-align: center; padding: 20px; }
+        .amount-display .ad-label { font-size: 13px; color: #999; }
+        .amount-display .ad-value { font-size: 36px; font-weight: bold; color: #333; margin-top: 8px; }
+        
+        .numpad { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: #e0e0e0; margin-top: auto; }
+        .numpad .key { background: white; padding: 16px; text-align: center; font-size: 20px; cursor: pointer; }
+        .numpad .key.action-key { background: linear-gradient(135deg, #FF85A2, #F4A0C0); color: white; }
+        .numpad .key.date-key { background: #f5f5f5; font-size: 14px; color: #666; }
+        
+        /* 记账统计 */
+        .chart-area { padding: 16px; }
+        .chart-placeholder { height: 200px; background: #FFF8FA; border-radius: 16px; display: flex; align-items: center; justify-content: center; color: #999; font-size: 14px; position: relative; overflow: hidden; border: 1px solid rgba(244,160,192,0.15); }
+        .chart-bars { display: flex; align-items: flex-end; gap: 8px; height: 160px; padding: 0 20px; }
+        .chart-bar { flex: 1; background: linear-gradient(to top, #E8729A, #FFB6C8); border-radius: 8px 8px 0 0; position: relative; }
+        .chart-bar .bar-label { position: absolute; bottom: -20px; left: 50%; transform: translateX(-50%); font-size: 10px; color: #999; white-space: nowrap; }
+        
+        .stat-list { padding: 16px; }
+        .stat-item { display: flex; align-items: center; padding: 12px 0; border-bottom: 1px solid #f5f5f5; }
+        .stat-item .si-icon { font-size: 24px; margin-right: 12px; }
+        .stat-item .si-info { flex: 1; }
+        .stat-item .si-name { font-size: 14px; color: #333; }
+        .stat-item .si-bar { height: 6px; background: #f0f0f0; border-radius: 3px; margin-top: 6px; }
+        .stat-item .si-bar-fill { height: 100%; background: linear-gradient(to right, #FF85A2, #F4A0C0); border-radius: 3px; }
+        .stat-item .si-amount { font-size: 14px; font-weight: bold; color: #E8729A; }
+        .stat-item .si-percent { font-size: 11px; color: #999; }
+        
+        /* 日记列表 */
+        .diary-item { padding: 16px; border-bottom: 1px solid #f0f0f0; }
+        .diary-item .di-date { font-size: 12px; color: #E8729A; font-weight: bold; }
+        .diary-item .di-weather { font-size: 12px; color: #999; margin-left: 8px; }
+        .diary-item .di-title { font-size: 16px; color: #333; font-weight: bold; margin: 6px 0; }
+        .diary-item .di-preview { font-size: 13px; color: #666; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .diary-item .di-mood { margin-top: 8px; font-size: 20px; }
+        
+        /* 写日记 */
+        .diary-meta { display: flex; gap: 10px; padding: 12px 16px; background: #FFF5F8; flex-wrap: wrap; }
+        .diary-meta .dm-item { padding: 6px 14px; background: white; border-radius: 20px; font-size: 13px; color: #666; border: 1px solid #e0e0e0; cursor: pointer; }
+        .diary-meta .dm-item.selected { background: #FFF0F5; border-color: #F4A0C0; color: #E8729A; }
+        .diary-edit-area { flex: 1; padding: 16px; }
+        .diary-edit-area .title-input { width: 100%; font-size: 20px; font-weight: bold; border: none; outline: none; margin-bottom: 16px; color: #333; }
+        .diary-edit-area .content-input { width: 100%; height: 300px; font-size: 15px; border: none; outline: none; color: #555; line-height: 1.8; resize: none; }
+        .diary-toolbar { display: flex; padding: 10px 16px; background: #FFF5F8; border-top: 1px solid #F4D0DE; gap: 16px; }
+        .diary-toolbar .dt-btn { font-size: 20px; cursor: pointer; padding: 6px; }
+        
+        /* 会议纪要列表 */
+        .meeting-item { padding: 16px; border-bottom: 1px solid #f0f0f0; display: flex; }
+        .meeting-item .mi-date-box { width: 50px; text-align: center; margin-right: 12px; }
+        .meeting-item .mi-day { font-size: 24px; font-weight: bold; color: #E8729A; }
+        .meeting-item .mi-month { font-size: 11px; color: #999; }
+        .meeting-item .mi-content { flex: 1; }
+        .meeting-item .mi-title { font-size: 15px; color: #333; font-weight: bold; margin-bottom: 4px; }
+        .meeting-item .mi-info { font-size: 12px; color: #999; margin-bottom: 4px; }
+        .meeting-item .mi-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+        .meeting-item .mi-tag { padding: 2px 8px; background: #FFF0F5; color: #E8729A; border-radius: 10px; font-size: 11px; }
+        
+        /* 添加会议纪要 */
+        .meeting-form { padding: 16px; }
+        .form-group { margin-bottom: 16px; }
+        .form-group .fg-label { font-size: 13px; color: #999; margin-bottom: 6px; }
+        .form-group .fg-input { width: 100%; padding: 12px; border: 1px solid #F4D0DE; border-radius: 12px; font-size: 14px; outline: none; }
+        .form-group .fg-input:focus { border-color: #F4A0C0; box-shadow: 0 0 0 3px rgba(244,160,192,0.15); }
+        .form-group textarea.fg-input { height: 150px; resize: none; line-height: 1.6; }
+        .form-group .fg-row { display: flex; gap: 10px; }
+        .form-group .fg-row .fg-input { flex: 1; }
+        .attendee-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+        .attendee-chip { padding: 4px 12px; background: #FFF0F5; color: #E8729A; border-radius: 20px; font-size: 12px; display: flex; align-items: center; gap: 4px; }
+        .attendee-chip .chip-close { cursor: pointer; font-size: 14px; }
+        
+        .save-btn { width: 100%; padding: 14px; background: linear-gradient(135deg, #FF85A2, #F4A0C0); color: white; border: none; border-radius: 25px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; box-shadow: 0 4px 15px rgba(232,114,154,0.3); }
+        
+        /* 设置页 */
+        .settings-group { padding: 0 16px; margin-top: 16px; }
+        .settings-group .sg-title { font-size: 13px; color: #999; margin-bottom: 8px; padding-left: 4px; }
+        .settings-list { background: white; border-radius: 16px; overflow: hidden; border: 1px solid rgba(244,160,192,0.1); }
+        .setting-item { display: flex; align-items: center; padding: 16px; border-bottom: 1px solid #f5f5f5; }
+        .setting-item:last-child { border-bottom: none; }
+        .setting-item .si-icon { font-size: 22px; margin-right: 12px; }
+        .setting-item .si-text { flex: 1; font-size: 15px; color: #333; }
+        .setting-item .si-arrow { color: #ccc; font-size: 16px; }
+        .setting-item .si-toggle { width: 44px; height: 24px; background: #e0e0e0; border-radius: 12px; position: relative; cursor: pointer; }
+        .setting-item .si-toggle.on { background: linear-gradient(135deg, #FF85A2, #F4A0C0); }
+        .setting-item .si-toggle::after { content: ''; width: 20px; height: 20px; background: white; border-radius: 50%; position: absolute; top: 2px; left: 2px; transition: left 0.3s; }
+        .setting-item .si-toggle.on::after { left: 22px; }
+        
+        /* 搜索栏 */
+        .search-bar { padding: 10px 16px; background: #FFF5F8; }
+        .search-bar input { width: 100%; padding: 10px 16px; background: white; border: 1px solid #F4D0DE; border-radius: 20px; font-size: 14px; outline: none; }
+        .search-bar input:focus { border-color: #F4A0C0; box-shadow: 0 0 0 3px rgba(244,160,192,0.12); }
+        
+        /* 页面标题标注 */
+        .page-title-badge { position: absolute; top: 50px; left: 0; right: 0; background: rgba(232,114,154,0.9); color: white; text-align: center; padding: 6px; font-size: 13px; font-weight: bold; z-index: 20; border-radius: 0; }
+        
+        /* 设计说明面板 */
+        .design-panel { max-width: 800px; width: 100%; margin-top: 40px; background: white; border-radius: 20px; padding: 30px; box-shadow: 0 4px 20px rgba(232,114,154,0.1); border: 1px solid rgba(244,160,192,0.15); }
+        .design-panel h2 { color: #D4619B; margin-bottom: 16px; font-size: 20px; }
+        .design-panel h3 { color: #E8729A; margin: 16px 0 8px; font-size: 16px; }
+        .design-panel p { color: #666; font-size: 14px; line-height: 1.8; margin-bottom: 8px; }
+        .design-panel ul { padding-left: 20px; color: #666; font-size: 14px; line-height: 2; }
+        
+        .screens-container { display: flex; gap: 40px; flex-wrap: wrap; justify-content: center; }
+        
+        /* 彩蛋动画 */
+        .heart-rain { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; overflow: hidden; }
+        .heart-rain .heart { position: absolute; top: -20px; font-size: 20px; animation: heartFall linear forwards; opacity: 0.9; }
+        @keyframes heartFall { 0% { transform: translateY(-20px) rotate(0deg) scale(0.8); opacity: 0; } 10% { opacity: 1; } 100% { transform: translateY(110vh) rotate(720deg) scale(0.3); opacity: 0; } }
+        
+        .love-popup { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 10000; opacity: 0; pointer-events: none; transition: opacity 0.4s; }
+        .love-popup.show { opacity: 1; pointer-events: auto; }
+        .love-popup .love-card { background: white; border-radius: 24px; padding: 40px 30px; max-width: 300px; text-align: center; transform: scale(0.8); transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 20px 60px rgba(232,114,154,0.3); }
+        .love-popup.show .love-card { transform: scale(1); }
+        .love-card .love-emoji { font-size: 60px; margin-bottom: 16px; animation: loveBounce 1s ease infinite; }
+        @keyframes loveBounce { 0%,100% { transform: scale(1); } 50% { transform: scale(1.2); } }
+        .love-card .love-title { font-size: 20px; color: #E8729A; font-weight: bold; margin-bottom: 12px; }
+        .love-card .love-text { font-size: 14px; color: #666; line-height: 1.8; }
+        .love-card .love-close { margin-top: 20px; padding: 10px 40px; background: linear-gradient(135deg, #FF85A2, #F4A0C0); color: white; border: none; border-radius: 25px; font-size: 14px; cursor: pointer; }
+        
+        .sparkle { position: absolute; pointer-events: none; animation: sparkleAnim 0.6s ease forwards; }
+        @keyframes sparkleAnim { 0% { transform: scale(0) rotate(0deg); opacity: 1; } 100% { transform: scale(1.5) rotate(180deg); opacity: 0; } }
+        
+        .splash .logo { cursor: pointer; transition: transform 0.3s; }
+        .splash .logo:hover { transform: scale(1.1); }
+        .stat-card { cursor: pointer; transition: transform 0.2s; }
+        .stat-card:active { transform: scale(0.95); }
+        
+        .secret-note { position: absolute; bottom: 100px; left: 50%; transform: translateX(-50%); background: rgba(255,255,255,0.95); padding: 12px 20px; border-radius: 16px; font-size: 13px; color: #E8729A; box-shadow: 0 4px 20px rgba(232,114,154,0.2); opacity: 0; transition: opacity 0.5s, transform 0.5s; pointer-events: none; white-space: nowrap; }
+        .secret-note.show { opacity: 1; transform: translateX(-50%) translateY(-10px); }
+        
+        /* 实时计时器 */
+        .live-counter { background: linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.08)); backdrop-filter: blur(10px); border-radius: 16px; padding: 12px; margin: 12px 16px 0; display: flex; justify-content: center; gap: 6px; }
+        .counter-item { text-align: center; min-width: 52px; }
+        .counter-num { font-size: 24px; font-weight: bold; color: white; text-shadow: 0 2px 8px rgba(0,0,0,0.15); font-variant-numeric: tabular-nums; }
+        .counter-label { font-size: 10px; color: rgba(255,255,255,0.8); margin-top: 2px; }
+        .counter-sep { font-size: 22px; color: rgba(255,255,255,0.6); padding-top: 2px; animation: counterBlink 1s ease infinite; }
+        @keyframes counterBlink { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+        
+        /* 启动页星星 */
+        .splash-stars { position: absolute; width: 100%; height: 100%; top: 0; left: 0; pointer-events: none; }
+        .splash-star { position: absolute; color: rgba(255,255,255,0.6); animation: twinkle ease-in-out infinite; }
+        @keyframes twinkle { 0%,100% { opacity: 0.3; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1.2); } }
+        
+        /* 情书页 */
+        .love-letter { padding: 24px 20px; height: 100%; overflow-y: auto; background: linear-gradient(180deg, #FFF8FA 0%, #FFF0F5 100%); }
+        .letter-header { text-align: center; margin-bottom: 24px; }
+        .letter-header .letter-icon { font-size: 48px; margin-bottom: 8px; }
+        .letter-header h3 { color: #E8729A; font-size: 20px; }
+        .letter-header .letter-date { color: #C88DAE; font-size: 12px; margin-top: 4px; }
+        .letter-body { background: white; border-radius: 16px; padding: 24px 20px; box-shadow: 0 2px 16px rgba(232,114,154,0.1); border: 1px solid rgba(244,160,192,0.15); position: relative; }
+        .letter-body::before { content: ''; position: absolute; top: 0; left: 20px; right: 20px; height: 1px; background: repeating-linear-gradient(90deg, #F4D0DE 0, #F4D0DE 4px, transparent 4px, transparent 8px); }
+        .letter-body p { font-size: 14px; color: #555; line-height: 2.2; text-indent: 2em; margin-bottom: 12px; background-image: linear-gradient(transparent 95%, #FDE8F0 95%); background-size: 100% 2.2em; }
+        .letter-sign { text-align: right; color: #E8729A; font-size: 14px; margin-top: 16px; font-style: italic; }
+        .letter-footer { text-align: center; margin-top: 20px; }
+        .letter-footer .promise-list { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 12px; }
+        .letter-footer .promise-item { padding: 8px 14px; background: white; border-radius: 20px; font-size: 12px; color: #E8729A; border: 1px dashed #F4A0C0; }
+        
+        /* 浪漫时间问候 */
+        .greeting-sub { font-size: 12px; opacity: 0.85; margin-top: 4px; letter-spacing: 1px; }
+    </style>
+</head>
+<body>
+    <h1>多功能数据管理APP - 原型设计</h1>
+    <p class="subtitle">记账 · 日记 · 会议纪要 | Excel数据存储</p>
+    
+    <div class="page-nav">
+        <button class="active" onclick="showScreen('splash')">启动页</button>
+        <button onclick="showScreen('home')">首页</button>
+        <button onclick="showScreen('account-list')">记账列表</button>
+        <button onclick="showScreen('account-add')">添加记账</button>
+        <button onclick="showScreen('account-stats')">记账统计</button>
+        <button onclick="showScreen('diary-list')">日记列表</button>
+        <button onclick="showScreen('diary-add')">写日记</button>
+        <button onclick="showScreen('meeting-list')">会议列表</button>
+        <button onclick="showScreen('meeting-add')">添加会议</button>
+        <button onclick="showScreen('settings')">设置</button>
+        <button onclick="showScreen('love-letter')" style="background:#FFF0F5;border-color:#F4A0C0;color:#E8729A">💌 情书</button>
+    </div>
+    
+    <div class="phone-frame">
+        <div class="notch"></div>
+        <div class="status-bar">
+            <span>9:41</span>
+            <span>📶 🔋</span>
+        </div>
+        
+        <!-- 1. 启动页 -->
+        <div class="screen active" id="screen-splash">
+            <div class="splash">
+                <div class="splash-stars" id="splashStars"></div>
+                <div class="logo" id="splash-logo" onclick="easterEggLogo()">💕</div>
+                <div class="app-name">我们的小账本</div>
+                <div class="app-desc">记录和你在一起的每一天</div>
+                <div class="start-btn" onclick="showScreen('home')" onmousedown="startLongPress()" onmouseup="endLongPress()" ontouchstart="startLongPress()" ontouchend="endLongPress()">开始使用</div>
+                <div class="secret-note" id="splash-secret">试试点我头上的爱心 ↑</div>
+            </div>
+        </div>
+        
+        <!-- 2. 首页 -->
+        <div class="screen" id="screen-home">
+            <div class="page-title-badge">首页 - 主导航页面</div>
+            <div class="home-banner" onclick="easterEggBanner()">
+                <div class="greeting" id="homeGreeting">亲爱的，今天也想你了</div>
+                <div class="greeting-sub" id="homeSub"></div>
+                <div class="date" id="homeDate">2026年2月14日 情人节快乐</div>
+                <div class="live-counter" id="liveCounter">
+                    <div class="counter-item"><div class="counter-num" id="cDays">365</div><div class="counter-label">天</div></div>
+                    <div class="counter-sep">:</div>
+                    <div class="counter-item"><div class="counter-num" id="cHours">08</div><div class="counter-label">小时</div></div>
+                    <div class="counter-sep">:</div>
+                    <div class="counter-item"><div class="counter-num" id="cMins">23</div><div class="counter-label">分钟</div></div>
+                    <div class="counter-sep">:</div>
+                    <div class="counter-item"><div class="counter-num" id="cSecs">45</div><div class="counter-label">秒</div></div>
+                </div>
+            </div>
+            <div class="home-stats">
+                <div class="stat-card" onclick="easterEggDays()">
+                    <div class="stat-icon">💕</div>
+                    <div class="stat-num">365</div>
+                    <div class="stat-label">在一起的日子</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📖</div>
+                    <div class="stat-num">8</div>
+                    <div class="stat-label">本月日记</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">💰</div>
+                    <div class="stat-num">23</div>
+                    <div class="stat-label">本月记账</div>
+                </div>
+            </div>
+            <div class="quick-actions">
+                <h3>快捷操作</h3>
+                <div class="action-grid">
+                    <div class="action-item" onclick="showScreen('account-add')">
+                        <div class="action-icon">✏️</div>
+                        <div class="action-text">记一笔</div>
+                    </div>
+                    <div class="action-item" onclick="showScreen('diary-add')">
+                        <div class="action-icon">📝</div>
+                        <div class="action-text">写日记</div>
+                    </div>
+                    <div class="action-item" onclick="showScreen('meeting-add')">
+                        <div class="action-icon">🗓️</div>
+                        <div class="action-text">记会议</div>
+                    </div>
+                    <div class="action-item" onclick="showScreen('account-stats')">
+                        <div class="action-icon">📊</div>
+                        <div class="action-text">统计</div>
+                    </div>
+                    <div class="action-item" onclick="showScreen('settings')">
+                        <div class="action-icon">📤</div>
+                        <div class="action-text">导出Excel</div>
+                    </div>
+                    <div class="action-item" onclick="showScreen('settings')">
+                        <div class="action-icon">⚙️</div>
+                        <div class="action-text">设置</div>
+                    </div>
+                </div>
+            </div>
+            <div class="recent-section">
+                <h3>最近记录</h3>
+                <div class="recent-item">
+                    <div class="ri-icon">�</div>
+                    <div class="ri-info">
+                        <div class="ri-title">情人节晚餐</div>
+                        <div class="ri-desc">和你吃饭，花多少都开心</div>
+                    </div>
+                    <div class="ri-time">18:30</div>
+                </div>
+                <div class="recent-item">
+                    <div class="ri-icon">📖</div>
+                    <div class="ri-info">
+                        <div class="ri-title">想你的晚上</div>
+                        <div class="ri-desc">今晚的月亮很美，但没你美...</div>
+                    </div>
+                    <div class="ri-time">昨天</div>
+                </div>
+                <div class="recent-item">
+                    <div class="ri-icon">🎁</div>
+                    <div class="ri-info">
+                        <div class="ri-title">给宝贝买礼物</div>
+                        <div class="ri-desc">支出 ¥520.00</div>
+                    </div>
+                    <div class="ri-time">2月12日</div>
+                </div>
+            </div>
+            <div class="bottom-nav">
+                <div class="nav-item active">
+                    <div class="icon">🏠</div>
+                    <span>首页</span>
+                </div>
+                <div class="nav-item" onclick="showScreen('account-list')">
+                    <div class="icon">💰</div>
+                    <span>记账</span>
+                </div>
+                <div class="nav-item" onclick="showScreen('diary-list')">
+                    <div class="icon">📖</div>
+                    <span>日记</span>
+                </div>
+                <div class="nav-item" onclick="showScreen('meeting-list')">
+                    <div class="icon">📋</div>
+                    <span>会议</span>
+                </div>
+                <div class="nav-item" onclick="showScreen('settings')">
+                    <div class="icon">⚙️</div>
+                    <span>设置</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 3. 记账列表 -->
+        <div class="screen" id="screen-account-list">
+            <div class="page-title-badge">记账模块 - 账单列表</div>
+            <div class="header">
+                <span>我的账本</span>
+                <span class="action" onclick="showScreen('account-stats')">统计</span>
+            </div>
+            <div class="content">
+                <div class="month-selector">
+                    <span class="arrow">◀</span>
+                    <span class="month-text">2026年2月</span>
+                    <span class="arrow">▶</span>
+                </div>
+                <div class="month-summary">
+                    <div class="ms-item">
+                        <div class="ms-label">收入</div>
+                        <div class="ms-value income">¥8,500</div>
+                    </div>
+                    <div class="ms-item">
+                        <div class="ms-label">支出</div>
+                        <div class="ms-value expense">¥979</div>
+                    </div>
+                    <div class="ms-item">
+                        <div class="ms-label">结余</div>
+                        <div class="ms-value balance">¥7,521</div>
+                    </div>
+                </div>
+                <div class="day-group">
+                    <div class="day-header">
+                        <span class="dh-date">2月14日 星期六</span>
+                        <span class="dh-total">支出 ¥947.00</span>
+                    </div>
+                    <div class="account-item">
+                        <div class="ai-icon expense-icon">�</div>
+                        <div class="ai-info">
+                            <div class="ai-cat">餐饮</div>
+                            <div class="ai-note">和宝贝的情人节晚餐</div>
+                        </div>
+                        <span class="ai-amount expense-amount">-¥328.00</span>
+                    </div>
+                    <div class="account-item">
+                        <div class="ai-icon expense-icon">🎁</div>
+                        <div class="ai-info">
+                            <div class="ai-cat">礼物</div>
+                            <div class="ai-note">她喜欢的口红</div>
+                        </div>
+                        <span class="ai-amount expense-amount" onclick="easterEgg520()" style="cursor:pointer">-¥520.00</span>
+                    </div>
+                    <div class="account-item">
+                        <div class="ai-icon expense-icon">🌷</div>
+                        <div class="ai-info">
+                            <div class="ai-cat">鲜花</div>
+                            <div class="ai-note">一束粉玉玉的郁金香</div>
+                        </div>
+                        <span class="ai-amount expense-amount" onclick="easterEgg99(event)" style="cursor:pointer">-¥99.00</span>
+                    </div>
+                </div>
+                <div class="day-group">
+                    <div class="day-header">
+                        <span class="dh-date">2月13日 星期五</span>
+                        <span class="dh-total">收入 ¥8,500 / 支出 ¥32.00</span>
+                    </div>
+                    <div class="account-item">
+                        <div class="ai-icon income-icon">💼</div>
+                        <div class="ai-info">
+                            <div class="ai-cat">工资</div>
+                            <div class="ai-note">又可以给她买好吃的了</div>
+                        </div>
+                        <span class="ai-amount income-amount" onclick="easterEggSalary(event)" style="cursor:pointer">+¥8,500</span>
+                    </div>
+                    <div class="account-item">
+                        <div class="ai-icon expense-icon">☕</div>
+                        <div class="ai-info">
+                            <div class="ai-cat">奶茶</div>
+                            <div class="ai-note">她最爱的草莓拿铁</div>
+                        </div>
+                        <span class="ai-amount expense-amount">-¥32.00</span>
+                    </div>
+                </div>
+            </div>
+            <div class="fab" onclick="showScreen('account-add')">+</div>
+            <div class="bottom-nav">
+                <div class="nav-item" onclick="showScreen('home')"><div class="icon">🏠</div><span>首页</span></div>
+                <div class="nav-item active"><div class="icon">💰</div><span>记账</span></div>
+                <div class="nav-item" onclick="showScreen('diary-list')"><div class="icon">📖</div><span>日记</span></div>
+                <div class="nav-item" onclick="showScreen('meeting-list')"><div class="icon">📋</div><span>会议</span></div>
+                <div class="nav-item" onclick="showScreen('settings')"><div class="icon">⚙️</div><span>设置</span></div>
+            </div>
+        </div>
+        
+        <!-- 4. 添加记账 -->
+        <div class="screen" id="screen-account-add">
+            <div class="page-title-badge">记账模块 - 添加账单</div>
+            <div class="header">
+                <span class="back" onclick="showScreen('account-list')">←</span>
+                <span>添加记账</span>
+            </div>
+            <div class="tab-bar">
+                <div class="tab active">支出</div>
+                <div class="tab">收入</div>
+            </div>
+            <div class="content" style="padding-bottom: 0;">
+                <div class="category-grid">
+                    <div class="cat-item selected"><div class="cat-icon">🍜</div><div class="cat-name">餐饮</div></div>
+                    <div class="cat-item"><div class="cat-icon">🚌</div><div class="cat-name">交通</div></div>
+                    <div class="cat-item"><div class="cat-icon">🛒</div><div class="cat-name">购物</div></div>
+                    <div class="cat-item"><div class="cat-icon">🏠</div><div class="cat-name">住房</div></div>
+                    <div class="cat-item"><div class="cat-icon">📱</div><div class="cat-name">通讯</div></div>
+                    <div class="cat-item"><div class="cat-icon">🎮</div><div class="cat-name">娱乐</div></div>
+                    <div class="cat-item"><div class="cat-icon">💊</div><div class="cat-name">医疗</div></div>
+                    <div class="cat-item"><div class="cat-icon">📚</div><div class="cat-name">教育</div></div>
+                    <div class="cat-item"><div class="cat-icon">👔</div><div class="cat-name">服饰</div></div>
+                    <div class="cat-item"><div class="cat-icon">➕</div><div class="cat-name">更多</div></div>
+                </div>
+                <div class="input-section">
+                    <div class="input-row">
+                        <span class="ir-label">备注</span>
+                        <input class="ir-input" placeholder="点击添加备注">
+                    </div>
+                    <div class="input-row">
+                        <span class="ir-label">日期</span>
+                        <input class="ir-input" value="2026-02-14" type="text">
+                    </div>
+                </div>
+                <div class="amount-display">
+                    <div class="ad-label">金额</div>
+                    <div class="ad-value">¥ 0.00</div>
+                </div>
+                <div class="numpad">
+                    <div class="key">1</div><div class="key">2</div><div class="key">3</div><div class="key date-key">📅 日期</div>
+                    <div class="key">4</div><div class="key">5</div><div class="key">6</div><div class="key action-key">+</div>
+                    <div class="key">7</div><div class="key">8</div><div class="key">9</div><div class="key action-key">-</div>
+                    <div class="key">.</div><div class="key">0</div><div class="key">⌫</div><div class="key action-key">✓</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 5. 记账统计 -->
+        <div class="screen" id="screen-account-stats">
+            <div class="page-title-badge">记账模块 - 统计分析</div>
+            <div class="header">
+                <span class="back" onclick="showScreen('account-list')">←</span>
+                <span>统计分析</span>
+            </div>
+            <div class="tab-bar">
+                <div class="tab active">周</div>
+                <div class="tab">月</div>
+                <div class="tab">年</div>
+            </div>
+            <div class="content">
+                <div class="month-summary" style="padding: 16px;">
+                    <div class="ms-item">
+                        <div class="ms-label">总支出</div>
+                        <div class="ms-value expense">¥979</div>
+                    </div>
+                    <div class="ms-item">
+                        <div class="ms-label">日均</div>
+                        <div class="ms-value expense">¥70</div>
+                    </div>
+                </div>
+                <div class="chart-area">
+                    <div class="chart-placeholder">
+                        <div class="chart-bars">
+                            <div class="chart-bar" style="height: 60%;"><span class="bar-label">周一</span></div>
+                            <div class="chart-bar" style="height: 80%;"><span class="bar-label">周二</span></div>
+                            <div class="chart-bar" style="height: 45%;"><span class="bar-label">周三</span></div>
+                            <div class="chart-bar" style="height: 90%;"><span class="bar-label">周四</span></div>
+                            <div class="chart-bar" style="height: 30%;"><span class="bar-label">周五</span></div>
+                            <div class="chart-bar" style="height: 100%;"><span class="bar-label">周六</span></div>
+                            <div class="chart-bar" style="height: 70%;"><span class="bar-label">周日</span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="stat-list">
+                    <h3 style="padding: 0 0 10px; font-size: 16px; color: #333;">支出分类排行</h3>
+                    <div class="stat-item">
+                        <span class="si-icon">🍜</span>
+                        <div class="si-info">
+                            <div class="si-name">餐饮</div>
+                            <div class="si-bar"><div class="si-bar-fill" style="width: 80%;"></div></div>
+                        </div>
+                        <div style="text-align: right; margin-left: 12px;">
+                            <div class="si-amount">¥1,200</div>
+                            <div class="si-percent">36.6%</div>
+                        </div>
+                    </div>
+                    <div class="stat-item">
+                        <span class="si-icon">🚌</span>
+                        <div class="si-info">
+                            <div class="si-name">交通</div>
+                            <div class="si-bar"><div class="si-bar-fill" style="width: 50%;"></div></div>
+                        </div>
+                        <div style="text-align: right; margin-left: 12px;">
+                            <div class="si-amount">¥680</div>
+                            <div class="si-percent">20.7%</div>
+                        </div>
+                    </div>
+                    <div class="stat-item">
+                        <span class="si-icon">🛒</span>
+                        <div class="si-info">
+                            <div class="si-name">购物</div>
+                            <div class="si-bar"><div class="si-bar-fill" style="width: 40%;"></div></div>
+                        </div>
+                        <div style="text-align: right; margin-left: 12px;">
+                            <div class="si-amount">¥520</div>
+                            <div class="si-percent">15.9%</div>
+                        </div>
+                    </div>
+                    <div class="stat-item">
+                        <span class="si-icon">🎮</span>
+                        <div class="si-info">
+                            <div class="si-name">娱乐</div>
+                            <div class="si-bar"><div class="si-bar-fill" style="width: 30%;"></div></div>
+                        </div>
+                        <div style="text-align: right; margin-left: 12px;">
+                            <div class="si-amount">¥380</div>
+                            <div class="si-percent">11.6%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 6. 日记列表 -->
+        <div class="screen" id="screen-diary-list">
+            <div class="page-title-badge">日记模块 - 日记列表</div>
+            <div class="header">
+                <span>我的日记</span>
+                <span class="action">搜索</span>
+            </div>
+            <div class="content">
+                <div class="search-bar">
+                    <input placeholder="搜索我们的回忆..." id="diarySearch" oninput="easterEggSearch(this)">
+                </div>
+                <div class="diary-item">
+                    <div>
+                        <span class="di-date">2月14日 周六</span>
+                        <span class="di-weather">☀️ 晴 12°C</span>
+                    </div>
+                    <div class="di-title">情人节，和你</div>
+                    <div class="di-preview">今天给你准备了惊喜，看到你笑的时候我就觉得什么都值了。晚上一起去了我们第一次约会的那家餐厅...</div>
+                    <div class="di-mood" onclick="easterEggMood(this)">🥰</div>
+                </div>
+                <div class="diary-item">
+                    <div>
+                        <span class="di-date">2月13日 周五</span>
+                        <span class="di-weather">🌤️ 多云 10°C</span>
+                    </div>
+                    <div class="di-title">偏偏又想你</div>
+                    <div class="di-preview">加班到很晚，但一打开手机看到你发的消息，累就全都消失了。明天情人节，已经按捰不住想见你...</div>
+                    <div class="di-mood" onclick="easterEggMood(this)">💭</div>
+                </div>
+                <div class="diary-item">
+                    <div>
+                        <span class="di-date">2月11日 周三</span>
+                        <span class="di-weather">🌧️ 雨 8°C</span>
+                    </div>
+                    <div class="di-title">下雨天适合想你</div>
+                    <div class="di-preview">下雨了，你有没有带伞？我在公司楼下的咖啡厅，窗外滤滤的雨声让我想起上次我们一起淨雨的时候...</div>
+                    <div class="di-mood" onclick="easterEggMood(this)">🌧️</div>
+                </div>
+                <div class="diary-item">
+                    <div>
+                        <span class="di-date">2月9日 周一</span>
+                        <span class="di-weather">☁️ 阴 9°C</span>
+                    </div>
+                    <div class="di-title">周一也有小幸福</div>
+                    <div class="di-preview">早上打开便当看到你昨晚偷偷塞的小纸条，上面写着“今天也要开心哦”，喜欢你这些小心思...</div>
+                    <div class="di-mood" onclick="easterEggMood(this)">☺️</div>
+                </div>
+            </div>
+            <div class="fab" onclick="showScreen('diary-add')">+</div>
+            <div class="bottom-nav">
+                <div class="nav-item" onclick="showScreen('home')"><div class="icon">🏠</div><span>首页</span></div>
+                <div class="nav-item" onclick="showScreen('account-list')"><div class="icon">💰</div><span>记账</span></div>
+                <div class="nav-item active"><div class="icon">📖</div><span>日记</span></div>
+                <div class="nav-item" onclick="showScreen('meeting-list')"><div class="icon">📋</div><span>会议</span></div>
+                <div class="nav-item" onclick="showScreen('settings')"><div class="icon">⚙️</div><span>设置</span></div>
+            </div>
+        </div>
+        
+        <!-- 7. 写日记 -->
+        <div class="screen" id="screen-diary-add">
+            <div class="page-title-badge">日记模块 - 写日记</div>
+            <div class="header">
+                <span class="back" onclick="showScreen('diary-list')">←</span>
+                <span>写日记</span>
+                <span class="action">保存</span>
+            </div>
+            <div class="content" style="padding-bottom: 0;">
+                <div class="diary-meta">
+                    <div class="dm-item selected">📅 2月14日</div>
+                    <div class="dm-item">☀️ 晴</div>
+                    <div class="dm-item selected">🥰 很幸福</div>
+                    <div class="dm-item">和你在一起</div>
+                </div>
+                <div class="diary-edit-area">
+                    <input class="title-input" placeholder="输入标题..." value="情人节，和你" onclick="easterEggDiaryTitle()">
+                    <textarea class="content-input" placeholder="开始写日记...">今天给你准备了惊喜，看到你笑的时候我就觉得什么都值了。
+
+晚上一起去了我们第一次约会的那家餐厅，老板还认出我们来，说“你们又来啦”。
+
+吃完饭散步回家，路灯把你的影子拉得长长的，你突然说“我们的影子手拉手了”。
+
+谢谢你出现在我的生命里，每一天都想和你说晚安。</textarea>
+                </div>
+                <div class="diary-toolbar">
+                    <span class="dt-btn">📷</span>
+                    <span class="dt-btn">🎤</span>
+                    <span class="dt-btn">📍</span>
+                    <span class="dt-btn">🏷️</span>
+                    <span class="dt-btn" style="margin-left: auto;">B</span>
+                    <span class="dt-btn">I</span>
+                    <span class="dt-btn">U</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 8. 会议列表 -->
+        <div class="screen" id="screen-meeting-list">
+            <div class="page-title-badge">会议纪要模块 - 会议列表</div>
+            <div class="header">
+                <span>会议纪要</span>
+                <span class="action">搜索</span>
+            </div>
+            <div class="content">
+                <div class="search-bar">
+                    <input placeholder="搜索会议内容...">
+                </div>
+                <div class="meeting-item">
+                    <div class="mi-date-box">
+                        <div class="mi-day" onclick="easterEgg214()" style="cursor:pointer">14</div>
+                        <div class="mi-month">2月</div>
+                    </div>
+                    <div class="mi-content">
+                        <div class="mi-title">Q1季度规划会议</div>
+                        <div class="mi-info">🕐 14:00-16:00 | 📍 3楼会议室</div>
+                        <div class="mi-info">👥 张三、李四、王五 等5人</div>
+                        <div class="mi-tags">
+                            <span class="mi-tag">季度规划</span>
+                            <span class="mi-tag">重要</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="meeting-item">
+                    <div class="mi-date-box">
+                        <div class="mi-day">12</div>
+                        <div class="mi-month">2月</div>
+                    </div>
+                    <div class="mi-content">
+                        <div class="mi-title">项目进度评审</div>
+                        <div class="mi-info">🕐 10:00-11:30 | 📍 线上会议</div>
+                        <div class="mi-info">👥 项目组全员 8人</div>
+                        <div class="mi-tags">
+                            <span class="mi-tag">项目管理</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="meeting-item">
+                    <div class="mi-date-box">
+                        <div class="mi-day">10</div>
+                        <div class="mi-month">2月</div>
+                    </div>
+                    <div class="mi-content">
+                        <div class="mi-title">产品需求讨论</div>
+                        <div class="mi-info">🕐 15:00-16:30 | 📍 5楼会议室</div>
+                        <div class="mi-info">👥 产品部、技术部 6人</div>
+                        <div class="mi-tags">
+                            <span class="mi-tag">产品</span>
+                            <span class="mi-tag">需求</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="meeting-item">
+                    <div class="mi-date-box">
+                        <div class="mi-day">07</div>
+                        <div class="mi-month">2月</div>
+                    </div>
+                    <div class="mi-content">
+                        <div class="mi-title">团队周会</div>
+                        <div class="mi-info">🕐 09:30-10:30 | 📍 2楼会议室</div>
+                        <div class="mi-info">👥 部门全员 12人</div>
+                        <div class="mi-tags">
+                            <span class="mi-tag">周会</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="fab" onclick="showScreen('meeting-add')">+</div>
+            <div class="bottom-nav">
+                <div class="nav-item" onclick="showScreen('home')"><div class="icon">🏠</div><span>首页</span></div>
+                <div class="nav-item" onclick="showScreen('account-list')"><div class="icon">💰</div><span>记账</span></div>
+                <div class="nav-item" onclick="showScreen('diary-list')"><div class="icon">📖</div><span>日记</span></div>
+                <div class="nav-item active"><div class="icon">📋</div><span>会议</span></div>
+                <div class="nav-item" onclick="showScreen('settings')"><div class="icon">⚙️</div><span>设置</span></div>
+            </div>
+        </div>
+        
+        <!-- 9. 添加会议纪要 -->
+        <div class="screen" id="screen-meeting-add">
+            <div class="page-title-badge">会议纪要模块 - 新建会议纪要</div>
+            <div class="header">
+                <span class="back" onclick="showScreen('meeting-list')">←</span>
+                <span>新建会议纪要</span>
+            </div>
+            <div class="content">
+                <div class="meeting-form">
+                    <div class="form-group">
+                        <div class="fg-label">会议主题 *</div>
+                        <input class="fg-input" placeholder="请输入会议主题" value="Q1季度规划会议">
+                    </div>
+                    <div class="form-group">
+                        <div class="fg-label">会议时间</div>
+                        <div class="fg-row">
+                            <input class="fg-input" value="2026-02-14" type="text">
+                            <input class="fg-input" value="14:00" type="text">
+                            <span style="padding: 12px 4px;">至</span>
+                            <input class="fg-input" value="16:00" type="text">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="fg-label">会议地点</div>
+                        <input class="fg-input" placeholder="请输入会议地点" value="3楼会议室A">
+                    </div>
+                    <div class="form-group">
+                        <div class="fg-label">参会人员</div>
+                        <input class="fg-input" placeholder="添加参会人员">
+                        <div class="attendee-list">
+                            <span class="attendee-chip">张三 <span class="chip-close">×</span></span>
+                            <span class="attendee-chip">李四 <span class="chip-close">×</span></span>
+                            <span class="attendee-chip">王五 <span class="chip-close">×</span></span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="fg-label">会议内容</div>
+                        <textarea class="fg-input" placeholder="请输入会议内容...">1. 回顾上季度目标完成情况
+2. Q1季度各部门目标制定
+3. 重点项目排期讨论
+4. 资源分配与协调</textarea>
+                    </div>
+                    <div class="form-group">
+                        <div class="fg-label">待办事项</div>
+                        <textarea class="fg-input" style="height: 80px;" placeholder="请输入待办事项...">- 张三：完成Q1预算方案（2月20日前）
+- 李四：提交技术评审报告（2月18日前）</textarea>
+                    </div>
+                    <div class="form-group">
+                        <div class="fg-label">标签</div>
+                        <div class="attendee-list">
+                            <span class="attendee-chip">季度规划 <span class="chip-close">×</span></span>
+                            <span class="attendee-chip">重要 <span class="chip-close">×</span></span>
+                            <span class="attendee-chip" style="background: #f5f5f5; color: #999; border: 1px dashed #ccc;">+ 添加标签</span>
+                        </div>
+                    </div>
+                    <button class="save-btn">保存会议纪要</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 10. 设置页 -->
+        <div class="screen" id="screen-settings">
+            <div class="page-title-badge">设置页面</div>
+            <div class="header">
+                <span>设置</span>
+            </div>
+            <div class="content" style="background: #f5f5f5;">
+                <div class="settings-group">
+                    <div class="sg-title">数据管理</div>
+                    <div class="settings-list">
+                        <div class="setting-item">
+                            <span class="si-icon">📤</span>
+                            <span class="si-text">导出Excel文件</span>
+                            <span class="si-arrow">›</span>
+                        </div>
+                        <div class="setting-item">
+                            <span class="si-icon">📥</span>
+                            <span class="si-text">导入Excel文件</span>
+                            <span class="si-arrow">›</span>
+                        </div>
+                        <div class="setting-item">
+                            <span class="si-icon">📁</span>
+                            <span class="si-text">数据存储位置</span>
+                            <span class="si-arrow" style="font-size: 12px; color: #999;">内部存储/DataManager ›</span>
+                        </div>
+                        <div class="setting-item">
+                            <span class="si-icon">☁️</span>
+                            <span class="si-text">自动备份</span>
+                            <div class="si-toggle on"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="settings-group">
+                    <div class="sg-title">Excel设置</div>
+                    <div class="settings-list">
+                        <div class="setting-item">
+                            <span class="si-icon">📊</span>
+                            <span class="si-text">记账Sheet名称</span>
+                            <span class="si-arrow" style="font-size: 12px; color: #999;">记账 ›</span>
+                        </div>
+                        <div class="setting-item">
+                            <span class="si-icon">📖</span>
+                            <span class="si-text">日记Sheet名称</span>
+                            <span class="si-arrow" style="font-size: 12px; color: #999;">日记 ›</span>
+                        </div>
+                        <div class="setting-item">
+                            <span class="si-icon">📋</span>
+                            <span class="si-text">会议Sheet名称</span>
+                            <span class="si-arrow" style="font-size: 12px; color: #999;">会议纪要 ›</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="settings-group">
+                    <div class="sg-title">通用</div>
+                    <div class="settings-list">
+                        <div class="setting-item">
+                            <span class="si-icon">🎨</span>
+                            <span class="si-text">主题颜色</span>
+                            <span class="si-arrow" style="font-size: 12px; color: #999;">默认粉 ›</span>
+                        </div>
+                        <div class="setting-item">
+                            <span class="si-icon">🌙</span>
+                            <span class="si-text">深色模式</span>
+                            <div class="si-toggle" onclick="easterEggDarkMode()"></div>
+                        </div>
+                        <div class="setting-item">
+                            <span class="si-icon">🔔</span>
+                            <span class="si-text">提醒通知</span>
+                            <div class="si-toggle on"></div>
+                        </div>
+                        <div class="setting-item" onclick="easterEggLock()" style="cursor:pointer">
+                            <span class="si-icon">🔒</span>
+                            <span class="si-text">密码锁定</span>
+                            <span class="si-arrow">›</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="settings-group">
+                    <div class="sg-title">关于</div>
+                    <div class="settings-list">
+                        <div class="setting-item" onclick="easterEggVersion()" style="cursor:pointer">
+                            <span class="si-icon">ℹ️</span>
+                            <span class="si-text">版本信息</span>
+                            <span class="si-arrow" style="font-size: 12px; color: #999;">v1.0.0 ›</span>
+                        </div>
+                        <div class="setting-item">
+                            <span class="si-icon">💬</span>
+                            <span class="si-text">意见反馈</span>
+                            <span class="si-arrow">›</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="bottom-nav">
+                <div class="nav-item" onclick="showScreen('home')"><div class="icon">🏠</div><span>首页</span></div>
+                <div class="nav-item" onclick="showScreen('account-list')"><div class="icon">💰</div><span>记账</span></div>
+                <div class="nav-item" onclick="showScreen('diary-list')"><div class="icon">📖</div><span>日记</span></div>
+                <div class="nav-item" onclick="showScreen('meeting-list')"><div class="icon">📋</div><span>会议</span></div>
+                <div class="nav-item active"><div class="icon">⚙️</div><span>设置</span></div>
+            </div>
+        </div>
+        
+        <!-- 11. 隐藏情书页 -->
+        <div class="screen" id="screen-love-letter">
+            <div class="header">
+                <span class="back" onclick="showScreen('home')">←</span>
+                <span>💌 给你的一封信</span>
+            </div>
+            <div class="love-letter">
+                <div class="letter-header">
+                    <div class="letter-icon">💌</div>
+                    <h3>写给最特别的你</h3>
+                    <div class="letter-date">2026年2月14日 · 我们在一起的第365天</div>
+                </div>
+                <div class="letter-body">
+                    <p>亲爱的：</p>
+                    <p>不知不觉，我们已经在一起365天了。写这封信的时候，我坐在电脑前，屏幕上满是粉色的代码，每一行都在说"我喜欢你"。</p>
+                    <p>还记得我们第一次见面吗？那天你穿了一件白色的裙子，笑起来眼睛弯弯的。从那一刻起，我的心里就只住得下一个人了。</p>
+                    <p>谢谢你愿意在我加班到深夜的时候，给我发一条"记得吃饭"；谢谢你在下雨天专门跑来给我送伞；谢谢你假装生气的时候，还是会偷偷看我有没有在哄你。</p>
+                    <p>我不太会说漂亮话，所以我把想对你说的都写进了这个APP里。你看到的每一个粉色，都是我心里你的颜色。你发现的每一个小彩蛋，都是我偷偷藏给你的小惊喜。</p>
+                    <p>未来的日子里，我想和你一起记每一笔账（你花的都算我的），写每一篇日记（主角永远是你），开每一场"两个人的会议"（议题只有一个：今天去哪吃）。</p>
+                    <p>最后想跟你说：遇见你，是我这辈子最大的幸运。余生很长，我想一直牵着你的手走下去。</p>
+                    <div class="letter-sign">永远爱你的我 ❤️</div>
+                </div>
+                <div class="letter-footer">
+                    <h3 style="color:#E8729A;font-size:15px;margin-top:20px;">🤙 我对你的承诺</h3>
+                    <div class="promise-list">
+                        <div class="promise-item">每天说晚安 🌙</div>
+                        <div class="promise-item">永远站你这边 🛡️</div>
+                        <div class="promise-item">记得每个纪念日 📅</div>
+                        <div class="promise-item">不让你一个人淋雨 🌂</div>
+                        <div class="promise-item">做你最温暖的依靠 🤗</div>
+                        <div class="promise-item">生气了先道歉 🙇</div>
+                        <div class="promise-item">存钱带你去旅行 ✈️</div>
+                        <div class="promise-item">给你做一辈子的饭 🍳</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 设计说明 -->
+    <div class="design-panel">
+        <h2>📐 设计说明文档</h2>
+        
+        <h3>一、应用概述</h3>
+        <p>「我们的小账本」是一款基于Android的多功能Excel数据管理应用，集成记账、日记和会议纪要三大功能模块。所有数据以Excel(.xlsx)格式存储，用户可在手机和电脑间自由切换编辑。</p>
+        
+        <h3>二、页面结构（共10个主要页面）</h3>
+        <ul>
+            <li><strong>启动页</strong> - 品牌展示 + 进入应用</li>
+            <li><strong>首页</strong> - 数据概览 + 快捷操作 + 最近记录</li>
+            <li><strong>记账列表</strong> - 按日期分组展示，月度收支汇总</li>
+            <li><strong>添加记账</strong> - 分类选择 + 金额输入 + 备注</li>
+            <li><strong>记账统计</strong> - 图表展示 + 分类排行</li>
+            <li><strong>日记列表</strong> - 日记流，天气/心情标记</li>
+            <li><strong>写日记</strong> - 富文本编辑 + 元数据标记</li>
+            <li><strong>会议列表</strong> - 按时间排列，标签分类</li>
+            <li><strong>添加会议纪要</strong> - 结构化表单录入</li>
+            <li><strong>设置页</strong> - Excel导入导出 + 应用配置</li>
+        </ul>
+        
+        <h3>三、导航架构</h3>
+        <p>底部Tab导航（5个）：首页 | 记账 | 日记 | 会议 | 设置</p>
+        <p>二级页面通过顶部返回按钮导航回列表页</p>
+        
+        <h3>四、Excel存储结构</h3>
+        <ul>
+            <li><strong>Sheet1: 记账</strong> - 列：日期、类型(收入/支出)、分类、金额、备注</li>
+            <li><strong>Sheet2: 日记</strong> - 列：日期、标题、内容、天气、心情、位置</li>
+            <li><strong>Sheet3: 会议纪要</strong> - 列：日期、主题、时间段、地点、参会人、内容、待办、标签</li>
+        </ul>
+        
+        <h3>五、设计规范</h3>
+        <ul>
+            <li><strong>主色调</strong>：#E8729A / #FF85A2 / #F4A0C0（粉色少女系）</li>
+            <li><strong>辅助色</strong>：收入绿 #66BB6A、支出粉 #E8729A、薰衣草紫 #D4A0E8</li>
+            <li><strong>圆角</strong>：卡片12px、按钮10px、标签4px</li>
+            <li><strong>字体</strong>：系统默认字体，标题17px、正文14px、辅助12px</li>
+            <li><strong>间距</strong>：页面边距16px、卡片间距10px</li>
+        </ul>
+        
+        <h3>六、技术方案</h3>
+        <ul>
+            <li><strong>平台</strong>：Android (Java/Kotlin)</li>
+            <li><strong>最低版本</strong>：Android 7.0 (API 24)</li>
+            <li><strong>Excel处理</strong>：Apache POI 库</li>
+            <li><strong>UI框架</strong>：Material Design 3</li>
+            <li><strong>架构模式</strong>：MVVM</li>
+            <li><strong>数据文件</strong>：.xlsx 格式，单文件多Sheet存储</li>
+        </ul>
+    </div>
+
+    <!-- 彩蛋：爱心雨容器 -->
+    <div class="heart-rain" id="heartRain"></div>
+    
+    <!-- 彩蛋：情话弹窗 -->
+    <div class="love-popup" id="lovePopup" onclick="closeLovePopup()">
+        <div class="love-card" onclick="event.stopPropagation()">
+            <div class="love-emoji" id="popupEmoji">💕</div>
+            <div class="love-title" id="popupTitle">标题</div>
+            <div class="love-text" id="popupText">内容</div>
+            <button class="love-close" onclick="closeLovePopup()">我知道啦</button>
+        </div>
+    </div>
+
+    <script>
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById('screen-' + screenId).classList.add('active');
+            
+            if (typeof event !== 'undefined' && event && event.target && event.target.classList) {
+                document.querySelectorAll('.page-nav button').forEach(b => b.classList.remove('active'));
+                event.target.classList.add('active');
+            }
+        }
+        
+        document.querySelectorAll('.page-nav button').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.page-nav button').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+
+        // ========== 彩蛋系统 ==========
+        
+        // 情话库
+        const loveWords = [
+            { emoji: '💕', title: '第365天', text: '从第一天牵你的手开始，\n我就决定这辈子都不放开了。\n\n谢谢你愿意和我一起走过\n这365个日日夜夜。' },
+            { emoji: '🌙', title: '晚安情话', text: '我对世界说晚安，\n唯独对你说喜欢。\n\n今晚的月亮很美，\n但不及你万分之一。' },
+            { emoji: '☀️', title: '早安情话', text: '每天早上醒来，\n第一件事就是看你发没发消息。\n\n你是我睁眼后，\n最想见到的人。' },
+            { emoji: '🌧️', title: '下雨天想你', text: '下雨了我会想你，\n天晴了我也想你。\n\n不管什么天气，\n反正我都在想你。' },
+            { emoji: '🎂', title: '小小心愿', text: '如果可以许一个愿望，\n我希望你每天都开开心心的。\n\n如果可以许两个，\n那第二个是永远在一起。' },
+            { emoji: '✨', title: '遇见你之后', text: '遇见你之前，\n我没想过结婚。\n遇见你之后，\n我没想过别人。' },
+            { emoji: '🏠', title: '关于未来', text: '等攒够了钱，\n我们就买一个小房子。\n\n养一只猫，\n周末一起做饭。\n你负责吃，我负责洗碗。' },
+            { emoji: '📝', title: '给你写的', text: '这个APP是我专门为你写的，\n每一行代码里都藏着我对你的喜欢。\n\n你看到的每一个粉色，\n都是我心里你的颜色。' },
+        ];
+
+        // 彩蛋1: 启动页logo - 连点3次触发爱心雨
+        let logoClickCount = 0;
+        let logoTimer = null;
+        function easterEggLogo() {
+            logoClickCount++;
+            clearTimeout(logoTimer);
+            const logo = document.getElementById('splash-logo');
+            logo.style.transform = 'scale(' + (1 + logoClickCount * 0.1) + ')';
+            
+            if (logoClickCount >= 3) {
+                logoClickCount = 0;
+                logo.style.transform = 'scale(1)';
+                triggerHeartRain();
+                setTimeout(() => {
+                    showLovePopup(loveWords[7]); // "给你写的"
+                }, 1500);
+            }
+            logoTimer = setTimeout(() => { 
+                logoClickCount = 0; 
+                logo.style.transform = 'scale(1)';
+            }, 1000);
+        }
+        
+        // 3秒后显示启动页提示
+        setTimeout(() => {
+            const hint = document.getElementById('splash-secret');
+            if (hint) { hint.classList.add('show'); setTimeout(() => hint.classList.remove('show'), 3000); }
+        }, 2000);
+
+        // 彩蛋2: 首页"在一起的日子" - 随机情话
+        function easterEggDays() {
+            const idx = Math.floor(Math.random() * loveWords.length);
+            showLovePopup(loveWords[idx]);
+            triggerMiniHearts(event);
+        }
+
+        // 彩蛋3: 首页banner - 连点5次触发满屏爱心
+        let bannerClickCount = 0;
+        let bannerTimer = null;
+        function easterEggBanner() {
+            bannerClickCount++;
+            clearTimeout(bannerTimer);
+            if (bannerClickCount >= 5) {
+                bannerClickCount = 0;
+                triggerHeartRain();
+                showLovePopup({ emoji: '🎉', title: '被你发现了！', text: '连续点了5次，\n说明你很认真在看对不对？\n\n那我告诉你一个秘密：\n我真的真的很喜欢你。' });
+            }
+            bannerTimer = setTimeout(() => bannerClickCount = 0, 2000);
+        }
+
+        // 彩蛋4: 520金额 - 我爱你
+        function easterEgg520() {
+            event.stopPropagation();
+            showLovePopup({ emoji: '💝', title: '¥520.00', text: '520 = 我爱你\n\n给你花的每一分钱，\n都是心甘情愿的。\n\n因为你值得全世界最好的。' });
+            triggerMiniHearts(event);
+        }
+
+        // 彩蛋5: 设置页版本信息 - 隐藏告白
+        let versionClickCount = 0;
+        function easterEggVersion() {
+            versionClickCount++;
+            if (versionClickCount >= 3) {
+                versionClickCount = 0;
+                showLovePopup({ emoji: '💌', title: '写给你的秘密', text: '这个APP从第一行代码开始，\n就是为你而写的。\n\n每一个按钮、每一种颜色，\n都是按照你喜欢的样子设计的。\n\n——爱你的我' });
+                triggerHeartRain();
+            }
+        }
+
+        // 爱心雨动画
+        function triggerHeartRain() {
+            const container = document.getElementById('heartRain');
+            const hearts = ['💕', '❤️', '💗', '💖', '💝', '🩷', '🌸', '✨'];
+            for (let i = 0; i < 30; i++) {
+                setTimeout(() => {
+                    const heart = document.createElement('span');
+                    heart.className = 'heart';
+                    heart.textContent = hearts[Math.floor(Math.random() * hearts.length)];
+                    heart.style.left = Math.random() * 100 + '%';
+                    heart.style.fontSize = (14 + Math.random() * 20) + 'px';
+                    heart.style.animationDuration = (2 + Math.random() * 3) + 's';
+                    container.appendChild(heart);
+                    setTimeout(() => heart.remove(), 5000);
+                }, i * 100);
+            }
+        }
+
+        // 迷你爱心爆发
+        function triggerMiniHearts(e) {
+            const hearts = ['💕', '❤️', '💗', '✨'];
+            for (let i = 0; i < 6; i++) {
+                const span = document.createElement('span');
+                span.className = 'sparkle';
+                span.textContent = hearts[Math.floor(Math.random() * hearts.length)];
+                span.style.position = 'fixed';
+                span.style.left = (e.clientX + (Math.random() - 0.5) * 60) + 'px';
+                span.style.top = (e.clientY + (Math.random() - 0.5) * 60) + 'px';
+                span.style.fontSize = (14 + Math.random() * 12) + 'px';
+                span.style.zIndex = '99999';
+                document.body.appendChild(span);
+                setTimeout(() => span.remove(), 600);
+            }
+        }
+
+        // 彩蛋6: 日记mood emoji点击 - 随机变换+情话
+        const moodEmojis = ['🥰','😘','💋','😍','🤗','💕','❤️','💗','✨','🌸'];
+        const moodWords = [
+            '你笑起来真好看',
+            '想捏捏你的脸',
+            '今天也超喜欢你',
+            '你是我的小太阳',
+            '全世界你最可爱',
+            '想rua你的头发',
+            '看到你就开心',
+            '你是草莓味的',
+        ];
+        function easterEggMood(el) {
+            event.stopPropagation();
+            el.textContent = moodEmojis[Math.floor(Math.random() * moodEmojis.length)];
+            el.style.transform = 'scale(1.5)';
+            setTimeout(() => el.style.transform = 'scale(1)', 300);
+            // 在emoji旁边短暂显示一句话
+            const tip = document.createElement('div');
+            tip.textContent = moodWords[Math.floor(Math.random() * moodWords.length)];
+            tip.style.cssText = 'position:absolute;right:16px;background:#FFF0F5;color:#E8729A;padding:4px 12px;border-radius:12px;font-size:12px;white-space:nowrap;z-index:30;animation:sparkleAnim 1.5s ease forwards;';
+            el.parentElement.style.position = 'relative';
+            el.parentElement.appendChild(tip);
+            setTimeout(() => tip.remove(), 1500);
+            triggerMiniHearts(event);
+        }
+
+        // 彩蛋7: 会议列表 2月14号 - 情人节彩蛋
+        function easterEgg214() {
+            event.stopPropagation();
+            showLovePopup({ emoji: '🗓️', title: '2月14日', text: '这一天不开会，\n只想和你约会。\n\n在我的日程表里，\n每一天都写着你的名字。' });
+            triggerMiniHearts(event);
+        }
+
+        // 彩蛋8: 深色模式开关 - 你就是我的光
+        function easterEggDarkMode() {
+            event.stopPropagation();
+            showLovePopup({ emoji: '🌙', title: '不用开深色模式', text: '因为有你在，\n我的世界永远是亮的。\n\n你就是我生命里的那束光。' });
+        }
+
+        // 彩蛋9: 日记搜索框 - 输入"爱"或"love"触发
+        let searchTimeout = null;
+        function easterEggSearch(input) {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                const v = input.value.toLowerCase();
+                if (v.includes('爱') || v.includes('love') || v.includes('喜欢')) {
+                    triggerHeartRain();
+                    showLovePopup({ emoji: '🔍', title: '找到了', text: '你搜索的答案只有一个：\n\n我爱你。\n\n不管搜多少次，\n答案都不会变。' });
+                    input.value = '';
+                } else if (v.includes('想你') || v.includes('miss')) {
+                    showLovePopup({ emoji: '💭', title: '我也想你', text: '你在搜"想你"？\n\n巧了，我也在想你。\n现在，此刻，每一秒。' });
+                    input.value = '';
+                }
+            }, 500);
+        }
+
+        // 彩蛋10: 写日记标题点击 - 浪漫提示
+        let titleClickCount = 0;
+        function easterEggDiaryTitle() {
+            titleClickCount++;
+            if (titleClickCount >= 3) {
+                titleClickCount = 0;
+                showLovePopup({ emoji: '✏️', title: '写给你的日记', text: '以后我们的每一篇日记，\n都有两个人的温度。\n\n你写你的心情，\n我写我有多喜欢你。' });
+            }
+        }
+
+        // 彩蛋11: 长按"开始使用"按钮 - 隐藏告白
+        let longPressTimer = null;
+        function startLongPress() {
+            longPressTimer = setTimeout(() => {
+                showLovePopup({ emoji: '💍', title: '未来可期', text: '你按住这个按钮的时间，\n就像我想和你在一起的时间。\n\n永远不想松手。\n\n余生请多指教。' });
+                triggerHeartRain();
+            }, 1500);
+        }
+        function endLongPress() { clearTimeout(longPressTimer); }
+
+        // 彩蛋12: 鲜花99元 - 浪漫
+        function easterEgg99(e) {
+            e.stopPropagation();
+            showLovePopup({ emoji: '🌷', title: '99朵郁金香', text: '99 = 长长久久\n\n给你买花不需要理由，\n但如果非要一个的话：\n\n因为你比花还好看。' });
+            triggerMiniHearts(e);
+        }
+
+        // 彩蛋13: 工资到账 - 给你花
+        function easterEggSalary(e) {
+            e.stopPropagation();
+            showLovePopup({ emoji: '💼', title: '工资到啦', text: '发工资最开心的事，\n不是数字变多了，\n\n而是又可以带你\n去吃你想吃的东西了。\n\n我的钱就是你的钱。' });
+            triggerMiniHearts(e);
+        }
+
+        // 彩蛋14: 密码锁 - 承诺卡片
+        function easterEggLock() {
+            event.stopPropagation();
+            showLovePopup({ emoji: '🔐', title: '这个APP的密码是', text: '密码就是我们在一起的日子：\n\n0214\n\n因为从那天起，\n我的心就只为你上锁了。' });
+        }
+
+        // ========== 实时在一起计时器 ==========
+        const togetherDate = new Date('2025-02-14T00:00:00');
+        function updateCounter() {
+            const now = new Date();
+            const diff = now - togetherDate;
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const secs = Math.floor((diff % (1000 * 60)) / 1000);
+            const el = (id) => document.getElementById(id);
+            if (el('cDays')) el('cDays').textContent = days;
+            if (el('cHours')) el('cHours').textContent = String(hours).padStart(2, '0');
+            if (el('cMins')) el('cMins').textContent = String(mins).padStart(2, '0');
+            if (el('cSecs')) el('cSecs').textContent = String(secs).padStart(2, '0');
+        }
+        setInterval(updateCounter, 1000);
+        updateCounter();
+
+        // ========== 时间问候语 ==========
+        function updateGreeting() {
+            const hour = new Date().getHours();
+            const el = document.getElementById('homeGreeting');
+            const sub = document.getElementById('homeSub');
+            if (!el) return;
+            if (hour >= 6 && hour < 11) {
+                el.textContent = '早安，我的小太阳 ☀️';
+                sub.textContent = '新的一天，从想你开始';
+            } else if (hour >= 11 && hour < 14) {
+                el.textContent = '中午好，记得吃饭哦 🍱';
+                sub.textContent = '吃饱饱才有力气想我';
+            } else if (hour >= 14 && hour < 18) {
+                el.textContent = '下午好，今天也想你了 💭';
+                sub.textContent = '困了就眯一会，梦里有我';
+            } else if (hour >= 18 && hour < 22) {
+                el.textContent = '晚上好，今天辛苦了 🌙';
+                sub.textContent = '回家的路上注意安全';
+            } else {
+                el.textContent = '夜深了，还没睡吗 🌟';
+                sub.textContent = '快去睡吧，我在梦里等你';
+            }
+            // 更新日期
+            const now = new Date();
+            const dateEl = document.getElementById('homeDate');
+            const weekdays = ['日','一','二','三','四','五','六'];
+            if (dateEl) dateEl.textContent = now.getFullYear() + '年' + (now.getMonth()+1) + '月' + now.getDate() + '日 星期' + weekdays[now.getDay()];
+        }
+        updateGreeting();
+
+        // ========== 启动页星星 ==========
+        function createStars() {
+            const container = document.getElementById('splashStars');
+            if (!container) return;
+            const stars = ['✦','✧','·','⋆','✨'];
+            for (let i = 0; i < 20; i++) {
+                const star = document.createElement('span');
+                star.className = 'splash-star';
+                star.textContent = stars[Math.floor(Math.random() * stars.length)];
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.fontSize = (8 + Math.random() * 14) + 'px';
+                star.style.animationDuration = (2 + Math.random() * 3) + 's';
+                star.style.animationDelay = Math.random() * 2 + 's';
+                container.appendChild(star);
+            }
+        }
+        createStars();
+
+        // 弹窗控制
+        function showLovePopup(data) {
+            document.getElementById('popupEmoji').textContent = data.emoji;
+            document.getElementById('popupTitle').textContent = data.title;
+            document.getElementById('popupText').textContent = data.text;
+            document.getElementById('lovePopup').classList.add('show');
+        }
+        function closeLovePopup() {
+            document.getElementById('lovePopup').classList.remove('show');
+        }
+    </script>
+</body>
+</html>

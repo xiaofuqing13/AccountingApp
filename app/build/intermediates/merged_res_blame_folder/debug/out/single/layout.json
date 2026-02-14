@@ -1,0 +1,70 @@
+[
+    {
+        "merged": "com.loveapp.accountbook.app-mergeDebugResources-49:/layout/item_diary.xml",
+        "source": "com.loveapp.accountbook.app-main-52:/layout/item_diary.xml"
+    },
+    {
+        "merged": "com.loveapp.accountbook.app-mergeDebugResources-49:/layout/fragment_diary_add.xml",
+        "source": "com.loveapp.accountbook.app-main-52:/layout/fragment_diary_add.xml"
+    },
+    {
+        "merged": "com.loveapp.accountbook.app-mergeDebugResources-49:/layout/activity_splash.xml",
+        "source": "com.loveapp.accountbook.app-main-52:/layout/activity_splash.xml"
+    },
+    {
+        "merged": "com.loveapp.accountbook.app-mergeDebugResources-49:/layout/dialog_love_popup.xml",
+        "source": "com.loveapp.accountbook.app-main-52:/layout/dialog_love_popup.xml"
+    },
+    {
+        "merged": "com.loveapp.accountbook.app-mergeDebugResources-49:/layout/item_recent.xml",
+        "source": "com.loveapp.accountbook.app-main-52:/layout/item_recent.xml"
+    },
+    {
+        "merged": "com.loveapp.accountbook.app-mergeDebugResources-49:/layout/fragment_account_stats.xml",
+        "source": "com.loveapp.accountbook.app-main-52:/layout/fragment_account_stats.xml"
+    },
+    {
+        "merged": "com.loveapp.accountbook.app-mergeDebugResources-49:/layout/item_account.xml",
+        "source": "com.loveapp.accountbook.app-main-52:/layout/item_account.xml"
+    },
+    {
+        "merged": "com.loveapp.accountbook.app-mergeDebugResources-49:/layout/item_meeting.xml",
+        "source": "com.loveapp.accountbook.app-main-52:/layout/item_meeting.xml"
+    },
+    {
+        "merged": "com.loveapp.accountbook.app-mergeDebugResources-49:/layout/fragment_settings.xml",
+        "source": "com.loveapp.accountbook.app-main-52:/layout/fragment_settings.xml"
+    },
+    {
+        "merged": "com.loveapp.accountbook.app-mergeDebugResources-49:/layout/fragment_diary_list.xml",
+        "source": "com.loveapp.accountbook.app-main-52:/layout/fragment_diary_list.xml"
+    },
+    {
+        "merged": "com.loveapp.accountbook.app-mergeDebugResources-49:/layout/fragment_account_list.xml",
+        "source": "com.loveapp.accountbook.app-main-52:/layout/fragment_account_list.xml"
+    },
+    {
+        "merged": "com.loveapp.accountbook.app-mergeDebugResources-49:/layout/fragment_meeting_add.xml",
+        "source": "com.loveapp.accountbook.app-main-52:/layout/fragment_meeting_add.xml"
+    },
+    {
+        "merged": "com.loveapp.accountbook.app-mergeDebugResources-49:/layout/fragment_meeting_list.xml",
+        "source": "com.loveapp.accountbook.app-main-52:/layout/fragment_meeting_list.xml"
+    },
+    {
+        "merged": "com.loveapp.accountbook.app-mergeDebugResources-49:/layout/fragment_love_letter.xml",
+        "source": "com.loveapp.accountbook.app-main-52:/layout/fragment_love_letter.xml"
+    },
+    {
+        "merged": "com.loveapp.accountbook.app-mergeDebugResources-49:/layout/fragment_home.xml",
+        "source": "com.loveapp.accountbook.app-main-52:/layout/fragment_home.xml"
+    },
+    {
+        "merged": "com.loveapp.accountbook.app-mergeDebugResources-49:/layout/fragment_account_add.xml",
+        "source": "com.loveapp.accountbook.app-main-52:/layout/fragment_account_add.xml"
+    },
+    {
+        "merged": "com.loveapp.accountbook.app-mergeDebugResources-49:/layout/activity_main.xml",
+        "source": "com.loveapp.accountbook.app-main-52:/layout/activity_main.xml"
+    }
+]
