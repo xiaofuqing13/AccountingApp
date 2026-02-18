@@ -30,8 +30,12 @@ class AccountListFragment : Fragment() {
         adapter = AccountAdapter { entry ->
             when {
                 entry.amount == 520.0 -> EasterEggManager.showLovePopup(requireContext(), EasterEggManager.egg520)
+                entry.amount == 1314.0 -> EasterEggManager.showLovePopup(requireContext(), EasterEggManager.egg1314)
+                entry.amount == 777.0 -> EasterEggManager.showLovePopup(requireContext(), EasterEggManager.egg777)
                 entry.amount == 99.0 && entry.category == "鲜花" -> EasterEggManager.showLovePopup(requireContext(), EasterEggManager.egg99)
+                entry.category == "鲜花" || entry.category == "礼物" -> EasterEggManager.showLovePopup(requireContext(), EasterEggManager.eggFlower)
                 entry.category == "工资" -> EasterEggManager.showLovePopup(requireContext(), EasterEggManager.eggSalary)
+                entry.note.contains("礼物") || entry.note.contains("生日") -> EasterEggManager.showLovePopup(requireContext(), EasterEggManager.eggGift)
             }
         }
 

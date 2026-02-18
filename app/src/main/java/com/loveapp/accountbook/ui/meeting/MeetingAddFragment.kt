@@ -14,6 +14,7 @@ import com.loveapp.accountbook.R
 import com.loveapp.accountbook.data.model.MeetingEntry
 import com.loveapp.accountbook.util.DateUtils
 import com.loveapp.accountbook.util.DraftManager
+import com.loveapp.accountbook.util.EasterEggManager
 
 class MeetingAddFragment : Fragment() {
 
@@ -73,6 +74,10 @@ class MeetingAddFragment : Fragment() {
             ))
             DraftManager.clearDrafts(requireContext(), "draft_meeting_")
             Toast.makeText(requireContext(), "会议纪要保存成功", Toast.LENGTH_SHORT).show()
+            // 随机概率弹出保存惊喜
+            if ((0..2).random() == 0) {
+                EasterEggManager.showLovePopup(requireContext(), EasterEggManager.eggMeetingSave)
+            }
             findNavController().popBackStack()
         }
     }

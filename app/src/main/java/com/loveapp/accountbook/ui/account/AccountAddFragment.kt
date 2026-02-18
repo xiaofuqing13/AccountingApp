@@ -16,6 +16,7 @@ import com.loveapp.accountbook.R
 import com.loveapp.accountbook.data.model.AccountEntry
 import com.loveapp.accountbook.util.DateUtils
 import com.loveapp.accountbook.util.DraftManager
+import com.loveapp.accountbook.util.EasterEggManager
 
 class AccountAddFragment : Fragment() {
 
@@ -130,6 +131,10 @@ class AccountAddFragment : Fragment() {
         viewModel.addAccount(entry)
         DraftManager.clearDrafts(requireContext(), "draft_account_")
         Toast.makeText(requireContext(), "保存成功", Toast.LENGTH_SHORT).show()
+        // 随机概率弹出保存惊喜
+        if ((0..2).random() == 0) {
+            EasterEggManager.showLovePopup(requireContext(), EasterEggManager.eggSaveSuccess)
+        }
         findNavController().popBackStack()
     }
 
@@ -155,6 +160,7 @@ class AccountAddFragment : Fragment() {
                     setBackgroundResource(if (position == selected) R.drawable.bg_tag_pink else 0)
                     setOnClickListener {
                         val old = selected
+                        @Suppress("DEPRECATION")
                         selected = holder.adapterPosition
                         selectedCategory = cat.name
                         notifyItemChanged(old)
