@@ -9,5 +9,6 @@ data class MeetingEntry(
     val attendees: String = "",
     val content: String = "",
     val todoItems: String = "",
-    val tags: String = ""
+    val tags: String = "",
+    val rowIndex: Int = -1
 )

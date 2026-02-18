@@ -101,7 +101,8 @@ class ExcelRepository(private val context: Context) {
                 type = getCellString(row.getCell(1)),
                 category = getCellString(row.getCell(2)),
                 amount = getCellDouble(row.getCell(3)),
-                note = getCellString(row.getCell(4))
+                note = getCellString(row.getCell(4)),
+                rowIndex = i - 1
             ))
         }
         workbook.close()
@@ -127,6 +128,34 @@ class ExcelRepository(private val context: Context) {
         getAccounts().filter { it.date.startsWith(yearMonth) }
     }
 
+
+    suspend fun updateAccount(entry: AccountEntry) = withContext(Dispatchers.IO) {
+        val workbook = getOrCreateWorkbook()
+        val sheet = workbook.getSheet(sheetAccount) ?: return@withContext
+        val row = sheet.getRow(entry.rowIndex + 1) ?: return@withContext
+        row.getCell(0)?.setCellValue(entry.date)
+        row.getCell(1)?.setCellValue(entry.type)
+        row.getCell(2)?.setCellValue(entry.category)
+        row.getCell(3)?.setCellValue(entry.amount)
+        row.getCell(4)?.setCellValue(entry.note)
+        saveWorkbook(workbook)
+        workbook.close()
+    }
+
+    suspend fun deleteAccount(entry: AccountEntry) = withContext(Dispatchers.IO) {
+        val workbook = getOrCreateWorkbook()
+        val sheet = workbook.getSheet(sheetAccount) ?: return@withContext
+        val rowIndex = entry.rowIndex + 1
+        val lastRow = sheet.lastRowNum
+        if (rowIndex < lastRow) {
+            sheet.shiftRows(rowIndex + 1, lastRow, -1)
+        } else {
+            sheet.removeRow(sheet.getRow(rowIndex) ?: return@withContext)
+        }
+        saveWorkbook(workbook)
+        workbook.close()
+    }
+
     // ========== 日记 ==========
 
     suspend fun getDiaries(): List<DiaryEntry> = withContext(Dispatchers.IO) {
@@ -141,7 +170,8 @@ class ExcelRepository(private val context: Context) {
                 content = getCellString(row.getCell(2)),
                 weather = getCellString(row.getCell(3)),
                 mood = getCellString(row.getCell(4)),
-                location = getCellString(row.getCell(5))
+                location = getCellString(row.getCell(5)),
+                rowIndex = i - 1
             ))
         }
         workbook.close()
@@ -164,6 +194,35 @@ class ExcelRepository(private val context: Context) {
         workbook.close()
     }
 
+
+    suspend fun updateDiary(entry: DiaryEntry) = withContext(Dispatchers.IO) {
+        val workbook = getOrCreateWorkbook()
+        val sheet = workbook.getSheet(sheetDiary) ?: return@withContext
+        val row = sheet.getRow(entry.rowIndex + 1) ?: return@withContext
+        row.getCell(0)?.setCellValue(entry.date)
+        row.getCell(1)?.setCellValue(entry.title)
+        row.getCell(2)?.setCellValue(entry.content)
+        row.getCell(3)?.setCellValue(entry.weather)
+        row.getCell(4)?.setCellValue(entry.mood)
+        row.getCell(5)?.setCellValue(entry.location)
+        saveWorkbook(workbook)
+        workbook.close()
+    }
+
+    suspend fun deleteDiary(entry: DiaryEntry) = withContext(Dispatchers.IO) {
+        val workbook = getOrCreateWorkbook()
+        val sheet = workbook.getSheet(sheetDiary) ?: return@withContext
+        val rowIndex = entry.rowIndex + 1
+        val lastRow = sheet.lastRowNum
+        if (rowIndex < lastRow) {
+            sheet.shiftRows(rowIndex + 1, lastRow, -1)
+        } else {
+            sheet.removeRow(sheet.getRow(rowIndex) ?: return@withContext)
+        }
+        saveWorkbook(workbook)
+        workbook.close()
+    }
+
     // ========== 会议 ==========
 
     suspend fun getMeetings(): List<MeetingEntry> = withContext(Dispatchers.IO) {
@@ -181,7 +240,8 @@ class ExcelRepository(private val context: Context) {
                 attendees = getCellString(row.getCell(5)),
                 content = getCellString(row.getCell(6)),
                 todoItems = getCellString(row.getCell(7)),
-                tags = getCellString(row.getCell(8))
+                tags = getCellString(row.getCell(8)),
+                rowIndex = i - 1
             ))
         }
         workbook.close()
@@ -202,6 +262,38 @@ class ExcelRepository(private val context: Context) {
             createCell(6).setCellValue(entry.content)
             createCell(7).setCellValue(entry.todoItems)
             createCell(8).setCellValue(entry.tags)
+        }
+        saveWorkbook(workbook)
+        workbook.close()
+    }
+
+
+    suspend fun updateMeeting(entry: MeetingEntry) = withContext(Dispatchers.IO) {
+        val workbook = getOrCreateWorkbook()
+        val sheet = workbook.getSheet(sheetMeeting) ?: return@withContext
+        val row = sheet.getRow(entry.rowIndex + 1) ?: return@withContext
+        row.getCell(0)?.setCellValue(entry.date)
+        row.getCell(1)?.setCellValue(entry.topic)
+        row.getCell(2)?.setCellValue(entry.startTime)
+        row.getCell(3)?.setCellValue(entry.endTime)
+        row.getCell(4)?.setCellValue(entry.location)
+        row.getCell(5)?.setCellValue(entry.attendees)
+        row.getCell(6)?.setCellValue(entry.content)
+        row.getCell(7)?.setCellValue(entry.todoItems)
+        row.getCell(8)?.setCellValue(entry.tags)
+        saveWorkbook(workbook)
+        workbook.close()
+    }
+
+    suspend fun deleteMeeting(entry: MeetingEntry) = withContext(Dispatchers.IO) {
+        val workbook = getOrCreateWorkbook()
+        val sheet = workbook.getSheet(sheetMeeting) ?: return@withContext
+        val rowIndex = entry.rowIndex + 1
+        val lastRow = sheet.lastRowNum
+        if (rowIndex < lastRow) {
+            sheet.shiftRows(rowIndex + 1, lastRow, -1)
+        } else {
+            sheet.removeRow(sheet.getRow(rowIndex) ?: return@withContext)
         }
         saveWorkbook(workbook)
         workbook.close()

@@ -57,6 +57,29 @@ class AccountViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
+    fun deleteAccount(entry: AccountEntry) {
+        viewModelScope.launch {
+            repo.deleteAccount(entry)
+            loadAccounts()
+        }
+    }
+
+    fun updateAccount(entry: AccountEntry) {
+        viewModelScope.launch {
+            repo.updateAccount(entry)
+            loadAccounts()
+        }
+    }
+
+    fun searchAccounts(keyword: String) {
+        viewModelScope.launch {
+            val month = _currentMonth.value ?: return@launch
+            val list = repo.getAccountsByMonth(month)
+            _accounts.value = if (keyword.isBlank()) list
+            else list.filter { it.category.contains(keyword) || it.note.contains(keyword) }
+        }
+    }
+
     fun getCategoryStats(): List<Pair<String, Double>> {
         val list = _accounts.value?.filter { it.isExpense } ?: emptyList()
         return list.groupBy { it.category }

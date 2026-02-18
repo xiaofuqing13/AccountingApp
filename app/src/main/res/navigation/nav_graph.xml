@@ -69,10 +69,15 @@
         android:name="com.loveapp.accountbook.ui.settings.SettingsFragment"
         android:label="@string/nav_settings">
         <action android:id="@+id/action_settings_to_love" app:destination="@id/nav_love_letter" />
+        <action android:id="@+id/action_settings_to_love_menu" app:destination="@id/nav_love_menu" />
     </fragment>
 
     <fragment
         android:id="@+id/nav_love_letter"
         android:name="com.loveapp.accountbook.ui.love.LoveLetterFragment"
         android:label="@string/love_letter_title" />
+    <fragment
+        android:id="@+id/nav_love_menu"
+        android:name="com.loveapp.accountbook.ui.love.LoveMenuFragment"
+        android:label="@string/love_menu_title" />
 </navigation>

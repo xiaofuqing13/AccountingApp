@@ -88,6 +88,16 @@ class HomeFragment : Fragment() {
         }
 
         viewModel.loadStats()
+
+        // 每日情话卡片
+        val dailyLove = EasterEggManager.dailyLoveWord()
+        view.findViewById<TextView>(R.id.tv_daily_love_emoji)?.text = dailyLove.emoji
+        view.findViewById<TextView>(R.id.tv_daily_love_title)?.text = dailyLove.title
+        view.findViewById<TextView>(R.id.tv_daily_love_text)?.text = dailyLove.text
+
+        view.findViewById<View>(R.id.card_daily_love)?.setOnClickListener {
+            EasterEggManager.showLovePopup(requireContext(), dailyLove)
+        }
     }
 
     private fun startCounter(view: View) {

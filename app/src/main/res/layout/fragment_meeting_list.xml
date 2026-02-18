@@ -5,6 +5,7 @@
     android:layout_height="match_parent"
     android:background="@color/pink_bg">
 
+    <!-- 顶部标题栏 -->
     <LinearLayout
         android:id="@+id/header"
         android:layout_width="0dp"
@@ -15,20 +16,78 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
-        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/meeting_title" android:textColor="@color/text_white" android:textSize="@dimen/title_size" android:textStyle="bold" />
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/meeting_title"
+            android:textColor="@color/text_white"
+            android:textSize="@dimen/title_size"
+            android:textStyle="bold" />
     </LinearLayout>
 
+    <!-- 搜索框 -->
+    <EditText
+        android:id="@+id/et_search"
+        android:layout_width="0dp"
+        android:layout_height="42dp"
+        android:layout_marginHorizontal="12dp"
+        android:layout_marginTop="10dp"
+        android:background="@drawable/bg_search_rounded"
+        android:drawableStart="@android:drawable/ic_menu_search"
+        android:drawablePadding="8dp"
+        android:hint="搜索会议主题或内容..."
+        android:textColorHint="@color/text_hint"
+        android:textColor="@color/text_primary"
+        android:paddingHorizontal="14dp"
+        android:textSize="13sp"
+        android:inputType="text"
+        app:layout_constraintTop_toBottomOf="@id/header"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- 空状态视图 -->
+    <LinearLayout
+        android:id="@+id/empty_view"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:visibility="gone"
+        app:layout_constraintTop_toBottomOf="@id/et_search"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="🗓️"
+            android:textSize="48sp" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:gravity="center"
+            android:lineSpacingMultiplier="1.5"
+            android:text="还没有会议记录哦~\n开始记录吧"
+            android:textColor="@color/text_hint"
+            android:textSize="14sp" />
+    </LinearLayout>
+
+    <!-- 列表 -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rv_meetings"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:padding="@dimen/page_margin"
+        android:padding="12dp"
         android:clipToPadding="false"
-        app:layout_constraintTop_toBottomOf="@id/header"
+        app:layout_constraintTop_toBottomOf="@id/et_search"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
+    <!-- FAB -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fab_add"
         android:layout_width="wrap_content"
@@ -37,6 +96,8 @@
         android:src="@android:drawable/ic_input_add"
         android:backgroundTint="@color/pink_primary"
         app:tint="@color/text_white"
+        app:elevation="6dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

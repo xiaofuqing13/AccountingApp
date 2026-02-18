@@ -12,7 +12,8 @@ import com.loveapp.accountbook.data.model.MeetingEntry
 
 class MeetingAdapter(
     private var items: List<MeetingEntry> = emptyList(),
-    private val onDayClick: ((MeetingEntry) -> Unit)? = null
+    private val onDayClick: ((MeetingEntry) -> Unit)? = null,
+    private val onLongClick: ((MeetingEntry) -> Unit)? = null
 ) : RecyclerView.Adapter<MeetingAdapter.ViewHolder>() {
 
     fun updateData(newItems: List<MeetingEntry>) {
@@ -48,6 +49,7 @@ class MeetingAdapter(
 
         // 彩蛋: 14号点击
         holder.tvDay.setOnClickListener { onDayClick?.invoke(item) }
+        holder.itemView.setOnLongClickListener { onLongClick?.invoke(item); true }
     }
 
     override fun getItemCount() = items.size

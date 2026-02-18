@@ -28,4 +28,26 @@ class MeetingViewModel(application: Application) : AndroidViewModel(application)
             loadMeetings()
         }
     }
+
+    fun deleteMeeting(entry: MeetingEntry) {
+        viewModelScope.launch {
+            repo.deleteMeeting(entry)
+            loadMeetings()
+        }
+    }
+
+    fun updateMeeting(entry: MeetingEntry) {
+        viewModelScope.launch {
+            repo.updateMeeting(entry)
+            loadMeetings()
+        }
+    }
+
+    fun searchMeetings(keyword: String) {
+        viewModelScope.launch {
+            val all = repo.getMeetings()
+            _meetings.value = if (keyword.isBlank()) all
+            else all.filter { it.topic.contains(keyword) || it.content.contains(keyword) || it.attendees.contains(keyword) }
+        }
+    }
 }

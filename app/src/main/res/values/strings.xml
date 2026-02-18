@@ -62,4 +62,27 @@
     <string name="btn_close">我知道啦</string>
     <string name="btn_start">开始使用</string>
     <string name="btn_back">返回</string>
+    <!-- 情话菜单 -->
+    <string name="love_menu_title">💕 情话小屋</string>
+    <string name="love_menu_daily">今日情话</string>
+    <string name="love_menu_random">换一句 💫</string>
+    <string name="love_menu_all">全部情话</string>
+    <string name="love_menu_category_daily">日常甜蜜</string>
+    <string name="love_menu_category_season">四季情话</string>
+    <string name="love_menu_category_food">美食情话</string>
+    <string name="love_menu_category_travel">浪漫时刻</string>
+    <string name="love_menu_category_future">未来畅想</string>
+    <string name="love_menu_category_all">全部情话</string>
+    <string name="love_menu_copy_success">已复制到剪贴板 💕</string>
+
+    <!-- 空状态 -->
+    <string name="empty_account">还没有记账记录哦~\n点击 + 开始记录吧 💰</string>
+    <string name="empty_diary">还没有日记哦~\n记录今天的心情吧 📝</string>
+    <string name="empty_meeting">还没有会议记录哦~\n开始记录吧 🗓️</string>
+
+    <!-- 设置页新增 -->
+    <string name="settings_love_menu">情话小屋</string>
+    <string name="footer_text">用爱编写 ❤️</string>
+    <string name="love_share">分享</string>
+    <string name="love_copy">复制</string>
 </resources>

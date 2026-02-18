@@ -11,7 +11,8 @@ import com.loveapp.accountbook.data.model.AccountEntry
 
 class AccountAdapter(
     private var items: List<AccountEntry> = emptyList(),
-    private val onItemClick: ((AccountEntry) -> Unit)? = null
+    private val onItemClick: ((AccountEntry) -> Unit)? = null,
+    private val onLongClick: ((AccountEntry) -> Unit)? = null
 ) : RecyclerView.Adapter<AccountAdapter.ViewHolder>() {
 
     private val categoryIcons = mapOf(
@@ -43,6 +44,7 @@ class AccountAdapter(
             if (item.isIncome) R.color.income_green else R.color.expense_pink))
 
         holder.itemView.setOnClickListener { onItemClick?.invoke(item) }
+        holder.itemView.setOnLongClickListener { onLongClick?.invoke(item); true }
     }
 
     override fun getItemCount() = items.size

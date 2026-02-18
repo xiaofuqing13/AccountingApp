@@ -11,7 +11,9 @@ import com.loveapp.accountbook.util.DateUtils
 
 class DiaryAdapter(
     private var items: List<DiaryEntry> = emptyList(),
-    private val onMoodClick: ((Int) -> Unit)? = null
+    private val onMoodClick: ((Int) -> Unit)? = null,
+    private val onItemClick: ((DiaryEntry) -> Unit)? = null,
+    private val onLongClick: ((DiaryEntry) -> Unit)? = null
 ) : RecyclerView.Adapter<DiaryAdapter.ViewHolder>() {
 
     fun updateData(newItems: List<DiaryEntry>) {
@@ -33,6 +35,8 @@ class DiaryAdapter(
         holder.tvMood.text = item.mood
 
         holder.tvMood.setOnClickListener { onMoodClick?.invoke(position) }
+        holder.itemView.setOnClickListener { onItemClick?.invoke(item) }
+        holder.itemView.setOnLongClickListener { onLongClick?.invoke(item); true }
     }
 
     override fun getItemCount() = items.size

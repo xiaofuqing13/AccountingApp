@@ -4,36 +4,103 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginBottom="10dp"
-    app:cardCornerRadius="12dp"
-    app:cardElevation="2dp">
+    app:cardCornerRadius="14dp"
+    app:cardElevation="2dp"
+    android:foreground="?android:attr/selectableItemBackground">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
-        android:padding="16dp">
+        android:padding="14dp">
 
+        <!-- 左侧日期徽章 -->
         <LinearLayout
-            android:layout_width="50dp"
+            android:layout_width="48dp"
             android:layout_height="wrap_content"
-            android:background="@drawable/bg_tag_pink"
+            android:background="@drawable/bg_date_badge"
             android:gravity="center"
             android:orientation="vertical"
-            android:padding="8dp">
-            <TextView android:id="@+id/tv_day" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="@color/pink_primary" android:textSize="22sp" android:textStyle="bold" />
-            <TextView android:id="@+id/tv_month" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="@color/pink_primary" android:textSize="11sp" />
+            android:padding="6dp">
+
+            <TextView
+                android:id="@+id/tv_day"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#E8729A"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tv_month"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#999999"
+                android:textSize="10sp" />
         </LinearLayout>
 
+        <!-- 右侧内容 -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
             android:layout_marginStart="12dp"
+            android:layout_weight="1"
             android:orientation="vertical">
-            <TextView android:id="@+id/tv_title" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="@color/text_primary" android:textSize="15sp" android:textStyle="bold" />
-            <TextView android:id="@+id/tv_time_location" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="@color/text_hint" android:textSize="12sp" android:layout_marginTop="4dp" />
-            <TextView android:id="@+id/tv_attendees" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="@color/text_hint" android:textSize="12sp" android:layout_marginTop="2dp" />
-            <com.google.android.material.chip.ChipGroup android:id="@+id/chip_tags" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="6dp" app:chipSpacingHorizontal="4dp" />
+
+            <!-- 主题 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="📋"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:id="@+id/tv_title"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:layout_weight="1"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:textColor="#333333"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <!-- 时间+地点 -->
+            <TextView
+                android:id="@+id/tv_time_location"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="#666666"
+                android:textSize="12sp" />
+
+            <!-- 参会人 -->
+            <TextView
+                android:id="@+id/tv_attendees"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="#999999"
+                android:textSize="11sp" />
+
+            <!-- 标签 -->
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chip_tags"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                app:chipSpacingHorizontal="4dp" />
         </LinearLayout>
     </LinearLayout>
 </androidx.cardview.widget.CardView>

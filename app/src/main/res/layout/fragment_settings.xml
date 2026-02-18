@@ -7,38 +7,75 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:paddingBottom="24dp">
 
+        <!-- 顶部渐变标题栏 -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@drawable/bg_gradient_pink"
             android:padding="@dimen/page_margin">
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/settings_title" android:textColor="@color/text_white" android:textSize="@dimen/title_size" android:textStyle="bold" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/settings_title"
+                android:textColor="@color/text_white"
+                android:textSize="@dimen/title_size"
+                android:textStyle="bold" />
         </LinearLayout>
 
-        <!-- 数据管理 -->
-        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="数据管理" android:textColor="@color/text_hint" android:textSize="@dimen/caption_size" android:layout_marginStart="@dimen/page_margin" android:layout_marginTop="16dp" android:layout_marginBottom="8dp" />
+        <!-- 数据管理分组 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="@dimen/page_margin"
+            android:paddingTop="16dp"
+            android:paddingBottom="8dp">
+            <View
+                android:layout_width="3dp"
+                android:layout_height="14dp"
+                android:background="@color/pink_primary" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="数据管理"
+                android:textColor="@color/text_hint"
+                android:textSize="@dimen/caption_size"
+                android:textStyle="bold" />
+        </LinearLayout>
 
-        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:background="@color/pink_card" android:orientation="vertical">
-            <LinearLayout android:id="@+id/btn_export" android:layout_width="match_parent" android:layout_height="56dp" android:gravity="center_vertical" android:paddingHorizontal="@dimen/page_margin">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="12dp"
+            android:background="@drawable/bg_settings_group"
+            android:elevation="1dp"
+            android:orientation="vertical">
+
+            <LinearLayout android:id="@+id/btn_export" android:layout_width="match_parent" android:layout_height="56dp" android:gravity="center_vertical" android:paddingHorizontal="@dimen/page_margin" android:foreground="?android:attr/selectableItemBackground">
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="📤" android:textSize="20sp" android:layout_marginEnd="16dp" />
                 <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/settings_export" android:textColor="@color/text_primary" android:textSize="@dimen/body_size" />
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="›" android:textColor="@color/text_hint" />
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="›" android:textColor="@color/text_hint" android:textSize="18sp" />
             </LinearLayout>
-            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/divider" android:layout_marginStart="52dp" />
-            <LinearLayout android:id="@+id/btn_import" android:layout_width="match_parent" android:layout_height="56dp" android:gravity="center_vertical" android:paddingHorizontal="@dimen/page_margin">
+            <View android:layout_width="match_parent" android:layout_height="0.5dp" android:background="@color/divider" android:layout_marginStart="52dp" />
+
+            <LinearLayout android:id="@+id/btn_import" android:layout_width="match_parent" android:layout_height="56dp" android:gravity="center_vertical" android:paddingHorizontal="@dimen/page_margin" android:foreground="?android:attr/selectableItemBackground">
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="📥" android:textSize="20sp" android:layout_marginEnd="16dp" />
                 <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/settings_import" android:textColor="@color/text_primary" android:textSize="@dimen/body_size" />
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="›" android:textColor="@color/text_hint" />
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="›" android:textColor="@color/text_hint" android:textSize="18sp" />
             </LinearLayout>
-            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/divider" android:layout_marginStart="52dp" />
+            <View android:layout_width="match_parent" android:layout_height="0.5dp" android:background="@color/divider" android:layout_marginStart="52dp" />
+
             <LinearLayout android:layout_width="match_parent" android:layout_height="56dp" android:gravity="center_vertical" android:paddingHorizontal="@dimen/page_margin">
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="📁" android:textSize="20sp" android:layout_marginEnd="16dp" />
                 <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/settings_storage" android:textColor="@color/text_primary" android:textSize="@dimen/body_size" />
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="内部存储" android:textColor="@color/text_hint" android:textSize="@dimen/caption_size" />
             </LinearLayout>
-            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/divider" android:layout_marginStart="52dp" />
+            <View android:layout_width="match_parent" android:layout_height="0.5dp" android:background="@color/divider" android:layout_marginStart="52dp" />
+
             <LinearLayout android:layout_width="match_parent" android:layout_height="56dp" android:gravity="center_vertical" android:paddingHorizontal="@dimen/page_margin">
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="🔄" android:textSize="20sp" android:layout_marginEnd="16dp" />
                 <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/settings_auto_backup" android:textColor="@color/text_primary" android:textSize="@dimen/body_size" />
@@ -46,50 +83,148 @@
             </LinearLayout>
         </LinearLayout>
 
-        <!-- 通用 -->
-        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="通用" android:textColor="@color/text_hint" android:textSize="@dimen/caption_size" android:layout_marginStart="@dimen/page_margin" android:layout_marginTop="16dp" android:layout_marginBottom="8dp" />
+        <!-- 通用分组 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="@dimen/page_margin"
+            android:paddingTop="16dp"
+            android:paddingBottom="8dp">
+            <View
+                android:layout_width="3dp"
+                android:layout_height="14dp"
+                android:background="@color/lavender" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="通用"
+                android:textColor="@color/text_hint"
+                android:textSize="@dimen/caption_size"
+                android:textStyle="bold" />
+        </LinearLayout>
 
-        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:background="@color/pink_card" android:orientation="vertical">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="12dp"
+            android:background="@drawable/bg_settings_group"
+            android:elevation="1dp"
+            android:orientation="vertical">
+
             <LinearLayout android:layout_width="match_parent" android:layout_height="56dp" android:gravity="center_vertical" android:paddingHorizontal="@dimen/page_margin">
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="🎨" android:textSize="20sp" android:layout_marginEnd="16dp" />
                 <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/settings_theme" android:textColor="@color/text_primary" android:textSize="@dimen/body_size" />
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/settings_theme_pink" android:textColor="@color/pink_primary" android:textSize="@dimen/caption_size" />
             </LinearLayout>
-            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/divider" android:layout_marginStart="52dp" />
+            <View android:layout_width="match_parent" android:layout_height="0.5dp" android:background="@color/divider" android:layout_marginStart="52dp" />
+
             <LinearLayout android:id="@+id/btn_dark_mode" android:layout_width="match_parent" android:layout_height="56dp" android:gravity="center_vertical" android:paddingHorizontal="@dimen/page_margin">
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="🌙" android:textSize="20sp" android:layout_marginEnd="16dp" />
                 <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/settings_dark_mode" android:textColor="@color/text_primary" android:textSize="@dimen/body_size" />
                 <com.google.android.material.switchmaterial.SwitchMaterial android:layout_width="wrap_content" android:layout_height="wrap_content" />
             </LinearLayout>
-            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/divider" android:layout_marginStart="52dp" />
+            <View android:layout_width="match_parent" android:layout_height="0.5dp" android:background="@color/divider" android:layout_marginStart="52dp" />
+
             <LinearLayout android:layout_width="match_parent" android:layout_height="56dp" android:gravity="center_vertical" android:paddingHorizontal="@dimen/page_margin">
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="🔔" android:textSize="20sp" android:layout_marginEnd="16dp" />
                 <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/settings_notification" android:textColor="@color/text_primary" android:textSize="@dimen/body_size" />
                 <com.google.android.material.switchmaterial.SwitchMaterial android:layout_width="wrap_content" android:layout_height="wrap_content" android:checked="true" />
             </LinearLayout>
-            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/divider" android:layout_marginStart="52dp" />
-            <LinearLayout android:id="@+id/btn_password" android:layout_width="match_parent" android:layout_height="56dp" android:gravity="center_vertical" android:paddingHorizontal="@dimen/page_margin">
+            <View android:layout_width="match_parent" android:layout_height="0.5dp" android:background="@color/divider" android:layout_marginStart="52dp" />
+
+            <LinearLayout android:id="@+id/btn_password" android:layout_width="match_parent" android:layout_height="56dp" android:gravity="center_vertical" android:paddingHorizontal="@dimen/page_margin" android:foreground="?android:attr/selectableItemBackground">
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="🔒" android:textSize="20sp" android:layout_marginEnd="16dp" />
                 <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/settings_password" android:textColor="@color/text_primary" android:textSize="@dimen/body_size" />
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="›" android:textColor="@color/text_hint" />
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="›" android:textColor="@color/text_hint" android:textSize="18sp" />
             </LinearLayout>
         </LinearLayout>
 
-        <!-- 关于 -->
-        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="关于" android:textColor="@color/text_hint" android:textSize="@dimen/caption_size" android:layout_marginStart="@dimen/page_margin" android:layout_marginTop="16dp" android:layout_marginBottom="8dp" />
+        <!-- 关于分组 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="@dimen/page_margin"
+            android:paddingTop="16dp"
+            android:paddingBottom="8dp">
+            <View
+                android:layout_width="3dp"
+                android:layout_height="14dp"
+                android:background="@color/income_green" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="关于"
+                android:textColor="@color/text_hint"
+                android:textSize="@dimen/caption_size"
+                android:textStyle="bold" />
+        </LinearLayout>
 
-        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:background="@color/pink_card" android:orientation="vertical" android:layout_marginBottom="20dp">
-            <LinearLayout android:id="@+id/btn_version" android:layout_width="match_parent" android:layout_height="56dp" android:gravity="center_vertical" android:paddingHorizontal="@dimen/page_margin">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="12dp"
+            android:background="@drawable/bg_settings_group"
+            android:elevation="1dp"
+            android:orientation="vertical">
+
+            <LinearLayout android:id="@+id/tv_version" android:layout_width="match_parent" android:layout_height="56dp" android:gravity="center_vertical" android:paddingHorizontal="@dimen/page_margin" android:foreground="?android:attr/selectableItemBackground">
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="ℹ️" android:textSize="20sp" android:layout_marginEnd="16dp" />
                 <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/settings_version" android:textColor="@color/text_primary" android:textSize="@dimen/body_size" />
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="v1.0.0" android:textColor="@color/text_hint" android:textSize="@dimen/caption_size" />
             </LinearLayout>
-            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/divider" android:layout_marginStart="52dp" />
-            <LinearLayout android:id="@+id/btn_feedback" android:layout_width="match_parent" android:layout_height="56dp" android:gravity="center_vertical" android:paddingHorizontal="@dimen/page_margin">
+            <View android:layout_width="match_parent" android:layout_height="0.5dp" android:background="@color/divider" android:layout_marginStart="52dp" />
+
+            <LinearLayout android:id="@+id/btn_feedback" android:layout_width="match_parent" android:layout_height="56dp" android:gravity="center_vertical" android:paddingHorizontal="@dimen/page_margin" android:foreground="?android:attr/selectableItemBackground">
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="💬" android:textSize="20sp" android:layout_marginEnd="16dp" />
                 <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/settings_feedback" android:textColor="@color/text_primary" android:textSize="@dimen/body_size" />
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="›" android:textColor="@color/text_hint" />
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="›" android:textColor="@color/text_hint" android:textSize="18sp" />
+            </LinearLayout>
+            <View android:layout_width="match_parent" android:layout_height="0.5dp" android:background="@color/divider" android:layout_marginStart="52dp" />
+
+            <!-- 情话小屋入口 -->
+            <LinearLayout android:id="@+id/btn_love_menu" android:layout_width="match_parent" android:layout_height="56dp" android:gravity="center_vertical" android:paddingHorizontal="@dimen/page_margin" android:foreground="?android:attr/selectableItemBackground">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="💕" android:textSize="20sp" android:layout_marginEnd="16dp" />
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="情话小屋" android:textColor="@color/pink_primary" android:textSize="@dimen/body_size" android:textStyle="bold" />
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="›" android:textColor="@color/pink_primary" android:textSize="18sp" />
             </LinearLayout>
         </LinearLayout>
+
+        <!-- 底部 Footer -->
+        <LinearLayout
+            android:id="@+id/footer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:paddingTop="28dp"
+            android:paddingBottom="12dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="💗"
+                android:textSize="20sp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="用爱编写 ❤️"
+                android:textColor="@color/text_hint"
+                android:textSize="11sp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="我们的小账本 v1.0.0"
+                android:textColor="#CCCCCC"
+                android:textSize="10sp" />
+        </LinearLayout>
+
     </LinearLayout>
 </ScrollView>

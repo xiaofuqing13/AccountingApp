@@ -36,4 +36,18 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
             loadDiaries()
         }
     }
+
+    fun deleteDiary(entry: DiaryEntry) {
+        viewModelScope.launch {
+            repo.deleteDiary(entry)
+            loadDiaries()
+        }
+    }
+
+    fun updateDiary(entry: DiaryEntry) {
+        viewModelScope.launch {
+            repo.updateDiary(entry)
+            loadDiaries()
+        }
+    }
 }
