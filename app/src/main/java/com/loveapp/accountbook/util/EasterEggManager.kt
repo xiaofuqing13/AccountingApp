@@ -11,7 +11,7 @@ data class LoveWord(val emoji: String, val title: String, val text: String)
 object EasterEggManager {
 
     val loveWords = listOf(
-        LoveWord("💕", "第365天", "从第一天牵你的手开始，\n我就决定这辈子都不放开了。\n\n谢谢你愿意和我一起走过\n这365个日日夜夜。"),
+        LoveWord("💕", "牵你的手", "从牵你手的那一刻起，\n我就决定这辈子都不放开了。\n\n每多一天，\n就多爱你一点。"),
         LoveWord("🌙", "晚安情话", "我对世界说晚安，\n唯独对你说喜欢。\n\n今晚的月亮很美，\n但不及你万分之一。"),
         LoveWord("☀️", "早安情话", "每天早上醒来，\n第一件事就是看你发没发消息。\n\n你是我睁眼后，\n最想见到的人。"),
         LoveWord("🌧️", "下雨天想你", "下雨了我会想你，\n天晴了我也想你。\n\n不管什么天气，\n反正我都在想你。"),
