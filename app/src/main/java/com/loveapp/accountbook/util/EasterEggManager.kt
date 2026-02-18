@@ -90,6 +90,4 @@ object EasterEggManager {
     val eggSaveSuccess = LoveWord("🌟", "记录成功", "又多了一条我们的回忆。\n\n等我们老了，\n翻开这些记录，\n一定会笑着说：\n\n「那时候真好。」")
     val eggMeetingSave = LoveWord("💑", "两个人的会议", "会议纪要已保存。\n\n其实我最想开的会议是：\n\n议题：今晚吃什么\n参会人：你和我\n决议：你说了算")
     val eggDiarySave = LoveWord("📖", "今日份日记", "日记已保存。\n\n以后翻开这本日记，\n每一页都有你的影子。\n\n这就是我最珍贵的宝藏。")
-    val eggEmptySearch = LoveWord("🔮", "什么都没搜到？", "没关系，\n因为你要找的人\n一直都在这里。\n\n就是正在看这段话的我。")
-    val eggShake = LoveWord("🎐", "摇一摇", "你在摇手机？\n\n是不是想把我\n从手机里摇出来？\n\n等一下，\n我马上就到你身边。")
 }

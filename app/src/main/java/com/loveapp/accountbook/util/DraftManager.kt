@@ -5,8 +5,6 @@ import android.content.SharedPreferences
 import android.os.Handler
 import android.os.Looper
 import android.widget.EditText
-import android.widget.Toast
-
 object DraftManager {
 
     private const val PREF_NAME = "app_drafts"
@@ -22,18 +20,11 @@ object DraftManager {
     fun getDraft(context: Context, key: String): String? =
         prefs(context).getString(key, null)
 
-    fun clearDraft(context: Context, key: String) {
-        prefs(context).edit().remove(key).apply()
-    }
-
     fun clearDrafts(context: Context, prefix: String) {
         val editor = prefs(context).edit()
         prefs(context).all.keys.filter { it.startsWith(prefix) }.forEach { editor.remove(it) }
         editor.apply()
     }
-
-    fun hasDraft(context: Context, prefix: String): Boolean =
-        prefs(context).all.keys.any { it.startsWith(prefix) }
 
     /**
      * 为EditText绑定自动保存，输入停止2秒后自动保存草稿
@@ -70,14 +61,10 @@ object DraftManager {
     // ===== 记账草稿 =====
     const val KEY_ACCOUNT_AMOUNT = "draft_account_amount"
     const val KEY_ACCOUNT_NOTE = "draft_account_note"
-    const val KEY_ACCOUNT_CATEGORY = "draft_account_category"
-    const val KEY_ACCOUNT_TYPE = "draft_account_type"
 
     // ===== 日记草稿 =====
     const val KEY_DIARY_TITLE = "draft_diary_title"
     const val KEY_DIARY_CONTENT = "draft_diary_content"
-    const val KEY_DIARY_WEATHER = "draft_diary_weather"
-    const val KEY_DIARY_MOOD = "draft_diary_mood"
 
     // ===== 会议草稿 =====
     const val KEY_MEETING_TOPIC = "draft_meeting_topic"

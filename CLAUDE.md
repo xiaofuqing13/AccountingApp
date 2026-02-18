@@ -57,7 +57,7 @@ Account module fragments share a single ViewModel via `activityViewModels()`. Di
 ## Key Conventions
 
 - Language: Kotlin 1.9.22, AGP 8.3.2, JVM target 11, compileSdk/targetSdk 34, minSdk 26
-- View system: XML layouts with `findViewById` (no Compose). ViewBinding is enabled in gradle but unused in code
+- View system: XML layouts with `findViewById` (no Compose, no ViewBinding)
 - UI label strings are in `res/values/strings.xml` (Chinese). Some data strings (category names, weather, mood) are hardcoded in Kotlin code
 - Color theme: pink (#E8729A primary), green (#66BB6A income), purple (#D4A0E8 accent)
 - Date format used throughout: `yyyy-MM-dd` (see `DateUtils`)
