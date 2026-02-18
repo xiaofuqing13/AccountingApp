@@ -29,7 +29,7 @@ class DiaryListFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        adapter = DiaryAdapter { position ->
+        adapter = DiaryAdapter { _ ->
             // 彩蛋: mood emoji点击
             Toast.makeText(requireContext(), EasterEggManager.moodWords.random(), Toast.LENGTH_SHORT).show()
         }
@@ -53,6 +53,12 @@ class DiaryListFragment : Fragment() {
                     etSearch.setText("")
                 } else if (text.contains("想你") || text.contains("miss")) {
                     EasterEggManager.showLovePopup(requireContext(), EasterEggManager.eggMiss)
+                    etSearch.setText("")
+                } else if (text.contains("永远") || text.contains("forever")) {
+                    EasterEggManager.showLovePopup(requireContext(), EasterEggManager.eggForever)
+                    etSearch.setText("")
+                } else if (text.contains("开心") || text.contains("快乐") || text.contains("happy")) {
+                    EasterEggManager.showLovePopup(requireContext(), EasterEggManager.eggHappy)
                     etSearch.setText("")
                 } else {
                     viewModel.searchDiaries(text)

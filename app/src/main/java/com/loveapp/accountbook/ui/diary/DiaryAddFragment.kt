@@ -75,6 +75,10 @@ class DiaryAddFragment : Fragment() {
             ))
             DraftManager.clearDrafts(requireContext(), "draft_diary_")
             Toast.makeText(requireContext(), "日记保存成功", Toast.LENGTH_SHORT).show()
+            // 随机概率弹出保存惊喜
+            if ((0..2).random() == 0) {
+                EasterEggManager.showLovePopup(requireContext(), EasterEggManager.eggDiarySave)
+            }
             findNavController().popBackStack()
         }
     }

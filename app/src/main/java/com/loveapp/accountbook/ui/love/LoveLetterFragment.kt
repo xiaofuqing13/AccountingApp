@@ -11,6 +11,7 @@ import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
 import com.loveapp.accountbook.R
 import com.loveapp.accountbook.util.DateUtils
+import com.loveapp.accountbook.util.EasterEggManager
 
 class LoveLetterFragment : Fragment() {
 
@@ -31,17 +32,22 @@ class LoveLetterFragment : Fragment() {
         val promises = listOf(
             "每天说晚安 🌙", "永远站你这边 🛡️", "记得每个纪念日 📅",
             "不让你一个人淋雨 🌂", "做你最温暖的依靠 🤗", "生气了先道歉 🙇",
-            "存钱带你去旅行 ✈️", "给你做一辈子的饭 🍳"
+            "存钱带你去旅行 ✈️", "给你做一辈子的饭 🍳",
+            "永远觉得你最好看 👸", "你的快乐我来守护 💪",
+            "陪你看遍世界的日落 🌅", "每天至少说三次我爱你 💕",
+            "你冷的时候把外套给你 🧥", "永远记得你爱吃什么 🍰",
+            "吵架了绝不冷战 🤝", "把最后一口留给你 🍦"
         )
         val chipGroup = view.findViewById<ChipGroup>(R.id.chip_promises)
         promises.forEach { promise ->
             val chip = Chip(requireContext()).apply {
                 text = promise
-                isClickable = false
+                isClickable = true
                 setChipBackgroundColorResource(R.color.pink_card)
                 setChipStrokeColorResource(R.color.pink_soft)
                 chipStrokeWidth = 2f
                 setTextColor(resources.getColor(R.color.pink_primary, null))
+                setOnClickListener { EasterEggManager.showRandomLovePopup(requireContext()) }
             }
             chipGroup.addView(chip)
         }
