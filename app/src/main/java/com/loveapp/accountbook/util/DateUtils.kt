@@ -44,9 +44,9 @@ object DateUtils {
         return sdfYearMonth.format(cal.time)
     }
 
-    // 在一起天数计算（从2025-02-14开始）
+    // 在一起天数计算（从2023-09-28开始）
     private val togetherDate: Calendar = Calendar.getInstance().apply {
-        set(2025, Calendar.FEBRUARY, 14, 0, 0, 0)
+        set(2023, Calendar.SEPTEMBER, 28, 0, 0, 0)
         set(Calendar.MILLISECOND, 0)
     }
 

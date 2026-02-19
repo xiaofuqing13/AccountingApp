@@ -139,7 +139,7 @@ object EasterEggManager {
     val eggGift = LoveWord("🎀", "礼物时间", "给你买礼物的时候，\n我从来不看价格。\n\n只看你会不会笑，\n笑了就值了。")
     val eggFlower = LoveWord("💐", "今日份鲜花", "虽然花会枯萎，\n但我对你的爱不会。\n\n以后每周都给你买花，\n让家里永远有花香。")
     val eggDarkMode = LoveWord("🌙", "不用开深色模式", "因为有你在，\n我的世界永远是亮的。\n\n你就是我生命里的那束光。")
-    val eggLock = LoveWord("🔐", "这个APP的密码是", "密码就是我们在一起的日子：\n\n0214\n\n因为从那天起，\n我的心就只为你上锁了。")
+    val eggLock = LoveWord("🔐", "这个APP的密码是", "密码就是我们在一起的日子：\n\n0928\n\n因为从那天起，\n我的心就只为你上锁了。")
     val eggVersion = LoveWord("💌", "写给你的秘密", "这个APP从第一行代码开始，\n就是为你而写的。\n\n每一个按钮、每一种颜色，\n都是按照你喜欢的样子设计的。\n\n——爱你的我")
     val egg214 = LoveWord("🗓️", "2月14日", "这一天不开会，\n只想和你约会。\n\n在我的日程表里，\n每一天都写着你的名字。")
     val eggSearch = LoveWord("🔍", "找到了", "你搜索的答案只有一个：\n\n我爱你。\n\n不管搜多少次，\n答案都不会变。")
