@@ -37,6 +37,21 @@ class SettingsFragment : Fragment() {
         }
     }
 
+    // 导入旧版备份：合并追加，不覆盖
+    private val importLegacyLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        uri ?: return@registerForActivityResult
+        lifecycleScope.launch {
+            try {
+                val (accounts, diaries, meetings) = requireContext().contentResolver.openInputStream(uri)!!.use { input ->
+                    repo.importFromLegacy(input)
+                }
+                Toast.makeText(requireContext(), "导入完成 ✅ 记账${accounts}条 日记${diaries}条 会议${meetings}条", Toast.LENGTH_LONG).show()
+            } catch (e: Exception) {
+                Toast.makeText(requireContext(), "导入失败: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
     // 导入：选择文件
     private val importLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         uri ?: return@registerForActivityResult
@@ -70,6 +85,11 @@ class SettingsFragment : Fragment() {
         // 导入
         view.findViewById<View>(R.id.btn_import).setOnClickListener {
             importLauncher.launch("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+        }
+
+        // 导入旧版备份
+        view.findViewById<View>(R.id.btn_import_legacy).setOnClickListener {
+            importLegacyLauncher.launch("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
         }
 
         // 深色模式（真实功能）

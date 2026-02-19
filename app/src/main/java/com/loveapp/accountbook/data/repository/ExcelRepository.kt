@@ -316,4 +316,126 @@ class ExcelRepository(private val context: Context) {
             source.copyTo(getFile(), overwrite = true)
         }
     }
+
+    /**
+     * 从旧版备份文件合并导入数据（不覆盖，追加去重）
+     * 支持旧版 sheet 名：记账明细、日记、会议纪要
+     * 返回三元组：(导入记账数, 导入日记数, 导入会议数)
+     */
+    suspend fun importFromLegacy(inputStream: java.io.InputStream): Triple<Int, Int, Int> = withContext(Dispatchers.IO) {
+        val legacyWb = XSSFWorkbook(inputStream)
+        val targetWb = getOrCreateWorkbook()
+
+        var accountCount = 0
+        var diaryCount = 0
+        var meetingCount = 0
+
+        // ===== 记账明细 =====
+        // 旧版列：日期(含时间) / 类型 / 分类 / 金额 / 账户 / 备注
+        // 新版列：日期(yyyy-MM-dd) / 类型 / 分类 / 金额 / 备注
+        val legacyAccount = legacyWb.getSheet("记账明细")
+        if (legacyAccount != null) {
+            val targetSheet = targetWb.getSheet(sheetAccount)!!
+            // 收集已有记录的去重 key
+            val existing = mutableSetOf<String>()
+            for (i in 1..targetSheet.lastRowNum) {
+                val r = targetSheet.getRow(i) ?: continue
+                existing.add("${getCellString(r.getCell(0))}_${getCellString(r.getCell(1))}_${getCellString(r.getCell(2))}_${getCellDouble(r.getCell(3))}_${getCellString(r.getCell(4))}")
+            }
+            for (i in 1..legacyAccount.lastRowNum) {
+                val row = legacyAccount.getRow(i) ?: continue
+                val rawDate = getCellString(row.getCell(0))
+                val date = if (rawDate.length > 10) rawDate.substring(0, 10) else rawDate
+                val type = getCellString(row.getCell(1))
+                val category = getCellString(row.getCell(2))
+                val amount = getCellDouble(row.getCell(3))
+                // 旧版第4列是账户，第5列是备注
+                val note = getCellString(row.getCell(5))
+                val key = "${date}_${type}_${category}_${amount}_${note}"
+                if (key in existing) continue
+                val newRow = targetSheet.createRow(targetSheet.lastRowNum + 1)
+                newRow.createCell(0).setCellValue(date)
+                newRow.createCell(1).setCellValue(type)
+                newRow.createCell(2).setCellValue(category)
+                newRow.createCell(3).setCellValue(amount)
+                newRow.createCell(4).setCellValue(note)
+                existing.add(key)
+                accountCount++
+            }
+        }
+
+        // ===== 日记 =====
+        // 旧版列：日期 / 天气 / 心情 / 标题 / 内容
+        // 新版列：日期 / 标题 / 内容 / 天气 / 心情 / 位置
+        val legacyDiary = legacyWb.getSheet("日记")
+        if (legacyDiary != null) {
+            val targetSheet = targetWb.getSheet(sheetDiary)!!
+            val existing = mutableSetOf<String>()
+            for (i in 1..targetSheet.lastRowNum) {
+                val r = targetSheet.getRow(i) ?: continue
+                existing.add("${getCellString(r.getCell(0))}_${getCellString(r.getCell(1))}")
+            }
+            for (i in 1..legacyDiary.lastRowNum) {
+                val row = legacyDiary.getRow(i) ?: continue
+                val date = getCellString(row.getCell(0))
+                val weather = getCellString(row.getCell(1))
+                val mood = getCellString(row.getCell(2))
+                val title = getCellString(row.getCell(3))
+                val content = getCellString(row.getCell(4))
+                val key = "${date}_${title}"
+                if (key in existing) continue
+                val newRow = targetSheet.createRow(targetSheet.lastRowNum + 1)
+                newRow.createCell(0).setCellValue(date)
+                newRow.createCell(1).setCellValue(title)
+                newRow.createCell(2).setCellValue(content)
+                newRow.createCell(3).setCellValue(weather)
+                newRow.createCell(4).setCellValue(mood)
+                newRow.createCell(5).setCellValue("")
+                existing.add(key)
+                diaryCount++
+            }
+        }
+
+        // ===== 会议纪要 =====
+        // 旧版列：日期时间 / 会议主题 / 地点 / 参会人员 / 会议内容 / 决议事项 / 待办事项
+        // 新版列：日期 / 主题 / 开始时间 / 结束时间 / 地点 / 参会人 / 内容 / 待办事项 / 标签
+        val legacyMeeting = legacyWb.getSheet("会议纪要")
+        if (legacyMeeting != null) {
+            val targetSheet = targetWb.getSheet(sheetMeeting)!!
+            val existing = mutableSetOf<String>()
+            for (i in 1..targetSheet.lastRowNum) {
+                val r = targetSheet.getRow(i) ?: continue
+                existing.add("${getCellString(r.getCell(0))}_${getCellString(r.getCell(1))}")
+            }
+            for (i in 1..legacyMeeting.lastRowNum) {
+                val row = legacyMeeting.getRow(i) ?: continue
+                val rawDate = getCellString(row.getCell(0))
+                val date = if (rawDate.length > 10) rawDate.substring(0, 10) else rawDate
+                val topic = getCellString(row.getCell(1))
+                val location = getCellString(row.getCell(2))
+                val attendees = getCellString(row.getCell(3))
+                val content = getCellString(row.getCell(4))
+                val todoItems = getCellString(row.getCell(6))
+                val key = "${date}_${topic}"
+                if (key in existing) continue
+                val newRow = targetSheet.createRow(targetSheet.lastRowNum + 1)
+                newRow.createCell(0).setCellValue(date)
+                newRow.createCell(1).setCellValue(topic)
+                newRow.createCell(2).setCellValue("")
+                newRow.createCell(3).setCellValue("")
+                newRow.createCell(4).setCellValue(location)
+                newRow.createCell(5).setCellValue(attendees)
+                newRow.createCell(6).setCellValue(content)
+                newRow.createCell(7).setCellValue(todoItems)
+                newRow.createCell(8).setCellValue("")
+                existing.add(key)
+                meetingCount++
+            }
+        }
+
+        legacyWb.close()
+        saveWorkbook(targetWb)
+        targetWb.close()
+        Triple(accountCount, diaryCount, meetingCount)
+    }
 }
