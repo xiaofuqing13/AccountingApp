@@ -5,17 +5,54 @@
     android:layout_height="match_parent"
     android:background="@drawable/bg_gradient_pink">
 
+    <!-- 顶部装饰 -->
+    <TextView
+        android:id="@+id/decor_top"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="✨"
+        android:textSize="28sp"
+        android:alpha="0.5"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="60dp"
+        android:layout_marginEnd="40dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="🌸"
+        android:textSize="22sp"
+        android:alpha="0.4"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginTop="100dp"
+        android:layout_marginStart="30dp" />
+
+    <!-- Logo -->
     <TextView
         android:id="@+id/tv_logo"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="💕"
-        android:textSize="72sp"
+        android:textSize="80sp"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintVertical_bias="0.35" />
+        app:layout_constraintVertical_bias="0.32" />
+
+    <!-- 装饰小心心 -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="💗"
+        android:textSize="16sp"
+        android:alpha="0.6"
+        app:layout_constraintTop_toTopOf="@id/tv_logo"
+        app:layout_constraintStart_toEndOf="@id/tv_logo"
+        android:layout_marginStart="-8dp"
+        android:layout_marginTop="-4dp" />
 
     <TextView
         android:id="@+id/tv_app_name"
@@ -23,9 +60,10 @@
         android:layout_height="wrap_content"
         android:text="@string/app_name"
         android:textColor="@color/text_white"
-        android:textSize="28sp"
+        android:textSize="30sp"
         android:textStyle="bold"
-        android:layout_marginTop="24dp"
+        android:letterSpacing="0.08"
+        android:layout_marginTop="20dp"
         app:layout_constraintTop_toBottomOf="@id/tv_logo"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
@@ -35,27 +73,93 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/app_desc"
-        android:textColor="#DDFFFFFF"
+        android:textColor="#CCFFFFFF"
         android:textSize="14sp"
-        android:layout_marginTop="12dp"
+        android:letterSpacing="0.05"
+        android:layout_marginTop="10dp"
         app:layout_constraintTop_toBottomOf="@id/tv_app_name"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
+    <!-- 分隔装饰线 -->
+    <LinearLayout
+        android:id="@+id/decor_line"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:layout_marginTop="24dp"
+        app:layout_constraintTop_toBottomOf="@id/tv_desc"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+        <View android:layout_width="24dp" android:layout_height="1dp" android:background="#55FFFFFF" />
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text=" 💌 " android:textSize="14sp" android:layout_marginHorizontal="8dp" />
+        <View android:layout_width="24dp" android:layout_height="1dp" android:background="#55FFFFFF" />
+    </LinearLayout>
+
     <TextView
         android:id="@+id/btn_start"
-        android:layout_width="200dp"
-        android:layout_height="50dp"
+        android:layout_width="220dp"
+        android:layout_height="52dp"
         android:gravity="center"
-        android:text="@string/btn_start"
+        android:text="开始我们的故事 →"
         android:textColor="@color/pink_primary"
         android:textSize="16sp"
         android:textStyle="bold"
         android:background="@drawable/bg_card_rounded"
-        android:elevation="4dp"
-        android:layout_marginTop="60dp"
-        app:layout_constraintTop_toBottomOf="@id/tv_desc"
+        android:elevation="6dp"
+        android:layout_marginTop="32dp"
+        app:layout_constraintTop_toBottomOf="@id/decor_line"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- 底部装饰 -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:layout_marginBottom="40dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="— 用爱编写 —"
+            android:textColor="#88FFFFFF"
+            android:textSize="11sp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="v1.0.0"
+            android:textColor="#55FFFFFF"
+            android:textSize="10sp"
+            android:layout_marginTop="4dp" />
+    </LinearLayout>
+
+    <!-- 底部角落装饰 -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="🌷"
+        android:textSize="20sp"
+        android:alpha="0.4"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginBottom="80dp"
+        android:layout_marginStart="24dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="✨"
+        android:textSize="18sp"
+        android:alpha="0.35"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginBottom="120dp"
+        android:layout_marginEnd="36dp" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
