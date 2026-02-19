@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 深色模式粉色系主题色 -->
+    <color name="pink_primary">#F48FB1</color>
+    <color name="pink_light">#F8BBD0</color>
+    <color name="pink_soft">#AD1457</color>
+    <color name="pink_bg">#1A1A2E</color>
+    <color name="pink_surface">#1E1E32</color>
+    <color name="pink_card">#252540</color>
+
+    <!-- 功能色 -->
+    <color name="income_green">#81C784</color>
+    <color name="expense_pink">#F48FB1</color>
+    <color name="lavender">#CE93D8</color>
+
+    <!-- 渐变色端点 -->
+    <color name="gradient_start">#AD1457</color>
+    <color name="gradient_center">#880E4F</color>
+    <color name="gradient_end">#6A1B9A</color>
+
+    <!-- 文字色 -->
+    <color name="text_primary">#E0E0E0</color>
+    <color name="text_secondary">#B0B0B0</color>
+    <color name="text_hint">#757575</color>
+    <color name="text_white">#FFFFFF</color>
+
+    <!-- 分隔线 -->
+    <color name="divider">#333350</color>
+</resources>

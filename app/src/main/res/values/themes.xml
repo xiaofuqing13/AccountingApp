@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.AccountBook" parent="Theme.Material3.Light.NoActionBar">
+    <style name="Theme.AccountBook" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="colorPrimary">@color/pink_primary</item>
         <item name="colorPrimaryContainer">@color/pink_soft</item>
         <item name="colorOnPrimary">@color/text_white</item>
@@ -15,7 +15,7 @@
         <item name="android:navigationBarColor">@color/pink_card</item>
     </style>
 
-    <style name="Theme.AccountBook.Splash" parent="Theme.Material3.Light.NoActionBar">
+    <style name="Theme.AccountBook.Splash" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:windowTranslucentStatus">true</item>
         <item name="android:windowTranslucentNavigation">true</item>
