@@ -10,6 +10,7 @@ import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.core.content.ContextCompat
 import com.loveapp.accountbook.R
 
 class AccountStatsFragment : Fragment() {
@@ -46,7 +47,7 @@ class AccountStatsFragment : Fragment() {
                     holder.itemView.findViewById<TextView>(R.id.tv_category).text = category
                     holder.itemView.findViewById<TextView>(R.id.tv_note).text = "共${viewModel.accounts.value?.count { e -> e.isExpense && e.category == category } ?: 0}笔"
                     holder.itemView.findViewById<TextView>(R.id.tv_amount).text = "¥${String.format("%,.0f", amount)}"
-                    holder.itemView.findViewById<TextView>(R.id.tv_amount).setTextColor(resources.getColor(R.color.expense_pink, null))
+                    holder.itemView.findViewById<TextView>(R.id.tv_amount).setTextColor(ContextCompat.getColor(requireContext(), R.color.expense_pink))
                 }
                 override fun getItemCount() = stats.size
             }

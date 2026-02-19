@@ -11,6 +11,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.cardview.widget.CardView
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.google.android.material.chip.Chip
@@ -60,16 +61,16 @@ class LoveMenuFragment : Fragment() {
                 isCheckable = true
                 isChecked = index == categories.size - 1 // 默认选中"全部情话"
                 chipBackgroundColor = android.content.res.ColorStateList.valueOf(
-                    if (isChecked) resources.getColor(R.color.pink_primary, null)
-                    else resources.getColor(R.color.pink_bg, null)
+                    if (isChecked) ContextCompat.getColor(requireContext(), R.color.pink_primary)
+                    else ContextCompat.getColor(requireContext(), R.color.pink_bg)
                 )
                 setTextColor(
-                    if (isChecked) resources.getColor(R.color.text_white, null)
-                    else resources.getColor(R.color.text_primary, null)
+                    if (isChecked) ContextCompat.getColor(requireContext(), R.color.text_white)
+                    else ContextCompat.getColor(requireContext(), R.color.text_primary)
                 )
                 chipStrokeWidth = 1f
                 chipStrokeColor = android.content.res.ColorStateList.valueOf(
-                    resources.getColor(R.color.pink_soft, null)
+                    ContextCompat.getColor(requireContext(), R.color.pink_soft)
                 )
             }
             chipGroup.addView(chip)
@@ -92,12 +93,12 @@ class LoveMenuFragment : Fragment() {
                 val c = group.getChildAt(i) as? Chip ?: continue
                 val isSelected = c.id == checkedIds[0]
                 c.chipBackgroundColor = android.content.res.ColorStateList.valueOf(
-                    if (isSelected) resources.getColor(R.color.pink_primary, null)
-                    else resources.getColor(R.color.pink_bg, null)
+                    if (isSelected) ContextCompat.getColor(requireContext(), R.color.pink_primary)
+                    else ContextCompat.getColor(requireContext(), R.color.pink_bg)
                 )
                 c.setTextColor(
-                    if (isSelected) resources.getColor(R.color.text_white, null)
-                    else resources.getColor(R.color.text_primary, null)
+                    if (isSelected) ContextCompat.getColor(requireContext(), R.color.text_white)
+                    else ContextCompat.getColor(requireContext(), R.color.text_primary)
                 )
             }
 

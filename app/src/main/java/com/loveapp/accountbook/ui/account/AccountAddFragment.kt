@@ -8,6 +8,7 @@ import android.widget.EditText
 import android.widget.GridLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
@@ -87,8 +88,8 @@ class AccountAddFragment : Fragment() {
                     height = ViewGroup.LayoutParams.WRAP_CONTENT
                 }
                 when (key) {
-                    "+", "-" -> setBackgroundColor(resources.getColor(R.color.pink_bg, null))
-                    "✓" -> { setBackgroundColor(resources.getColor(R.color.pink_primary, null)); setTextColor(resources.getColor(R.color.text_white, null)) }
+                    "+", "-" -> setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.pink_bg))
+                    "✓" -> { setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.pink_primary)); setTextColor(ContextCompat.getColor(requireContext(), R.color.text_white)) }
                 }
                 setOnClickListener { onKeyPress(key, tvAmount, etNote) }
             }
@@ -156,7 +157,7 @@ class AccountAddFragment : Fragment() {
                 val cat = categories[position]
                 (holder.itemView as TextView).apply {
                     text = "${cat.icon}\n${cat.name}"
-                    setTextColor(resources.getColor(if (position == selected) R.color.pink_primary else R.color.text_primary, null))
+                    setTextColor(ContextCompat.getColor(requireContext(), if (position == selected) R.color.pink_primary else R.color.text_primary))
                     setBackgroundResource(if (position == selected) R.drawable.bg_tag_pink else 0)
                     setOnClickListener {
                         val old = selected
