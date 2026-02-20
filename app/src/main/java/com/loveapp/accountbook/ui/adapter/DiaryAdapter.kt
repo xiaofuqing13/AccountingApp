@@ -90,8 +90,8 @@ class DiaryAdapter(
             holder.btnSwipeEdit.setOnClickListener { onEditClick?.invoke(item) }
             holder.btnSwipeDelete.setOnClickListener { onDeleteClick?.invoke(item) }
         }.onFailure {
-            holder.tvTitle.text = "日记加载异常"
-            holder.tvPreview.text = "该条数据异常，请尝试编辑或删除"
+            holder.tvTitle.text = "\u65E5\u8BB0\u52A0\u8F7D\u5F02\u5E38"
+            holder.tvPreview.text = "\u8BE5\u6761\u6570\u636E\u5F02\u5E38\uFF0C\u8BF7\u5C1D\u8BD5\u7F16\u8F91\u6216\u5220\u9664"
             holder.tvWeather.text = ""
             holder.tvDate.text = ""
             holder.tvLocationTag.visibility = View.GONE

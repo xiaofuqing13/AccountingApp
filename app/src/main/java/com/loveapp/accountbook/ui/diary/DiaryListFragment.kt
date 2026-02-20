@@ -35,7 +35,6 @@ class DiaryListFragment : Fragment() {
     private lateinit var adapter: DiaryAdapter
     private lateinit var rvDiaries: RecyclerView
     private var lastErrorMessage: String? = null
-    private var lastSwipeDx = 0f
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -157,18 +156,18 @@ class DiaryListFragment : Fragment() {
                 if (viewHolder is DiaryAdapter.ViewHolder) {
                     getDefaultUIUtil().clearView(viewHolder.cardForeground)
                     val position = viewHolder.bindingAdapterPosition
-                    val closeThreshold = recyclerView.resources.displayMetrics.density * 12f
-                    if (
-                        position != RecyclerView.NO_POSITION &&
-                        adapter.isSwipeOpenAt(position) &&
-                        lastSwipeDx > closeThreshold
-                    ) {
-                        closeSwipeAt(recyclerView, position)
+                    if (position != RecyclerView.NO_POSITION) {
+                        val maxSwipe = adapter.getSwipeActionTotalWidthPx().toFloat()
+                        val currentTx = viewHolder.cardForeground.translationX
+                        if (currentTx <= -maxSwipe * 0.5f) {
+                            openSwipeAt(recyclerView, position)
+                        } else {
+                            closeSwipeAt(recyclerView, position)
+                        }
                     }
                 } else {
                     super.clearView(recyclerView, viewHolder)
                 }
-                lastSwipeDx = 0f
             }
 
             override fun onChildDraw(
@@ -184,7 +183,6 @@ class DiaryListFragment : Fragment() {
                     super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive)
                     return
                 }
-                lastSwipeDx = dX
                 val maxSwipe = adapter.getSwipeActionTotalWidthPx().toFloat()
                 val position = viewHolder.bindingAdapterPosition
                 val isOpen = position != RecyclerView.NO_POSITION && adapter.isSwipeOpenAt(position)
@@ -218,7 +216,7 @@ class DiaryListFragment : Fragment() {
     }
 
     private fun attachSwipeCloseFallback(recyclerView: RecyclerView) {
-        val closeTrigger = recyclerView.resources.displayMetrics.density * 4f
+        val closeTrigger = recyclerView.resources.displayMetrics.density * 3f
         var downX = 0f
         var downY = 0f
         recyclerView.addOnItemTouchListener(object : RecyclerView.SimpleOnItemTouchListener() {
@@ -235,12 +233,21 @@ class DiaryListFragment : Fragment() {
                         if (touchedPosition != openPosition) {
                             closeSwipeAt(rv, openPosition)
                         } else {
-                            // 点在已展开卡片主体（非按钮区）时，立即收回，避免“卡住”
+                            // Tap body area to close immediately.
                             val isCardBodyArea = e.x < rv.width - actionWidth
                             if (isCardBodyArea) {
                                 closeSwipeAt(rv, openPosition)
                                 return true
                             }
+                        }
+                    }
+
+                    MotionEvent.ACTION_MOVE -> {
+                        val dx = e.x - downX
+                        val dy = e.y - downY
+                        if (dx > closeTrigger && abs(dx) >= abs(dy) * 0.6f) {
+                            closeSwipeAt(rv, openPosition)
+                            return true
                         }
                     }
 
@@ -319,7 +326,7 @@ class DiaryListFragment : Fragment() {
 
         if (entry.location.isNotEmpty()) {
             container.addView(TextView(requireContext()).apply {
-                text = "位置：${entry.location}"
+                text = "\u4F4D\u7F6E\uFF1A${entry.location}"
                 textSize = 13f
                 setTextColor(ContextCompat.getColor(requireContext(), R.color.text_hint))
                 setPadding(0, 0, 0, 16)
