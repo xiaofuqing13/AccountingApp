@@ -4,6 +4,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import com.google.android.material.card.MaterialCardView
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
@@ -12,18 +13,55 @@ import com.loveapp.accountbook.data.model.MeetingEntry
 
 class MeetingAdapter(
     private var items: List<MeetingEntry> = emptyList(),
-    private val onItemClick: ((MeetingEntry) -> Unit)? = null,
+    private val onItemClick: ((MeetingEntry, Int) -> Unit)? = null,
     private val onDayClick: ((MeetingEntry) -> Unit)? = null,
-    private val onLongClick: ((MeetingEntry) -> Unit)? = null
+    private val onEditClick: ((MeetingEntry) -> Unit)? = null,
+    private val onDeleteClick: ((MeetingEntry) -> Unit)? = null
 ) : RecyclerView.Adapter<MeetingAdapter.ViewHolder>() {
+
+    private var swipeOpenPosition: Int = RecyclerView.NO_POSITION
+    private var swipeActionTotalWidthPx: Int = 0
 
     fun updateData(newItems: List<MeetingEntry>) {
         items = newItems
+        if (swipeOpenPosition !in items.indices) {
+            swipeOpenPosition = RecyclerView.NO_POSITION
+        }
         notifyDataSetChanged()
     }
 
+    fun getSwipeOpenPosition(): Int = swipeOpenPosition
+
+    fun setSwipeOpenPosition(position: Int, notify: Boolean = true) {
+        if (position == swipeOpenPosition) {
+            if (notify && position != RecyclerView.NO_POSITION) notifyItemChanged(position)
+            return
+        }
+        val previous = swipeOpenPosition
+        swipeOpenPosition = position
+        if (!notify) return
+        if (previous != RecyclerView.NO_POSITION) notifyItemChanged(previous)
+        if (position != RecyclerView.NO_POSITION) notifyItemChanged(position)
+    }
+
+    fun clearSwipeOpenPosition(position: Int = swipeOpenPosition, notify: Boolean = true) {
+        if (position == RecyclerView.NO_POSITION) return
+        if (position == swipeOpenPosition) {
+            swipeOpenPosition = RecyclerView.NO_POSITION
+        }
+        if (notify) notifyItemChanged(position)
+    }
+
+    fun isSwipeOpenAt(position: Int): Boolean = swipeOpenPosition == position
+
+    fun getSwipeActionTotalWidthPx(): Int = swipeActionTotalWidthPx
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.item_meeting, parent, false)
+        if (swipeActionTotalWidthPx == 0) {
+            swipeActionTotalWidthPx =
+                view.resources.getDimensionPixelSize(R.dimen.diary_swipe_action_width) * 2
+        }
         return ViewHolder(view)
     }
 
@@ -50,24 +88,22 @@ class MeetingAdapter(
                 holder.chipTags.addView(chip)
             }
 
-        val clickAction = View.OnClickListener {
-            if (onItemClick != null) {
-                onItemClick.invoke(item)
-            } else {
-                onDayClick?.invoke(item)
-            }
-        }
-        holder.itemView.setOnClickListener(clickAction)
-        holder.tvDay.setOnClickListener(clickAction)
-        holder.itemView.setOnLongClickListener {
-            onLongClick?.invoke(item)
-            true
-        }
+        holder.cardForeground.translationX =
+            if (position == swipeOpenPosition) -getSwipeActionTotalWidthPx().toFloat() else 0f
+        holder.cardForeground.setOnClickListener { onItemClick?.invoke(item, position) }
+        holder.tvDay.setOnClickListener { onDayClick?.invoke(item) }
+        holder.btnSwipeEdit.setOnClickListener { onEditClick?.invoke(item) }
+        holder.btnSwipeDelete.setOnClickListener { onDeleteClick?.invoke(item) }
     }
 
     override fun getItemCount() = items.size
 
+    fun getItem(position: Int): MeetingEntry = items[position]
+
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+        val cardForeground: MaterialCardView = view.findViewById(R.id.card_foreground)
+        val btnSwipeEdit: TextView = view.findViewById(R.id.btn_swipe_edit)
+        val btnSwipeDelete: TextView = view.findViewById(R.id.btn_swipe_delete)
         val tvDay: TextView = view.findViewById(R.id.tv_day)
         val tvMonth: TextView = view.findViewById(R.id.tv_month)
         val tvTitle: TextView = view.findViewById(R.id.tv_title)
