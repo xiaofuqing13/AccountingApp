@@ -44,9 +44,7 @@ class DiaryListFragment : Fragment() {
                 Toast.makeText(requireContext(), EasterEggManager.moodWords.random(), Toast.LENGTH_SHORT).show()
             },
             onItemClick = { entry -> showDetailDialog(entry) },
-            onLongClick = { entry -> showEditDeleteDialog(entry) },
-            onEditClick = { entry -> showEditDialog(entry) },
-            onDeleteClick = { entry -> showDeleteConfirmDialog(entry) }
+            onLongClick = { entry -> showEditDeleteDialog(entry) }
         )
 
         view.findViewById<RecyclerView>(R.id.rv_diaries).apply {

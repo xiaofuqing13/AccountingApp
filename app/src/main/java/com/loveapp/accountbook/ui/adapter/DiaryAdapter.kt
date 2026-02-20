@@ -7,8 +7,6 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.cardview.widget.CardView
 import androidx.recyclerview.widget.RecyclerView
-import com.chauthai.swipereveallayout.SwipeRevealLayout
-import com.chauthai.swipereveallayout.ViewBinderHelper
 import com.loveapp.accountbook.R
 import com.loveapp.accountbook.data.model.DiaryEntry
 import com.loveapp.accountbook.util.DateUtils
@@ -19,14 +17,8 @@ class DiaryAdapter(
     private var items: List<DiaryEntry> = emptyList(),
     private val onMoodClick: ((Int) -> Unit)? = null,
     private val onItemClick: ((DiaryEntry) -> Unit)? = null,
-    private val onLongClick: ((DiaryEntry) -> Unit)? = null,
-    private val onEditClick: ((DiaryEntry) -> Unit)? = null,
-    private val onDeleteClick: ((DiaryEntry) -> Unit)? = null
+    private val onLongClick: ((DiaryEntry) -> Unit)? = null
 ) : RecyclerView.Adapter<DiaryAdapter.ViewHolder>() {
-
-    private val viewBinderHelper = ViewBinderHelper().apply {
-        setOpenOnlyOne(true)
-    }
 
     fun updateData(newItems: List<DiaryEntry>) {
         items = newItems
@@ -46,7 +38,6 @@ class DiaryAdapter(
             holder.tvTitle.text = item.title
             holder.tvPreview.text = DiaryContentRenderer.getPlainPreview(item.content)
             holder.ivMood.setImageResource(EasterEggManager.iconResForMood(item.mood))
-            viewBinderHelper.bind(holder.swipeLayout, "diary_${item.rowIndex}")
 
             if (item.location.isNotEmpty()) {
                 holder.tvLocationTag.text = item.location
@@ -58,14 +49,6 @@ class DiaryAdapter(
             holder.ivMood.setOnClickListener { onMoodClick?.invoke(position) }
             holder.cardForeground.setOnClickListener { onItemClick?.invoke(item) }
             holder.cardForeground.setOnLongClickListener { onLongClick?.invoke(item); true }
-            holder.btnEdit.setOnClickListener {
-                holder.swipeLayout.close(true)
-                onEditClick?.invoke(item)
-            }
-            holder.btnDelete.setOnClickListener {
-                holder.swipeLayout.close(true)
-                onDeleteClick?.invoke(item)
-            }
         }.onFailure {
             holder.tvTitle.text = "日记加载异常"
             holder.tvPreview.text = "该条目数据异常，请编辑或删除"
@@ -76,8 +59,6 @@ class DiaryAdapter(
             holder.ivMood.setOnClickListener(null)
             holder.cardForeground.setOnClickListener(null)
             holder.cardForeground.setOnLongClickListener(null)
-            holder.btnEdit.setOnClickListener(null)
-            holder.btnDelete.setOnClickListener(null)
         }
     }
 
@@ -86,10 +67,7 @@ class DiaryAdapter(
     fun getItem(position: Int): DiaryEntry = items[position]
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        val swipeLayout: SwipeRevealLayout = view.findViewById(R.id.swipe_layout)
         val cardForeground: CardView = view.findViewById(R.id.card_foreground)
-        val btnEdit: TextView = view.findViewById(R.id.btn_edit)
-        val btnDelete: TextView = view.findViewById(R.id.btn_delete)
         val tvDate: TextView = view.findViewById(R.id.tv_date)
         val tvWeather: TextView = view.findViewById(R.id.tv_weather)
         val tvTitle: TextView = view.findViewById(R.id.tv_title)

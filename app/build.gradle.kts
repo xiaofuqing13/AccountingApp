@@ -1,6 +1,5 @@
-plugins {
-    id("com.android.application") version "8.3.2"
-    id("org.jetbrains.kotlin.android") version "1.9.22"
+﻿plugins {
+    id("com.android.application") version "9.0.1"
 }
 
 android {
@@ -27,10 +26,6 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
 
-    kotlinOptions {
-        jvmTarget = "11"
-    }
-
     packaging {
         resources {
             excludes += setOf(
@@ -41,6 +36,12 @@ android {
                 "META-INF/NOTICE.txt"
             )
         }
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11
     }
 }
 
@@ -70,4 +71,20 @@ dependencies {
 
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+
+    // Coil
+    implementation("io.coil-kt:coil:2.5.0")
+
+    // Google Play Services Location
+    implementation("com.google.android.gms:play-services-location:21.0.1")
+
+    // Emoji2 Bundled
+    implementation("androidx.emoji2:emoji2:1.4.0")
+    implementation("androidx.emoji2:emoji2-views:1.4.0")
+    implementation("androidx.emoji2:emoji2-views-helper:1.4.0")
+    implementation("androidx.emoji2:emoji2-bundled:1.4.0")
+    implementation("com.vanniktech:emoji-google:0.23.0")
 }
+
+
+
