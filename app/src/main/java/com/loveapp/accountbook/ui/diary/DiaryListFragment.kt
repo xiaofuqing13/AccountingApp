@@ -33,6 +33,7 @@ class DiaryListFragment : Fragment() {
     private lateinit var adapter: DiaryAdapter
     private lateinit var rvDiaries: RecyclerView
     private var lastErrorMessage: String? = null
+    private var blockSwipePosition: Int = RecyclerView.NO_POSITION
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -72,6 +73,7 @@ class DiaryListFragment : Fragment() {
             adapter = this@DiaryListFragment.adapter
             (itemAnimator as? SimpleItemAnimator)?.supportsChangeAnimations = false
         }
+        attachActionAreaTouchGuard(rvDiaries)
         attachSwipeActions(rvDiaries)
 
         viewModel.diaries.observe(viewLifecycleOwner) { diaries ->
@@ -134,6 +136,17 @@ class DiaryListFragment : Fragment() {
                 viewHolder: RecyclerView.ViewHolder,
                 target: RecyclerView.ViewHolder
             ): Boolean = false
+
+            override fun getSwipeDirs(
+                recyclerView: RecyclerView,
+                viewHolder: RecyclerView.ViewHolder
+            ): Int {
+                return if (viewHolder.bindingAdapterPosition == blockSwipePosition) {
+                    0
+                } else {
+                    super.getSwipeDirs(recyclerView, viewHolder)
+                }
+            }
 
             override fun getSwipeThreshold(viewHolder: RecyclerView.ViewHolder): Float {
                 // Use clearView snap logic for open/close; avoid onSwiped state machine side effects.
@@ -209,6 +222,37 @@ class DiaryListFragment : Fragment() {
             }
         }
         ItemTouchHelper(swipeCallback).attachToRecyclerView(recyclerView)
+    }
+
+    private fun attachActionAreaTouchGuard(recyclerView: RecyclerView) {
+        recyclerView.addOnItemTouchListener(object : RecyclerView.SimpleOnItemTouchListener() {
+            override fun onInterceptTouchEvent(rv: RecyclerView, e: android.view.MotionEvent): Boolean {
+                when (e.actionMasked) {
+                    android.view.MotionEvent.ACTION_DOWN -> {
+                        blockSwipePosition = RecyclerView.NO_POSITION
+                        val openPosition = adapter.getSwipeOpenPosition()
+                        if (openPosition == RecyclerView.NO_POSITION) return false
+                        val touchedChild = rv.findChildViewUnder(e.x, e.y) ?: return false
+                        val touchedPosition = rv.getChildAdapterPosition(touchedChild)
+                        if (touchedPosition != openPosition) return false
+
+                        val actionWidth = adapter.getSwipeActionTotalWidthPx().toFloat()
+                        val itemRight = touchedChild.right.toFloat()
+                        val actionLeft = itemRight - actionWidth
+                        if (e.x >= actionLeft) {
+                            // Touch starts from action area: keep click, disable swipe for this gesture.
+                            blockSwipePosition = openPosition
+                        }
+                    }
+
+                    android.view.MotionEvent.ACTION_UP,
+                    android.view.MotionEvent.ACTION_CANCEL -> {
+                        blockSwipePosition = RecyclerView.NO_POSITION
+                    }
+                }
+                return false
+            }
+        })
     }
 
     private fun openSwipeAt(recyclerView: RecyclerView, position: Int) {
