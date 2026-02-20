@@ -37,6 +37,7 @@ class MeetingListFragment : Fragment() {
     private lateinit var adapter: MeetingAdapter
     private lateinit var rvMeetings: RecyclerView
     private var lastSwipeDx = 0f
+    private val swipeOpenScale = 0.96f
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -169,6 +170,10 @@ class MeetingListFragment : Fragment() {
                     isOpen -> (-maxSwipe + dX).coerceIn(-maxSwipe, 0f)
                     else -> 0f
                 }
+                val progress = (kotlin.math.abs(clampedDx) / maxSwipe).coerceIn(0f, 1f)
+                val scale = 1f - (1f - swipeOpenScale) * progress
+                viewHolder.cardForeground.scaleX = scale
+                viewHolder.cardForeground.scaleY = scale
                 getDefaultUIUtil().onDraw(
                     c,
                     recyclerView,
@@ -242,6 +247,8 @@ class MeetingListFragment : Fragment() {
             if (previousHolder != null) {
                 previousHolder.cardForeground.animate()
                     .translationX(0f)
+                    .scaleX(1f)
+                    .scaleY(1f)
                     .setDuration(150L)
                     .setInterpolator(DecelerateInterpolator())
                     .start()
@@ -254,6 +261,8 @@ class MeetingListFragment : Fragment() {
         if (holder != null) {
             holder.cardForeground.animate()
                 .translationX(-maxSwipe)
+                .scaleX(swipeOpenScale)
+                .scaleY(swipeOpenScale)
                 .setDuration(150L)
                 .setInterpolator(DecelerateInterpolator())
                 .start()
@@ -269,6 +278,8 @@ class MeetingListFragment : Fragment() {
         if (holder != null) {
             holder.cardForeground.animate()
                 .translationX(0f)
+                .scaleX(1f)
+                .scaleY(1f)
                 .setDuration(120L)
                 .setInterpolator(DecelerateInterpolator())
                 .start()

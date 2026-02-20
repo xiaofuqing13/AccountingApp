@@ -60,7 +60,7 @@ class MeetingAdapter(
         val view = LayoutInflater.from(parent.context).inflate(R.layout.item_meeting, parent, false)
         if (swipeActionTotalWidthPx == 0) {
             swipeActionTotalWidthPx =
-                view.resources.getDimensionPixelSize(R.dimen.meeting_swipe_action_width)
+                view.resources.getDimensionPixelSize(R.dimen.meeting_swipe_action_width) * 2
         }
         return ViewHolder(view)
     }
@@ -88,8 +88,15 @@ class MeetingAdapter(
                 holder.chipTags.addView(chip)
             }
 
-        holder.cardForeground.translationX =
-            if (position == swipeOpenPosition) -getSwipeActionTotalWidthPx().toFloat() else 0f
+        if (position == swipeOpenPosition) {
+            holder.cardForeground.translationX = -getSwipeActionTotalWidthPx().toFloat()
+            holder.cardForeground.scaleX = 0.96f
+            holder.cardForeground.scaleY = 0.96f
+        } else {
+            holder.cardForeground.translationX = 0f
+            holder.cardForeground.scaleX = 1f
+            holder.cardForeground.scaleY = 1f
+        }
         holder.cardForeground.setOnClickListener { onItemClick?.invoke(item, position) }
         holder.tvDay.setOnClickListener { onDayClick?.invoke(item) }
         holder.btnSwipeEdit.setOnClickListener { onEditClick?.invoke(item) }
