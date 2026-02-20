@@ -142,6 +142,8 @@ class DiaryListFragment : Fragment() {
                 recyclerView: RecyclerView,
                 viewHolder: RecyclerView.ViewHolder
             ): Int {
+                // Once an item is opened, disable swipe globally to prioritize action-button clicks.
+                if (adapter.getSwipeOpenPosition() != RecyclerView.NO_POSITION) return 0
                 return if (
                     blockAllSwipesForActionTap ||
                     viewHolder.bindingAdapterPosition == blockSwipePosition
