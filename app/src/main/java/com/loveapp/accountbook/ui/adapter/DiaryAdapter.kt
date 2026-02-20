@@ -17,7 +17,9 @@ class DiaryAdapter(
     private var items: List<DiaryEntry> = emptyList(),
     private val onMoodClick: ((Int) -> Unit)? = null,
     private val onItemClick: ((DiaryEntry) -> Unit)? = null,
-    private val onLongClick: ((DiaryEntry) -> Unit)? = null
+    private val onLongClick: ((DiaryEntry) -> Unit)? = null,
+    private val onEditClick: ((DiaryEntry) -> Unit)? = null,
+    private val onDeleteClick: ((DiaryEntry) -> Unit)? = null
 ) : RecyclerView.Adapter<DiaryAdapter.ViewHolder>() {
 
     fun updateData(newItems: List<DiaryEntry>) {
@@ -49,6 +51,8 @@ class DiaryAdapter(
             holder.ivMood.setOnClickListener { onMoodClick?.invoke(position) }
             holder.cardForeground.setOnClickListener { onItemClick?.invoke(item) }
             holder.cardForeground.setOnLongClickListener { onLongClick?.invoke(item); true }
+            holder.btnEdit.setOnClickListener { onEditClick?.invoke(item) }
+            holder.btnDelete.setOnClickListener { onDeleteClick?.invoke(item) }
         }.onFailure {
             holder.tvTitle.text = "日记加载异常"
             holder.tvPreview.text = "该条目数据异常，请编辑或删除"
@@ -59,6 +63,8 @@ class DiaryAdapter(
             holder.ivMood.setOnClickListener(null)
             holder.cardForeground.setOnClickListener(null)
             holder.cardForeground.setOnLongClickListener(null)
+            holder.btnEdit.setOnClickListener(null)
+            holder.btnDelete.setOnClickListener(null)
         }
     }
 
@@ -68,6 +74,8 @@ class DiaryAdapter(
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val cardForeground: CardView = view.findViewById(R.id.card_foreground)
+        val btnEdit: TextView = view.findViewById(R.id.btn_edit)
+        val btnDelete: TextView = view.findViewById(R.id.btn_delete)
         val tvDate: TextView = view.findViewById(R.id.tv_date)
         val tvWeather: TextView = view.findViewById(R.id.tv_weather)
         val tvTitle: TextView = view.findViewById(R.id.tv_title)
