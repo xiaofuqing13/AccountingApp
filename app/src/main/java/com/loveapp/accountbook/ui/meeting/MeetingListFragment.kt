@@ -83,15 +83,12 @@ class MeetingListFragment : Fragment() {
         val details = SpannableStringBuilder().apply {
             appendDetailLine("日期：", entry.date, highlightColor, emphasized = true)
             appendDetailLine("时间：", "${entry.startTime} - ${entry.endTime}", highlightColor, emphasized = true)
-            appendDetailLine("地点：", entry.location.ifBlank { "未填写" }, highlightColor)
-            appendDetailLine("参会人：", entry.attendees.ifBlank { "未填写" }, highlightColor)
-            appendDetailLine("标签：", entry.tags.ifBlank { "无" }, highlightColor)
+            appendDetailLine("地点：", entry.location.ifBlank { "未填写" }, highlightColor, emphasized = true)
+            appendDetailLine("参会人：", entry.attendees.ifBlank { "未填写" }, highlightColor, emphasized = true)
+            appendDetailLine("标签：", entry.tags.ifBlank { "无" }, highlightColor, emphasized = true)
+            appendLabeledBlock("会议内容：", entry.content.ifBlank { "未填写" }, highlightColor)
             append("\n")
-            append("会议内容：\n")
-            append(entry.content.ifBlank { "未填写" })
-            append("\n\n")
-            append("待办事项：\n")
-            append(entry.todoItems.ifBlank { "未填写" })
+            appendLabeledBlock("待办事项：", entry.todoItems.ifBlank { "未填写" }, highlightColor)
         }
         AlertDialog.Builder(requireContext())
             .setCustomTitle(createHighlightedDialogTitle(entry.topic.ifBlank { "会议详情" }))
@@ -114,6 +111,19 @@ class MeetingListFragment : Fragment() {
         }
         append(value)
         append("\n")
+    }
+
+    private fun SpannableStringBuilder.appendLabeledBlock(
+        label: String,
+        value: String,
+        highlightColor: Int
+    ) {
+        val start = length
+        append(label)
+        setSpan(ForegroundColorSpan(highlightColor), start, start + label.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        setSpan(StyleSpan(Typeface.BOLD), start, start + label.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        append("\n")
+        append(value)
     }
 
     private fun createHighlightedDialogTitle(title: String): TextView {
