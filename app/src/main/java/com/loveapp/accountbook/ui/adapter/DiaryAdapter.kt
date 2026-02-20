@@ -1,6 +1,7 @@
 package com.loveapp.accountbook.ui.adapter
 
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
@@ -90,6 +91,30 @@ class DiaryAdapter(
             holder.cardForeground.setOnClickListener { onItemClick?.invoke(item, position) }
             holder.btnSwipeEdit.setOnClickListener { onEditClick?.invoke(item) }
             holder.btnSwipeDelete.setOnClickListener { onDeleteClick?.invoke(item) }
+            holder.btnSwipeEdit.setOnTouchListener { v, event ->
+                when (event.actionMasked) {
+                    MotionEvent.ACTION_DOWN -> v.parent?.requestDisallowInterceptTouchEvent(true)
+                    MotionEvent.ACTION_UP -> {
+                        v.performClick()
+                        v.parent?.requestDisallowInterceptTouchEvent(false)
+                        return@setOnTouchListener true
+                    }
+                    MotionEvent.ACTION_CANCEL -> v.parent?.requestDisallowInterceptTouchEvent(false)
+                }
+                false
+            }
+            holder.btnSwipeDelete.setOnTouchListener { v, event ->
+                when (event.actionMasked) {
+                    MotionEvent.ACTION_DOWN -> v.parent?.requestDisallowInterceptTouchEvent(true)
+                    MotionEvent.ACTION_UP -> {
+                        v.performClick()
+                        v.parent?.requestDisallowInterceptTouchEvent(false)
+                        return@setOnTouchListener true
+                    }
+                    MotionEvent.ACTION_CANCEL -> v.parent?.requestDisallowInterceptTouchEvent(false)
+                }
+                false
+            }
         }.onFailure {
             holder.tvTitle.text = "\u65E5\u8BB0\u52A0\u8F7D\u5F02\u5E38"
             holder.tvPreview.text = "\u8BE5\u6761\u6570\u636E\u5F02\u5E38\uFF0C\u8BF7\u5C1D\u8BD5\u7F16\u8F91\u6216\u5220\u9664"
@@ -101,6 +126,8 @@ class DiaryAdapter(
             holder.cardForeground.setOnClickListener(null)
             holder.btnSwipeEdit.setOnClickListener(null)
             holder.btnSwipeDelete.setOnClickListener(null)
+            holder.btnSwipeEdit.setOnTouchListener(null)
+            holder.btnSwipeDelete.setOnTouchListener(null)
         }
     }
 

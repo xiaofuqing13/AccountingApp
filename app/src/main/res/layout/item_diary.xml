@@ -23,6 +23,8 @@
             android:id="@+id/btn_swipe_edit"
             android:layout_width="@dimen/diary_swipe_action_width"
             android:layout_height="match_parent"
+            android:clickable="true"
+            android:focusable="true"
             android:gravity="center"
             android:orientation="vertical">
 
@@ -48,6 +50,8 @@
             android:id="@+id/btn_swipe_delete"
             android:layout_width="@dimen/diary_swipe_action_width"
             android:layout_height="match_parent"
+            android:clickable="true"
+            android:focusable="true"
             android:gravity="center"
             android:orientation="vertical">
 
