@@ -218,13 +218,14 @@ class DiaryListFragment : Fragment() {
     }
 
     private fun attachSwipeCloseFallback(recyclerView: RecyclerView) {
-        val closeTrigger = recyclerView.resources.displayMetrics.density * 8f
+        val closeTrigger = recyclerView.resources.displayMetrics.density * 4f
         var downX = 0f
         var downY = 0f
         recyclerView.addOnItemTouchListener(object : RecyclerView.SimpleOnItemTouchListener() {
             override fun onInterceptTouchEvent(rv: RecyclerView, e: MotionEvent): Boolean {
                 val openPosition = adapter.getSwipeOpenPosition()
                 if (openPosition == RecyclerView.NO_POSITION) return false
+                val actionWidth = adapter.getSwipeActionTotalWidthPx().toFloat()
                 when (e.actionMasked) {
                     MotionEvent.ACTION_DOWN -> {
                         downX = e.x
@@ -233,13 +234,20 @@ class DiaryListFragment : Fragment() {
                         val touchedPosition = touchedChild?.let { rv.getChildAdapterPosition(it) }
                         if (touchedPosition != openPosition) {
                             closeSwipeAt(rv, openPosition)
+                        } else {
+                            // 点在已展开卡片主体（非按钮区）时，立即收回，避免“卡住”
+                            val isCardBodyArea = e.x < rv.width - actionWidth
+                            if (isCardBodyArea) {
+                                closeSwipeAt(rv, openPosition)
+                                return true
+                            }
                         }
                     }
 
                     MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                         val dx = e.x - downX
                         val dy = e.y - downY
-                        if (dx > closeTrigger && abs(dx) > abs(dy)) {
+                        if (dx > closeTrigger && abs(dx) >= abs(dy) * 0.6f) {
                             closeSwipeAt(rv, openPosition)
                             return true
                         }
