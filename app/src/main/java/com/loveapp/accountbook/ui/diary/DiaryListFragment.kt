@@ -249,8 +249,12 @@ class DiaryListFragment : Fragment() {
                         if (touchedPosition != openPosition) {
                             closeSwipeAt(rv, openPosition)
                         } else {
-                            // Tap body area to close immediately.
-                            val isCardBodyArea = e.x < rv.width - actionWidth
+                            // Use opened item's real bounds to avoid touch misclassification on padded RecyclerView.
+                            val openHolder =
+                                rv.findViewHolderForAdapterPosition(openPosition) as? DiaryAdapter.ViewHolder
+                            val itemRight = openHolder?.itemView?.right ?: (rv.width - rv.paddingRight)
+                            val actionLeft = itemRight - actionWidth
+                            val isCardBodyArea = e.x < actionLeft
                             if (isCardBodyArea) {
                                 closeSwipeAt(rv, openPosition)
                                 return true

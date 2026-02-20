@@ -16,9 +16,7 @@
         android:clipToOutline="true"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:paddingStart="6dp"
         android:paddingTop="8dp"
-        android:paddingEnd="6dp"
         android:paddingBottom="8dp">
 
         <LinearLayout
