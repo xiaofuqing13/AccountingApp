@@ -38,9 +38,6 @@
 **添加记账页**
 - 支出/收入Tab切换
 - 分类选择网格（5列）：餐饮、交通、购物、住房、通讯、娱乐、医疗、教育、服饰等
-- 支持自定义分类：点击“➕ 添加”输入名称并选择图标
-- 图标选择器升级为开源 Emoji 组件（分类更全、视觉更统一）
-- 支持删除自定义分类：长按自定义分类后确认删除（内置分类仅提示不可删除）
 - 备注输入行
 - 日期选择
 - 金额显示区
@@ -196,27 +193,3 @@
 ## 十、原型预览
 
 交互式原型文件位于 `design/prototype.html`，用浏览器打开即可预览全部11个页面设计、实时计时器和隐藏彩蛋。
-
-## UI视觉改版（2026-02-20）
-- 改版目标：提升整体质感，减少“粉色堆叠”和旧式卡片感，让界面更现代、清爽。
-- 全局主题：重构亮/暗色板，统一主色、背景层级、文本对比度。
-- 公共样式：统一卡片圆角与边框、搜索框描边、设置分组容器描边，提升信息层级。
-- 导航改版：底部导航新增独立容器背景（圆角+描边+边距），避免整页“贴边”观感。
-- 细节优化：统一阴影与圆角参数，提升页面一致性。
-
-### 主要修改文件
-- `app/src/main/res/values/colors.xml`
-- `app/src/main/res/values-night/colors.xml`
-- `app/src/main/res/values/themes.xml`
-- `app/src/main/res/values/dimens.xml`
-- `app/src/main/res/layout/activity_main.xml`
-- `app/src/main/res/drawable/bg_bottom_nav.xml`
-- `app/src/main/res/drawable/bg_card_rounded.xml`
-- `app/src/main/res/drawable/bg_settings_group.xml`
-- `app/src/main/res/drawable/bg_home_quick_btn.xml`
-- `app/src/main/res/drawable/bg_gradient_pink.xml`
-- `app/src/main/res/drawable/bg_love_card.xml`
-- `app/src/main/res/drawable/bg_fab_pink.xml`
-
-### 验证
-- `./gradlew.bat :app:assembleDebug` 构建通过。

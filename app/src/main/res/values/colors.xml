@@ -1,71 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- 少女粉色系主题色 -->
-    <color name="pink_primary">#E85D73</color>
-    <color name="pink_light">#F4909D</color>
-    <color name="pink_soft">#C44763</color>
-    <color name="pink_bg">#F5F7FB</color>
-    <color name="pink_surface">#FFFFFF</color>
+    <color name="pink_primary">#E8729A</color>
+    <color name="pink_light">#FF85A2</color>
+    <color name="pink_soft">#F4A0C0</color>
+    <color name="pink_bg">#FFF0F5</color>
+    <color name="pink_surface">#FFF8FA</color>
     <color name="pink_card">#FFFFFF</color>
 
     <!-- 功能色 -->
-    <color name="income_green">#18A957</color>
-    <color name="expense_pink">#E6526A</color>
-    <color name="lavender">#5864D8</color>
+    <color name="income_green">#66BB6A</color>
+    <color name="expense_pink">#E8729A</color>
+    <color name="lavender">#D4A0E8</color>
 
     <!-- 渐变色端点 -->
-    <color name="gradient_start">#FF8A7A</color>
-    <color name="gradient_center">#F26AA0</color>
-    <color name="gradient_end">#6E70FF</color>
+    <color name="gradient_start">#FFB6C8</color>
+    <color name="gradient_center">#F4A0C0</color>
+    <color name="gradient_end">#D4A0E8</color>
 
     <!-- 文字色 -->
-    <color name="text_primary">#1F2937</color>
-    <color name="text_secondary">#4B5563</color>
-    <color name="text_hint">#94A3B8</color>
+    <color name="text_primary">#333333</color>
+    <color name="text_secondary">#666666</color>
+    <color name="text_hint">#999999</color>
     <color name="text_white">#FFFFFF</color>
 
     <!-- 分隔线 -->
-    <color name="divider">#E6EAF2</color>
-
-    <!-- 组件背景色（深色模式适配） -->
-    <color name="card_background">#FFFFFF</color>
-    <color name="search_background">#FFFFFF</color>
-    <color name="search_stroke">#D5DEEA</color>
-    <color name="category_circle_bg">#F1F5FB</color>
-    <color name="tag_chip_bg">#F1F5FB</color>
-    <color name="tag_chip_stroke">#D5DEEA</color>
-    <color name="settings_group_bg">#FFFFFF</color>
-    <color name="quick_btn_bg">#FFFFFF</color>
-    <color name="date_badge_bg">#EEF3FB</color>
-
-    <!-- 底部导航 -->
-    <color name="nav_icon_active">#3E49D3</color>
-    <color name="nav_icon_inactive">#9AA7BD</color>
-
-    <!-- 半透明白色（首页用） -->
-    <color name="white_alpha_dd">#DDFFFFFF</color>
-    <color name="white_alpha_bb">#BBFFFFFF</color>
-    <color name="white_alpha_88">#88FFFFFF</color>
-    <color name="white_alpha_ee">#EEFFFFFF</color>
-    <color name="white_alpha_22">#22FFFFFF</color>
-    <color name="white_alpha_55">#55FFFFFF</color>
-    <color name="white_alpha_cc_full">#CCFFFFFF</color>
-    <color name="ripple_pink">#33E85D73</color>
-    <color name="ripple_white">#33FFFFFF</color>
-    <color name="light_purple">#8A93FF</color>
-
-    <!-- 统计卡片渐变 -->
-    <color name="stat_expense_start">#FFEFF2</color>
-    <color name="stat_expense_end">#FFDCE2</color>
-    <color name="stat_income_start">#ECFBF2</color>
-    <color name="stat_income_end">#D8F5E5</color>
-    <color name="stat_balance_start">#EEF0FF</color>
-    <color name="stat_balance_end">#DFE3FF</color>
-
-    <!-- 对话框/其他 -->
-    <color name="dialog_border_start">#FFB0A8</color>
-    <color name="dialog_border_end">#9EA4FF</color>
-    <color name="footer_hint">#A7B1C3</color>
-    <color name="diary_purple">#6670E8</color>
-    <color name="section_indicator">#3E49D3</color>
+    <color name="divider">#F0F0F0</color>
 </resources>

@@ -11,9 +11,8 @@
         <item name="android:colorBackground">@color/pink_bg</item>
         <item name="colorOnBackground">@color/text_primary</item>
         <item name="colorOnSurface">@color/text_primary</item>
-        <item name="android:statusBarColor">@android:color/transparent</item>
-        <item name="android:navigationBarColor">@color/pink_bg</item>
-        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:statusBarColor">@color/pink_primary</item>
+        <item name="android:navigationBarColor">@color/pink_card</item>
     </style>
 
     <style name="Theme.AccountBook.Splash" parent="Theme.Material3.DayNight.NoActionBar">
