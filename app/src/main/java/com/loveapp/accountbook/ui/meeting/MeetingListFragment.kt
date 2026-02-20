@@ -204,6 +204,9 @@ class MeetingListFragment : Fragment() {
         val closeTrigger = recyclerView.resources.displayMetrics.density * 8f
         var downX = 0f
         var downY = 0f
+        var downInActionArea = false
+        var downActionZoneStartX = 0f
+        var downTargetPosition = RecyclerView.NO_POSITION
         recyclerView.addOnItemTouchListener(object : RecyclerView.SimpleOnItemTouchListener() {
             override fun onInterceptTouchEvent(rv: RecyclerView, e: MotionEvent): Boolean {
                 val openPosition = adapter.getSwipeOpenPosition()
@@ -212,14 +215,20 @@ class MeetingListFragment : Fragment() {
                     MotionEvent.ACTION_DOWN -> {
                         downX = e.x
                         downY = e.y
-                        val touchedChild = rv.findChildViewUnder(e.x, e.y)
-                        val touchedPosition = touchedChild?.let { rv.getChildAdapterPosition(it) }
+                        downInActionArea = false
+                        downActionZoneStartX = 0f
+                        downTargetPosition = RecyclerView.NO_POSITION
+                        val touchedChild = rv.findChildViewUnder(e.x, e.y) ?: return false
+                        val touchedPosition = rv.getChildAdapterPosition(touchedChild)
+                        downTargetPosition = touchedPosition
                         if (touchedPosition != openPosition) {
                             closeSwipeAt(rv, openPosition)
                         } else {
                             val actionWidth = adapter.getSwipeActionTotalWidthPx().toFloat()
                             val localX = e.x - touchedChild.left
-                            val isCardBodyArea = localX < touchedChild.width - actionWidth
+                            downActionZoneStartX = touchedChild.width - actionWidth
+                            downInActionArea = localX >= downActionZoneStartX
+                            val isCardBodyArea = !downInActionArea
                             if (isCardBodyArea) {
                                 closeSwipeAt(rv, openPosition)
                                 return true
@@ -228,6 +237,32 @@ class MeetingListFragment : Fragment() {
                     }
 
                     MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                        if (downInActionArea && downTargetPosition == openPosition && e.actionMasked == MotionEvent.ACTION_UP) {
+                            val touchedChild = rv.findChildViewUnder(e.x, e.y)
+                            val touchedPosition = touchedChild?.let { rv.getChildAdapterPosition(it) }
+                            val moveX = abs(e.x - downX)
+                            val moveY = abs(e.y - downY)
+                            if (
+                                touchedChild != null &&
+                                touchedPosition == openPosition &&
+                                moveX <= closeTrigger &&
+                                moveY <= closeTrigger
+                            ) {
+                                val localXUp = e.x - touchedChild.left
+                                if (localXUp >= downActionZoneStartX) {
+                                    val actionWidth = adapter.getSwipeActionTotalWidthPx().toFloat()
+                                    val actionOffset = (localXUp - downActionZoneStartX).coerceIn(0f, actionWidth)
+                                    val target = adapter.getItem(openPosition)
+                                    closeSwipeAt(rv, openPosition)
+                                    if (actionOffset < actionWidth / 2f) {
+                                        showEditTopicDialog(target)
+                                    } else {
+                                        showDeleteConfirmDialog(target)
+                                    }
+                                    return true
+                                }
+                            }
+                        }
                         val dx = e.x - downX
                         val dy = e.y - downY
                         if (dx > closeTrigger && abs(dx) >= abs(dy) * 0.6f) {
