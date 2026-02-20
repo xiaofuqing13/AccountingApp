@@ -3,6 +3,8 @@ package com.loveapp.accountbook.ui.meeting
 import android.graphics.Typeface
 import android.os.Bundle
 import android.text.Editable
+import android.text.SpannableStringBuilder
+import android.text.Spanned
 import android.text.TextWatcher
 import android.util.TypedValue
 import android.view.LayoutInflater
@@ -17,6 +19,8 @@ import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import android.text.style.ForegroundColorSpan
+import android.text.style.StyleSpan
 import com.loveapp.accountbook.R
 import com.loveapp.accountbook.data.model.MeetingEntry
 import com.loveapp.accountbook.ui.adapter.MeetingAdapter
@@ -75,17 +79,18 @@ class MeetingListFragment : Fragment() {
     }
 
     private fun showMeetingDetailDialog(entry: MeetingEntry) {
-        val details = buildString {
-            appendLine("日期：${entry.date}")
-            appendLine("时间：${entry.startTime} - ${entry.endTime}")
-            appendLine("地点：${entry.location.ifBlank { "未填写" }}")
-            appendLine("参会人：${entry.attendees.ifBlank { "未填写" }}")
-            appendLine("标签：${entry.tags.ifBlank { "无" }}")
-            appendLine()
-            appendLine("会议内容：")
-            appendLine(entry.content.ifBlank { "未填写" })
-            appendLine()
-            appendLine("待办事项：")
+        val highlightColor = ContextCompat.getColor(requireContext(), R.color.pink_primary)
+        val details = SpannableStringBuilder().apply {
+            appendDetailLine("日期：", entry.date, highlightColor, emphasized = true)
+            appendDetailLine("时间：", "${entry.startTime} - ${entry.endTime}", highlightColor, emphasized = true)
+            appendDetailLine("地点：", entry.location.ifBlank { "未填写" }, highlightColor)
+            appendDetailLine("参会人：", entry.attendees.ifBlank { "未填写" }, highlightColor)
+            appendDetailLine("标签：", entry.tags.ifBlank { "无" }, highlightColor)
+            append("\n")
+            append("会议内容：\n")
+            append(entry.content.ifBlank { "未填写" })
+            append("\n\n")
+            append("待办事项：\n")
             append(entry.todoItems.ifBlank { "未填写" })
         }
         AlertDialog.Builder(requireContext())
@@ -93,6 +98,22 @@ class MeetingListFragment : Fragment() {
             .setMessage(details)
             .setPositiveButton("确定", null)
             .show()
+    }
+
+    private fun SpannableStringBuilder.appendDetailLine(
+        label: String,
+        value: String,
+        highlightColor: Int,
+        emphasized: Boolean = false
+    ) {
+        val start = length
+        append(label)
+        if (emphasized) {
+            setSpan(ForegroundColorSpan(highlightColor), start, start + label.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+            setSpan(StyleSpan(Typeface.BOLD), start, start + label.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        }
+        append(value)
+        append("\n")
     }
 
     private fun createHighlightedDialogTitle(title: String): TextView {
