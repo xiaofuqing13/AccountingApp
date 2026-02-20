@@ -1,13 +1,17 @@
 package com.loveapp.accountbook.ui.meeting
 
+import android.graphics.Typeface
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
+import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
@@ -85,10 +89,23 @@ class MeetingListFragment : Fragment() {
             append(entry.todoItems.ifBlank { "未填写" })
         }
         AlertDialog.Builder(requireContext())
-            .setTitle(entry.topic.ifBlank { "会议详情" })
+            .setCustomTitle(createHighlightedDialogTitle(entry.topic.ifBlank { "会议详情" }))
             .setMessage(details)
             .setPositiveButton("确定", null)
             .show()
+    }
+
+    private fun createHighlightedDialogTitle(title: String): TextView {
+        val horizontalPadding = (16 * resources.displayMetrics.density).toInt()
+        val verticalPadding = (10 * resources.displayMetrics.density).toInt()
+        return TextView(requireContext()).apply {
+            text = title
+            setTextColor(ContextCompat.getColor(context, R.color.text_primary))
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 20f)
+            setTypeface(typeface, Typeface.BOLD)
+            setPadding(horizontalPadding, verticalPadding, horizontalPadding, verticalPadding)
+            background = ContextCompat.getDrawable(context, R.drawable.bg_meeting_detail_title)
+        }
     }
 
     private fun showEditDeleteDialog(entry: MeetingEntry) {
