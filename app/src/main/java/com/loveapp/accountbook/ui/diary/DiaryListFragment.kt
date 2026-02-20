@@ -34,6 +34,7 @@ class DiaryListFragment : Fragment() {
     private lateinit var rvDiaries: RecyclerView
     private var lastErrorMessage: String? = null
     private var blockSwipePosition: Int = RecyclerView.NO_POSITION
+    private var blockAllSwipesForActionTap = false
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -141,7 +142,10 @@ class DiaryListFragment : Fragment() {
                 recyclerView: RecyclerView,
                 viewHolder: RecyclerView.ViewHolder
             ): Int {
-                return if (viewHolder.bindingAdapterPosition == blockSwipePosition) {
+                return if (
+                    blockAllSwipesForActionTap ||
+                    viewHolder.bindingAdapterPosition == blockSwipePosition
+                ) {
                     0
                 } else {
                     super.getSwipeDirs(recyclerView, viewHolder)
@@ -229,6 +233,7 @@ class DiaryListFragment : Fragment() {
             override fun onInterceptTouchEvent(rv: RecyclerView, e: android.view.MotionEvent): Boolean {
                 when (e.actionMasked) {
                     android.view.MotionEvent.ACTION_DOWN -> {
+                        blockAllSwipesForActionTap = false
                         blockSwipePosition = RecyclerView.NO_POSITION
                         val openPosition = adapter.getSwipeOpenPosition()
                         if (openPosition == RecyclerView.NO_POSITION) return false
@@ -242,12 +247,16 @@ class DiaryListFragment : Fragment() {
                         if (e.x >= actionLeft) {
                             // Touch starts from action area: keep click, disable swipe for this gesture.
                             blockSwipePosition = openPosition
+                            blockAllSwipesForActionTap = true
+                            rv.parent?.requestDisallowInterceptTouchEvent(true)
                         }
                     }
 
                     android.view.MotionEvent.ACTION_UP,
                     android.view.MotionEvent.ACTION_CANCEL -> {
                         blockSwipePosition = RecyclerView.NO_POSITION
+                        blockAllSwipesForActionTap = false
+                        rv.parent?.requestDisallowInterceptTouchEvent(false)
                     }
                 }
                 return false
