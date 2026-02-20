@@ -206,7 +206,6 @@ class MeetingListFragment : Fragment() {
             override fun onInterceptTouchEvent(rv: RecyclerView, e: MotionEvent): Boolean {
                 val openPosition = adapter.getSwipeOpenPosition()
                 if (openPosition == RecyclerView.NO_POSITION) return false
-                val actionWidth = adapter.getSwipeActionTotalWidthPx().toFloat()
                 when (e.actionMasked) {
                     MotionEvent.ACTION_DOWN -> {
                         downX = e.x
@@ -216,7 +215,9 @@ class MeetingListFragment : Fragment() {
                         if (touchedPosition != openPosition) {
                             closeSwipeAt(rv, openPosition)
                         } else {
-                            val isCardBodyArea = e.x < rv.width - actionWidth
+                            val actionWidth = adapter.getSwipeActionTotalWidthPx().toFloat()
+                            val localX = e.x - touchedChild.left
+                            val isCardBodyArea = localX < touchedChild.width - actionWidth
                             if (isCardBodyArea) {
                                 closeSwipeAt(rv, openPosition)
                                 return true

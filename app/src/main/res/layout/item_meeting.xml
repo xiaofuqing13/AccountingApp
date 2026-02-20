@@ -19,6 +19,7 @@
             android:id="@+id/btn_swipe_edit"
             android:layout_width="@dimen/meeting_swipe_action_width"
             android:layout_height="match_parent"
+            android:clickable="true"
             android:gravity="center"
             android:orientation="vertical">
 
@@ -49,6 +50,7 @@
             android:layout_width="@dimen/meeting_swipe_action_width"
             android:layout_height="match_parent"
             android:layout_marginStart="2dp"
+            android:clickable="true"
             android:gravity="center"
             android:orientation="vertical">
 
