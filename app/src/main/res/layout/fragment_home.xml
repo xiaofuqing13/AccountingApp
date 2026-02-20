@@ -11,16 +11,15 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <!-- Banner 渐变头部 -->
         <LinearLayout
             android:id="@+id/banner"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@drawable/bg_gradient_pink"
+            android:background="@drawable/bg_home_banner"
             android:orientation="vertical"
             android:paddingHorizontal="20dp"
             android:paddingTop="20dp"
-            android:paddingBottom="16dp">
+            android:paddingBottom="20dp">
 
             <TextView
                 android:id="@+id/tv_greeting"
@@ -35,7 +34,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:textColor="#DDFFFFFF"
+                android:textColor="@color/white_alpha_dd"
                 android:textSize="12sp" />
 
             <TextView
@@ -43,16 +42,14 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:textColor="#BBFFFFFF"
+                android:textColor="@color/white_alpha_bb"
                 android:textSize="12sp" />
 
-            <!-- 实时计时器卡片 -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="14dp"
-                android:background="@drawable/bg_card_rounded"
-                android:backgroundTint="#22FFFFFF"
+                android:background="@drawable/bg_counter_glass"
                 android:gravity="center"
                 android:orientation="horizontal"
                 android:padding="14dp">
@@ -63,6 +60,7 @@
                     android:layout_weight="1"
                     android:gravity="center"
                     android:orientation="vertical">
+
                     <TextView
                         android:id="@+id/tv_counter_days"
                         android:layout_width="wrap_content"
@@ -71,11 +69,12 @@
                         android:textColor="@color/text_white"
                         android:textSize="26sp"
                         android:textStyle="bold" />
+
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="天"
-                        android:textColor="#BBFFFFFF"
+                        android:textColor="@color/white_alpha_bb"
                         android:textSize="10sp" />
                 </LinearLayout>
 
@@ -83,7 +82,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text=":"
-                    android:textColor="#88FFFFFF"
+                    android:textColor="@color/white_alpha_88"
                     android:textSize="22sp" />
 
                 <LinearLayout
@@ -92,6 +91,7 @@
                     android:layout_weight="1"
                     android:gravity="center"
                     android:orientation="vertical">
+
                     <TextView
                         android:id="@+id/tv_counter_hours"
                         android:layout_width="wrap_content"
@@ -100,11 +100,12 @@
                         android:textColor="@color/text_white"
                         android:textSize="26sp"
                         android:textStyle="bold" />
+
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="小时"
-                        android:textColor="#BBFFFFFF"
+                        android:text="时"
+                        android:textColor="@color/white_alpha_bb"
                         android:textSize="10sp" />
                 </LinearLayout>
 
@@ -112,7 +113,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text=":"
-                    android:textColor="#88FFFFFF"
+                    android:textColor="@color/white_alpha_88"
                     android:textSize="22sp" />
 
                 <LinearLayout
@@ -121,6 +122,7 @@
                     android:layout_weight="1"
                     android:gravity="center"
                     android:orientation="vertical">
+
                     <TextView
                         android:id="@+id/tv_counter_mins"
                         android:layout_width="wrap_content"
@@ -129,11 +131,12 @@
                         android:textColor="@color/text_white"
                         android:textSize="26sp"
                         android:textStyle="bold" />
+
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="分钟"
-                        android:textColor="#BBFFFFFF"
+                        android:text="分"
+                        android:textColor="@color/white_alpha_bb"
                         android:textSize="10sp" />
                 </LinearLayout>
 
@@ -141,7 +144,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text=":"
-                    android:textColor="#88FFFFFF"
+                    android:textColor="@color/white_alpha_88"
                     android:textSize="22sp" />
 
                 <LinearLayout
@@ -150,6 +153,7 @@
                     android:layout_weight="1"
                     android:gravity="center"
                     android:orientation="vertical">
+
                     <TextView
                         android:id="@+id/tv_counter_secs"
                         android:layout_width="wrap_content"
@@ -158,17 +162,17 @@
                         android:textColor="@color/text_white"
                         android:textSize="26sp"
                         android:textStyle="bold" />
+
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="秒"
-                        android:textColor="#BBFFFFFF"
+                        android:textColor="@color/white_alpha_bb"
                         android:textSize="10sp" />
                 </LinearLayout>
             </LinearLayout>
         </LinearLayout>
 
-        <!-- 统计卡片区域 -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -177,15 +181,15 @@
             android:paddingTop="14dp"
             android:paddingBottom="6dp">
 
-            <!-- 在一起天数 -->
             <androidx.cardview.widget.CardView
                 android:id="@+id/card_days"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginEnd="5dp"
-                app:cardCornerRadius="14dp"
-                app:cardElevation="3dp">
+                app:cardCornerRadius="@dimen/card_radius_unified"
+                app:cardElevation="@dimen/card_elevation_unified">
+
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -193,20 +197,41 @@
                     android:gravity="center"
                     android:orientation="vertical"
                     android:padding="14dp">
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="💕" android:textSize="22sp" />
-                    <TextView android:id="@+id/tv_stat_days" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="365" android:textColor="@color/pink_primary" android:textSize="26sp" android:textStyle="bold" android:layout_marginTop="2dp" />
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/home_days_label" android:textColor="@color/text_hint" android:textSize="11sp" android:layout_marginTop="2dp" />
+
+                    <androidx.appcompat.widget.AppCompatImageView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:src="@drawable/ic_love_heart"
+                        app:tint="@color/pink_primary" />
+
+                    <TextView
+                        android:id="@+id/tv_stat_days"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="365"
+                        android:textColor="@color/pink_primary"
+                        android:textSize="26sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="@string/home_days_label"
+                        android:textColor="@color/text_hint"
+                        android:textSize="11sp" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
-            <!-- 本月日记 -->
             <androidx.cardview.widget.CardView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginHorizontal="3dp"
-                app:cardCornerRadius="14dp"
-                app:cardElevation="3dp">
+                app:cardCornerRadius="@dimen/card_radius_unified"
+                app:cardElevation="@dimen/card_elevation_unified">
+
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -214,20 +239,41 @@
                     android:gravity="center"
                     android:orientation="vertical"
                     android:padding="14dp">
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="📖" android:textSize="22sp" />
-                    <TextView android:id="@+id/tv_stat_diary" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="0" android:textColor="#7E57C2" android:textSize="26sp" android:textStyle="bold" android:layout_marginTop="2dp" />
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/home_diary_count" android:textColor="@color/text_hint" android:textSize="11sp" android:layout_marginTop="2dp" />
+
+                    <androidx.appcompat.widget.AppCompatImageView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:src="@drawable/ic_nav_diary"
+                        app:tint="@color/diary_purple" />
+
+                    <TextView
+                        android:id="@+id/tv_stat_diary"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="0"
+                        android:textColor="@color/diary_purple"
+                        android:textSize="26sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="@string/home_diary_count"
+                        android:textColor="@color/text_hint"
+                        android:textSize="11sp" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
-            <!-- 本月记账 -->
             <androidx.cardview.widget.CardView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginStart="5dp"
-                app:cardCornerRadius="14dp"
-                app:cardElevation="3dp">
+                app:cardCornerRadius="@dimen/card_radius_unified"
+                app:cardElevation="@dimen/card_elevation_unified">
+
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -235,22 +281,42 @@
                     android:gravity="center"
                     android:orientation="vertical"
                     android:padding="14dp">
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="💰" android:textSize="22sp" />
-                    <TextView android:id="@+id/tv_stat_account" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="0" android:textColor="@color/income_green" android:textSize="26sp" android:textStyle="bold" android:layout_marginTop="2dp" />
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/home_account_count" android:textColor="@color/text_hint" android:textSize="11sp" android:layout_marginTop="2dp" />
+
+                    <androidx.appcompat.widget.AppCompatImageView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:src="@drawable/ic_nav_account"
+                        app:tint="@color/income_green" />
+
+                    <TextView
+                        android:id="@+id/tv_stat_account"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="0"
+                        android:textColor="@color/income_green"
+                        android:textSize="26sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="@string/home_account_count"
+                        android:textColor="@color/text_hint"
+                        android:textSize="11sp" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
         </LinearLayout>
 
-        <!-- 每日情话卡片 -->
         <androidx.cardview.widget.CardView
             android:id="@+id/card_daily_love"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="@dimen/page_margin"
             android:layout_marginTop="10dp"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="3dp">
+            app:cardCornerRadius="@dimen/card_radius_featured"
+            app:cardElevation="@dimen/card_elevation_featured">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -264,24 +330,25 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="💌 今日情话"
-                    android:textColor="#FFFFFF"
+                    android:text="今日情话"
+                    android:textColor="@color/text_white"
                     android:textSize="12sp"
                     android:textStyle="bold" />
 
-                <TextView
-                    android:id="@+id/tv_daily_love_emoji"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp"
-                    android:textSize="32sp" />
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:id="@+id/iv_daily_love_icon"
+                    android:layout_width="34dp"
+                    android:layout_height="34dp"
+                    android:layout_marginTop="8dp"
+                    android:src="@drawable/ic_love_heart"
+                    app:tint="@color/text_white" />
 
                 <TextView
                     android:id="@+id/tv_daily_love_title"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:textColor="#FFFFFF"
+                    android:layout_marginTop="6dp"
+                    android:textColor="@color/text_white"
                     android:textSize="16sp"
                     android:textStyle="bold" />
 
@@ -290,24 +357,23 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
+                    android:ellipsize="end"
                     android:gravity="center"
                     android:lineSpacingMultiplier="1.5"
                     android:maxLines="4"
-                    android:ellipsize="end"
-                    android:textColor="#EEFFFFFF"
+                    android:textColor="@color/white_alpha_ee"
                     android:textSize="13sp" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:text="点击查看完整情话 →"
-                    android:textColor="#BBFFFFFF"
+                    android:text="点击查看完整情话"
+                    android:textColor="@color/white_alpha_bb"
                     android:textSize="11sp" />
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
-        <!-- 快捷操作标题 -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -331,7 +397,6 @@
                 android:textStyle="bold" />
         </LinearLayout>
 
-        <!-- 快捷操作网格 -->
         <GridLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -340,16 +405,214 @@
             android:paddingBottom="4dp"
             android:useDefaultMargins="true">
 
-            <TextView android:id="@+id/btn_quick_account" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:background="@drawable/bg_home_quick_btn" android:elevation="2dp" android:gravity="center" android:padding="14dp" android:text="✏️\n记一笔" android:textColor="@color/text_primary" android:textSize="13sp" android:lineSpacingMultiplier="1.4" />
-            <TextView android:id="@+id/btn_quick_diary" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:background="@drawable/bg_home_quick_btn" android:elevation="2dp" android:gravity="center" android:padding="14dp" android:text="📝\n写日记" android:textColor="@color/text_primary" android:textSize="13sp" android:lineSpacingMultiplier="1.4" />
-            <TextView android:id="@+id/btn_quick_meeting" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:background="@drawable/bg_home_quick_btn" android:elevation="2dp" android:gravity="center" android:padding="14dp" android:text="🗓️\n记会议" android:textColor="@color/text_primary" android:textSize="13sp" android:lineSpacingMultiplier="1.4" />
-            <TextView android:id="@+id/btn_quick_stats" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:background="@drawable/bg_home_quick_btn" android:elevation="2dp" android:gravity="center" android:padding="14dp" android:text="📊\n统计" android:textColor="@color/text_primary" android:textSize="13sp" android:lineSpacingMultiplier="1.4" />
-            <TextView android:id="@+id/btn_quick_export" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:background="@drawable/bg_home_quick_btn" android:elevation="2dp" android:gravity="center" android:padding="14dp" android:text="📤\n导出Excel" android:textColor="@color/text_primary" android:textSize="13sp" android:lineSpacingMultiplier="1.4" />
-            <TextView android:id="@+id/btn_quick_settings" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_columnWeight="1" android:background="@drawable/bg_home_quick_btn" android:elevation="2dp" android:gravity="center" android:padding="14dp" android:text="⚙️\n设置" android:textColor="@color/text_primary" android:textSize="13sp" android:lineSpacingMultiplier="1.4" />
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/btn_quick_account"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_columnWeight="1"
+                app:cardBackgroundColor="@color/quick_btn_bg"
+                app:cardCornerRadius="@dimen/radius_md"
+                app:cardElevation="0dp"
+                app:strokeColor="@color/divider"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="12dp">
+
+                    <androidx.appcompat.widget.AppCompatImageView
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:src="@drawable/ic_nav_account"
+                        app:tint="@color/pink_primary" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="记一笔"
+                        android:textColor="@color/text_primary"
+                        android:textSize="13sp" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/btn_quick_diary"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_columnWeight="1"
+                app:cardBackgroundColor="@color/quick_btn_bg"
+                app:cardCornerRadius="@dimen/radius_md"
+                app:cardElevation="0dp"
+                app:strokeColor="@color/divider"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="12dp">
+
+                    <androidx.appcompat.widget.AppCompatImageView
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:src="@drawable/ic_nav_diary"
+                        app:tint="@color/diary_purple" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="写日记"
+                        android:textColor="@color/text_primary"
+                        android:textSize="13sp" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/btn_quick_meeting"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_columnWeight="1"
+                app:cardBackgroundColor="@color/quick_btn_bg"
+                app:cardCornerRadius="@dimen/radius_md"
+                app:cardElevation="0dp"
+                app:strokeColor="@color/divider"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="12dp">
+
+                    <androidx.appcompat.widget.AppCompatImageView
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:src="@drawable/ic_nav_meeting"
+                        app:tint="@color/pink_primary" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="记会议"
+                        android:textColor="@color/text_primary"
+                        android:textSize="13sp" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/btn_quick_stats"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_columnWeight="1"
+                app:cardBackgroundColor="@color/quick_btn_bg"
+                app:cardCornerRadius="@dimen/radius_md"
+                app:cardElevation="0dp"
+                app:strokeColor="@color/divider"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="12dp">
+
+                    <androidx.appcompat.widget.AppCompatImageView
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:src="@drawable/ic_stats"
+                        app:tint="@color/diary_purple" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="统计"
+                        android:textColor="@color/text_primary"
+                        android:textSize="13sp" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/btn_quick_export"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_columnWeight="1"
+                app:cardBackgroundColor="@color/quick_btn_bg"
+                app:cardCornerRadius="@dimen/radius_md"
+                app:cardElevation="0dp"
+                app:strokeColor="@color/divider"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="12dp">
+
+                    <androidx.appcompat.widget.AppCompatImageView
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:src="@drawable/ic_export"
+                        app:tint="@color/pink_primary" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="导出Excel"
+                        android:textColor="@color/text_primary"
+                        android:textSize="13sp" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/btn_quick_settings"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_columnWeight="1"
+                app:cardBackgroundColor="@color/quick_btn_bg"
+                app:cardCornerRadius="@dimen/radius_md"
+                app:cardElevation="0dp"
+                app:strokeColor="@color/divider"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="12dp">
+
+                    <androidx.appcompat.widget.AppCompatImageView
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:src="@drawable/ic_nav_settings"
+                        app:tint="@color/diary_purple" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="设置"
+                        android:textColor="@color/text_primary"
+                        android:textSize="13sp" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
         </GridLayout>
 
-        <!-- 底部留白 -->
-        <View android:layout_width="1dp" android:layout_height="16dp" />
+        <View
+            android:layout_width="1dp"
+            android:layout_height="16dp" />
 
     </LinearLayout>
 </ScrollView>
