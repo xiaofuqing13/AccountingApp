@@ -6,33 +6,73 @@
     android:layout_marginBottom="10dp">
 
     <LinearLayout
+        android:id="@+id/swipe_actions_container"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:layout_gravity="end"
         android:gravity="center_vertical"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:background="@drawable/bg_meeting_swipe_actions_surface"
+        android:paddingVertical="8dp">
 
-        <TextView
+        <LinearLayout
             android:id="@+id/btn_swipe_edit"
             android:layout_width="@dimen/meeting_swipe_action_width"
             android:layout_height="match_parent"
-            android:background="@color/income_green"
             android:gravity="center"
-            android:text="编辑"
-            android:textColor="@color/text_white"
-            android:textSize="12sp"
-            android:textStyle="bold" />
+            android:orientation="vertical">
 
-        <TextView
+            <FrameLayout
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="@drawable/bg_meeting_action_circle_edit">
+
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_action_edit" />
+            </FrameLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="编辑"
+                android:textColor="@color/text_secondary"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <LinearLayout
             android:id="@+id/btn_swipe_delete"
             android:layout_width="@dimen/meeting_swipe_action_width"
             android:layout_height="match_parent"
-            android:background="@color/expense_pink"
+            android:layout_marginStart="2dp"
             android:gravity="center"
-            android:text="删除"
-            android:textColor="@color/text_white"
-            android:textSize="12sp"
-            android:textStyle="bold" />
+            android:orientation="vertical">
+
+            <FrameLayout
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="@drawable/bg_meeting_action_circle_delete">
+
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_action_delete" />
+            </FrameLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="删除"
+                android:textColor="@color/text_secondary"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+        </LinearLayout>
     </LinearLayout>
 
     <com.google.android.material.card.MaterialCardView

@@ -59,8 +59,9 @@ class MeetingAdapter(
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.item_meeting, parent, false)
         if (swipeActionTotalWidthPx == 0) {
+            val betweenSpacingPx = (view.resources.displayMetrics.density * 2f).toInt()
             swipeActionTotalWidthPx =
-                view.resources.getDimensionPixelSize(R.dimen.meeting_swipe_action_width) * 2
+                view.resources.getDimensionPixelSize(R.dimen.meeting_swipe_action_width) * 2 + betweenSpacingPx
         }
         return ViewHolder(view)
     }
@@ -109,8 +110,8 @@ class MeetingAdapter(
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val cardForeground: MaterialCardView = view.findViewById(R.id.card_foreground)
-        val btnSwipeEdit: TextView = view.findViewById(R.id.btn_swipe_edit)
-        val btnSwipeDelete: TextView = view.findViewById(R.id.btn_swipe_delete)
+        val btnSwipeEdit: View = view.findViewById(R.id.btn_swipe_edit)
+        val btnSwipeDelete: View = view.findViewById(R.id.btn_swipe_delete)
         val tvDay: TextView = view.findViewById(R.id.tv_day)
         val tvMonth: TextView = view.findViewById(R.id.tv_month)
         val tvTitle: TextView = view.findViewById(R.id.tv_title)
