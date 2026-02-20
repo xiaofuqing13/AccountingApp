@@ -16,17 +16,54 @@ import com.loveapp.accountbook.util.EasterEggManager
 class DiaryAdapter(
     private var items: List<DiaryEntry> = emptyList(),
     private val onMoodClick: ((Int) -> Unit)? = null,
-    private val onItemClick: ((DiaryEntry) -> Unit)? = null,
-    private val onLongClick: ((DiaryEntry) -> Unit)? = null
+    private val onItemClick: ((DiaryEntry, Int) -> Unit)? = null,
+    private val onEditClick: ((DiaryEntry) -> Unit)? = null,
+    private val onDeleteClick: ((DiaryEntry) -> Unit)? = null
 ) : RecyclerView.Adapter<DiaryAdapter.ViewHolder>() {
+
+    private var swipeOpenPosition: Int = RecyclerView.NO_POSITION
+    private var swipeActionTotalWidthPx: Int = 0
 
     fun updateData(newItems: List<DiaryEntry>) {
         items = newItems
+        if (swipeOpenPosition !in items.indices) {
+            swipeOpenPosition = RecyclerView.NO_POSITION
+        }
         notifyDataSetChanged()
     }
 
+    fun getSwipeOpenPosition(): Int = swipeOpenPosition
+
+    fun setSwipeOpenPosition(position: Int, notify: Boolean = true) {
+        if (position == swipeOpenPosition) {
+            if (notify && position != RecyclerView.NO_POSITION) notifyItemChanged(position)
+            return
+        }
+        val previous = swipeOpenPosition
+        swipeOpenPosition = position
+        if (!notify) return
+        if (previous != RecyclerView.NO_POSITION) notifyItemChanged(previous)
+        if (position != RecyclerView.NO_POSITION) notifyItemChanged(position)
+    }
+
+    fun clearSwipeOpenPosition(position: Int = swipeOpenPosition, notify: Boolean = true) {
+        if (position == RecyclerView.NO_POSITION) return
+        if (position == swipeOpenPosition) {
+            swipeOpenPosition = RecyclerView.NO_POSITION
+        }
+        if (notify) notifyItemChanged(position)
+    }
+
+    fun isSwipeOpenAt(position: Int): Boolean = swipeOpenPosition == position
+
+    fun getSwipeActionTotalWidthPx(): Int = swipeActionTotalWidthPx
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.item_diary, parent, false)
+        if (swipeActionTotalWidthPx == 0) {
+            swipeActionTotalWidthPx =
+                view.resources.getDimensionPixelSize(R.dimen.diary_swipe_action_width) * 2
+        }
         return ViewHolder(view)
     }
 
@@ -46,9 +83,12 @@ class DiaryAdapter(
                 holder.tvLocationTag.visibility = View.GONE
             }
 
+            holder.cardForeground.translationX =
+                if (position == swipeOpenPosition) -getSwipeActionTotalWidthPx().toFloat() else 0f
             holder.ivMood.setOnClickListener { onMoodClick?.invoke(position) }
-            holder.cardForeground.setOnClickListener { onItemClick?.invoke(item) }
-            holder.cardForeground.setOnLongClickListener { onLongClick?.invoke(item); true }
+            holder.cardForeground.setOnClickListener { onItemClick?.invoke(item, position) }
+            holder.btnSwipeEdit.setOnClickListener { onEditClick?.invoke(item) }
+            holder.btnSwipeDelete.setOnClickListener { onDeleteClick?.invoke(item) }
         }.onFailure {
             holder.tvTitle.text = "日记加载异常"
             holder.tvPreview.text = "该条数据异常，请尝试编辑或删除"
@@ -58,7 +98,8 @@ class DiaryAdapter(
             holder.ivMood.setImageResource(R.drawable.ic_mood)
             holder.ivMood.setOnClickListener(null)
             holder.cardForeground.setOnClickListener(null)
-            holder.cardForeground.setOnLongClickListener(null)
+            holder.btnSwipeEdit.setOnClickListener(null)
+            holder.btnSwipeDelete.setOnClickListener(null)
         }
     }
 
@@ -68,6 +109,8 @@ class DiaryAdapter(
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val cardForeground: CardView = view.findViewById(R.id.card_foreground)
+        val btnSwipeEdit: TextView = view.findViewById(R.id.btn_swipe_edit)
+        val btnSwipeDelete: TextView = view.findViewById(R.id.btn_swipe_delete)
         val tvDate: TextView = view.findViewById(R.id.tv_date)
         val tvWeather: TextView = view.findViewById(R.id.tv_weather)
         val tvTitle: TextView = view.findViewById(R.id.tv_title)
@@ -75,4 +118,5 @@ class DiaryAdapter(
         val ivMood: ImageView = view.findViewById(R.id.iv_mood)
         val tvLocationTag: TextView = view.findViewById(R.id.tv_location_tag)
     }
+
 }

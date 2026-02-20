@@ -6,6 +6,7 @@ import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.animation.DecelerateInterpolator
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.ScrollView
@@ -16,8 +17,10 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.SimpleItemAnimator
 import com.loveapp.accountbook.R
 import com.loveapp.accountbook.data.model.DiaryEntry
 import com.loveapp.accountbook.ui.adapter.DiaryAdapter
@@ -43,16 +46,32 @@ class DiaryListFragment : Fragment() {
             onMoodClick = {
                 Toast.makeText(requireContext(), EasterEggManager.moodWords.random(), Toast.LENGTH_SHORT).show()
             },
-            onItemClick = { entry -> showDetailDialog(entry) },
-            onLongClick = { entry -> showEditDeleteDialog(entry) },
-            onEditClick = { entry -> showEditDialog(entry) },
-            onDeleteClick = { entry -> showDeleteConfirmDialog(entry) }
+            onItemClick = { entry, position ->
+                if (adapter.isSwipeOpenAt(position)) {
+                    view.findViewById<RecyclerView>(R.id.rv_diaries)?.let { closeSwipeAt(it, position) }
+                } else {
+                    showDetailDialog(entry)
+                }
+            },
+            onEditClick = { entry ->
+                val openPosition = adapter.getSwipeOpenPosition()
+                view.findViewById<RecyclerView>(R.id.rv_diaries)?.let { closeSwipeAt(it, openPosition) }
+                showEditDialog(entry)
+            },
+            onDeleteClick = { entry ->
+                val openPosition = adapter.getSwipeOpenPosition()
+                view.findViewById<RecyclerView>(R.id.rv_diaries)?.let { closeSwipeAt(it, openPosition) }
+                showDeleteConfirmDialog(entry)
+            }
         )
 
-        view.findViewById<RecyclerView>(R.id.rv_diaries).apply {
+        val rvDiaries = view.findViewById<RecyclerView>(R.id.rv_diaries)
+        rvDiaries.apply {
             layoutManager = LinearLayoutManager(context)
             adapter = this@DiaryListFragment.adapter
+            (itemAnimator as? SimpleItemAnimator)?.supportsChangeAnimations = false
         }
+        attachSwipeActions(rvDiaries)
 
         viewModel.diaries.observe(viewLifecycleOwner) { diaries ->
             adapter.updateData(diaries)
@@ -104,6 +123,122 @@ class DiaryListFragment : Fragment() {
         viewModel.loadDiaries()
     }
 
+    private fun attachSwipeActions(recyclerView: RecyclerView) {
+        val swipeCallback = object : ItemTouchHelper.SimpleCallback(
+            0,
+            ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT
+        ) {
+            override fun onMove(
+                recyclerView: RecyclerView,
+                viewHolder: RecyclerView.ViewHolder,
+                target: RecyclerView.ViewHolder
+            ): Boolean = false
+
+            override fun getSwipeThreshold(viewHolder: RecyclerView.ViewHolder): Float {
+                val itemWidth = viewHolder.itemView.width.takeIf { it > 0 } ?: return 0.2f
+                val actionWidth = adapter.getSwipeActionTotalWidthPx().toFloat()
+                return (actionWidth / itemWidth.toFloat()).coerceIn(0.12f, 0.4f)
+            }
+
+            override fun getSwipeEscapeVelocity(defaultValue: Float): Float = defaultValue * 1.5f
+
+            override fun onSelectedChanged(viewHolder: RecyclerView.ViewHolder?, actionState: Int) {
+                if (viewHolder is DiaryAdapter.ViewHolder) {
+                    getDefaultUIUtil().onSelected(viewHolder.cardForeground)
+                }
+            }
+
+            override fun clearView(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder) {
+                if (viewHolder is DiaryAdapter.ViewHolder) {
+                    getDefaultUIUtil().clearView(viewHolder.cardForeground)
+                } else {
+                    super.clearView(recyclerView, viewHolder)
+                }
+            }
+
+            override fun onChildDraw(
+                c: android.graphics.Canvas,
+                recyclerView: RecyclerView,
+                viewHolder: RecyclerView.ViewHolder,
+                dX: Float,
+                dY: Float,
+                actionState: Int,
+                isCurrentlyActive: Boolean
+            ) {
+                if (viewHolder !is DiaryAdapter.ViewHolder) {
+                    super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive)
+                    return
+                }
+                val maxSwipe = adapter.getSwipeActionTotalWidthPx().toFloat()
+                val clampedDx = dX.coerceIn(-maxSwipe, 0f)
+                getDefaultUIUtil().onDraw(
+                    c,
+                    recyclerView,
+                    viewHolder.cardForeground,
+                    clampedDx,
+                    dY,
+                    actionState,
+                    isCurrentlyActive
+                )
+            }
+
+            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
+                val position = viewHolder.bindingAdapterPosition
+                if (position == RecyclerView.NO_POSITION) return
+                if (direction == ItemTouchHelper.RIGHT) {
+                    closeSwipeAt(recyclerView, position)
+                } else {
+                    openSwipeAt(recyclerView, position)
+                }
+            }
+        }
+        ItemTouchHelper(swipeCallback).attachToRecyclerView(recyclerView)
+    }
+
+    private fun openSwipeAt(recyclerView: RecyclerView, position: Int) {
+        val maxSwipe = adapter.getSwipeActionTotalWidthPx().toFloat()
+        val previous = adapter.getSwipeOpenPosition()
+        if (previous != RecyclerView.NO_POSITION && previous != position) {
+            val previousHolder =
+                recyclerView.findViewHolderForAdapterPosition(previous) as? DiaryAdapter.ViewHolder
+            if (previousHolder != null) {
+                previousHolder.cardForeground.animate()
+                    .translationX(0f)
+                    .setDuration(150L)
+                    .setInterpolator(DecelerateInterpolator())
+                    .start()
+                adapter.clearSwipeOpenPosition(previous, notify = false)
+            } else {
+                adapter.clearSwipeOpenPosition(previous)
+            }
+        }
+        val holder = recyclerView.findViewHolderForAdapterPosition(position) as? DiaryAdapter.ViewHolder
+        if (holder != null) {
+            holder.cardForeground.animate()
+                .translationX(-maxSwipe)
+                .setDuration(150L)
+                .setInterpolator(DecelerateInterpolator())
+                .start()
+            adapter.setSwipeOpenPosition(position, notify = false)
+        } else {
+            adapter.setSwipeOpenPosition(position)
+        }
+    }
+
+    private fun closeSwipeAt(recyclerView: RecyclerView, position: Int) {
+        val holder = recyclerView.findViewHolderForAdapterPosition(position) as? DiaryAdapter.ViewHolder
+        if (holder != null) {
+            holder.cardForeground.animate()
+                .translationX(0f)
+                .setDuration(120L)
+                .setInterpolator(DecelerateInterpolator())
+                .start()
+            adapter.clearSwipeOpenPosition(position, notify = false)
+        } else {
+            adapter.clearSwipeOpenPosition(position)
+        }
+    }
+
     private fun showDetailDialog(entry: DiaryEntry) {
         val scrollView = ScrollView(requireContext())
         val container = LinearLayout(requireContext()).apply {
@@ -136,18 +271,6 @@ class DiaryListFragment : Fragment() {
             .setPositiveButton("\u5173\u95ED", null)
             .setNeutralButton("\u7F16\u8F91") { _, _ -> showEditDialog(entry) }
             .setNegativeButton("\u5220\u9664") { _, _ -> showDeleteConfirmDialog(entry) }
-            .show()
-    }
-
-    private fun showEditDeleteDialog(entry: DiaryEntry) {
-        AlertDialog.Builder(requireContext())
-            .setTitle(entry.title)
-            .setItems(arrayOf("\u7F16\u8F91", "\u5220\u9664")) { _, which ->
-                when (which) {
-                    0 -> showEditDialog(entry)
-                    1 -> showDeleteConfirmDialog(entry)
-                }
-            }
             .show()
     }
 

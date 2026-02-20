@@ -254,6 +254,9 @@ object DiaryContentRenderer {
         return content
             .replace(DiaryMediaManager.IMG_PATTERN, "[图片]")
             .replace(DiaryMediaManager.AUDIO_PATTERN, "[语音]")
+            .replace(Regex("\\s*\\n\\s*"), "\n")
+            .replace(Regex("\\n{2,}"), "\n")
+            .replace(Regex("[ \\t]{2,}"), " ")
             .trim()
     }
 }

@@ -38,6 +38,7 @@
 
     <dimen name="search_height">44dp</dimen>
     <dimen name="search_radius">22dp</dimen>
+    <dimen name="diary_swipe_action_width">68dp</dimen>
 
     <dimen name="list_item_margin_bottom">10dp</dimen>
     <dimen name="list_padding">12dp</dimen>
