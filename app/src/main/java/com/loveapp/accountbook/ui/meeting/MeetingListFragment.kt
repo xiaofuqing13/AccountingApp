@@ -119,10 +119,12 @@ class MeetingListFragment : Fragment() {
             override fun getSwipeThreshold(viewHolder: RecyclerView.ViewHolder): Float {
                 val itemWidth = viewHolder.itemView.width.takeIf { it > 0 } ?: return 0.2f
                 val actionWidth = adapter.getSwipeActionTotalWidthPx().toFloat()
-                return (actionWidth / itemWidth.toFloat()).coerceIn(0.12f, 0.4f)
+                return ((actionWidth / itemWidth.toFloat()) + 0.08f).coerceIn(0.30f, 0.55f)
             }
 
-            override fun getSwipeEscapeVelocity(defaultValue: Float): Float = defaultValue * 1.5f
+            override fun getSwipeEscapeVelocity(defaultValue: Float): Float = defaultValue * 2.2f
+
+            override fun getSwipeVelocityThreshold(defaultValue: Float): Float = defaultValue * 1.8f
 
             override fun onSelectedChanged(viewHolder: RecyclerView.ViewHolder?, actionState: Int) {
                 if (viewHolder is MeetingAdapter.ViewHolder) {
@@ -199,7 +201,7 @@ class MeetingListFragment : Fragment() {
     }
 
     private fun attachSwipeCloseFallback(recyclerView: RecyclerView) {
-        val closeTrigger = recyclerView.resources.displayMetrics.density * 4f
+        val closeTrigger = recyclerView.resources.displayMetrics.density * 12f
         var downX = 0f
         var downY = 0f
         recyclerView.addOnItemTouchListener(object : RecyclerView.SimpleOnItemTouchListener() {
