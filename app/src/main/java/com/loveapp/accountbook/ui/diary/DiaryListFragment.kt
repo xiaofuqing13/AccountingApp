@@ -218,7 +218,7 @@ class DiaryListFragment : Fragment() {
     }
 
     private fun attachSwipeCloseFallback(recyclerView: RecyclerView) {
-        val closeTrigger = recyclerView.resources.displayMetrics.density * 24f
+        val closeTrigger = recyclerView.resources.displayMetrics.density * 10f
         var downX = 0f
         var downY = 0f
         recyclerView.addOnItemTouchListener(object : RecyclerView.SimpleOnItemTouchListener() {
@@ -233,6 +233,15 @@ class DiaryListFragment : Fragment() {
                         val touchedPosition = touchedChild?.let { rv.getChildAdapterPosition(it) }
                         if (touchedPosition != openPosition) {
                             closeSwipeAt(rv, openPosition)
+                        }
+                    }
+
+                    MotionEvent.ACTION_MOVE -> {
+                        val dx = e.x - downX
+                        val dy = e.y - downY
+                        if (dx > closeTrigger && abs(dx) > abs(dy)) {
+                            closeSwipeAt(rv, openPosition)
+                            return true
                         }
                     }
 
