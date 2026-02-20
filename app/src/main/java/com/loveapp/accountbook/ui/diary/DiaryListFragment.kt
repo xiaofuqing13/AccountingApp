@@ -232,9 +232,10 @@ class DiaryListFragment : Fragment() {
     }
 
     private fun attachSwipeCloseFallback(recyclerView: RecyclerView) {
-        val closeTrigger = recyclerView.resources.displayMetrics.density * 3f
+        val closeTrigger = recyclerView.resources.displayMetrics.density * 10f
         var downX = 0f
         var downY = 0f
+        var downInActionArea = false
         recyclerView.addOnItemTouchListener(object : RecyclerView.SimpleOnItemTouchListener() {
             override fun onInterceptTouchEvent(rv: RecyclerView, e: MotionEvent): Boolean {
                 val openPosition = adapter.getSwipeOpenPosition()
@@ -254,6 +255,7 @@ class DiaryListFragment : Fragment() {
                                 rv.findViewHolderForAdapterPosition(openPosition) as? DiaryAdapter.ViewHolder
                             val itemRight = openHolder?.itemView?.right ?: (rv.width - rv.paddingRight)
                             val actionLeft = itemRight - actionWidth
+                            downInActionArea = e.x >= actionLeft
                             val isCardBodyArea = e.x < actionLeft
                             if (isCardBodyArea) {
                                 closeSwipeAt(rv, openPosition)
@@ -263,6 +265,7 @@ class DiaryListFragment : Fragment() {
                     }
 
                     MotionEvent.ACTION_MOVE -> {
+                        if (downInActionArea) return false
                         val dx = e.x - downX
                         val dy = e.y - downY
                         if (dx > closeTrigger && abs(dx) >= abs(dy) * 0.6f) {
@@ -272,6 +275,10 @@ class DiaryListFragment : Fragment() {
                     }
 
                     MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                        if (downInActionArea) {
+                            downInActionArea = false
+                            return false
+                        }
                         val dx = e.x - downX
                         val dy = e.y - downY
                         if (dx > closeTrigger && abs(dx) >= abs(dy) * 0.6f) {
