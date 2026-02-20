@@ -35,6 +35,7 @@ class DiaryListFragment : Fragment() {
     private lateinit var adapter: DiaryAdapter
     private lateinit var rvDiaries: RecyclerView
     private var lastErrorMessage: String? = null
+    private var forceCloseUntilNextClear = false
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -139,6 +140,11 @@ class DiaryListFragment : Fragment() {
             ): Boolean = false
 
             override fun getSwipeThreshold(viewHolder: RecyclerView.ViewHolder): Float {
+                val position = viewHolder.bindingAdapterPosition
+                if (position != RecyclerView.NO_POSITION && adapter.isSwipeOpenAt(position)) {
+                    // 已展开项右滑时降低触发门槛，确保容易收回。
+                    return 0.06f
+                }
                 val itemWidth = viewHolder.itemView.width.takeIf { it > 0 } ?: return 0.2f
                 val actionWidth = adapter.getSwipeActionTotalWidthPx().toFloat()
                 return (actionWidth / itemWidth.toFloat()).coerceIn(0.12f, 0.4f)
@@ -159,15 +165,25 @@ class DiaryListFragment : Fragment() {
                     if (position != RecyclerView.NO_POSITION) {
                         val maxSwipe = adapter.getSwipeActionTotalWidthPx().toFloat()
                         val currentTx = viewHolder.cardForeground.translationX
-                        if (currentTx <= -maxSwipe * 0.5f) {
+                        if (forceCloseUntilNextClear) {
+                            closeSwipeAt(recyclerView, position, force = false)
+                        } else if (adapter.isSwipeOpenAt(position)) {
+                            // 已展开状态下，除非几乎完全停留在展开位置，否则回收。
+                            if (currentTx <= -maxSwipe * 0.9f) {
+                                openSwipeAt(recyclerView, position)
+                            } else {
+                                closeSwipeAt(recyclerView, position, force = false)
+                            }
+                        } else if (currentTx <= -maxSwipe * 0.5f) {
                             openSwipeAt(recyclerView, position)
                         } else {
-                            closeSwipeAt(recyclerView, position)
+                            closeSwipeAt(recyclerView, position, force = false)
                         }
                     }
                 } else {
                     super.clearView(recyclerView, viewHolder)
                 }
+                forceCloseUntilNextClear = false
             }
 
             override fun onChildDraw(
@@ -295,7 +311,8 @@ class DiaryListFragment : Fragment() {
         }
     }
 
-    private fun closeSwipeAt(recyclerView: RecyclerView, position: Int) {
+    private fun closeSwipeAt(recyclerView: RecyclerView, position: Int, force: Boolean = true) {
+        if (force) forceCloseUntilNextClear = true
         val holder = recyclerView.findViewHolderForAdapterPosition(position) as? DiaryAdapter.ViewHolder
         if (holder != null) {
             holder.cardForeground.animate()
