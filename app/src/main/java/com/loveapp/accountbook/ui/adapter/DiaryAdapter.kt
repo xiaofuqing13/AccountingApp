@@ -3,18 +3,30 @@ package com.loveapp.accountbook.ui.adapter
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.TextView
+import androidx.cardview.widget.CardView
 import androidx.recyclerview.widget.RecyclerView
+import com.chauthai.swipereveallayout.SwipeRevealLayout
+import com.chauthai.swipereveallayout.ViewBinderHelper
 import com.loveapp.accountbook.R
 import com.loveapp.accountbook.data.model.DiaryEntry
 import com.loveapp.accountbook.util.DateUtils
+import com.loveapp.accountbook.util.DiaryContentRenderer
+import com.loveapp.accountbook.util.EasterEggManager
 
 class DiaryAdapter(
     private var items: List<DiaryEntry> = emptyList(),
     private val onMoodClick: ((Int) -> Unit)? = null,
     private val onItemClick: ((DiaryEntry) -> Unit)? = null,
-    private val onLongClick: ((DiaryEntry) -> Unit)? = null
+    private val onLongClick: ((DiaryEntry) -> Unit)? = null,
+    private val onEditClick: ((DiaryEntry) -> Unit)? = null,
+    private val onDeleteClick: ((DiaryEntry) -> Unit)? = null
 ) : RecyclerView.Adapter<DiaryAdapter.ViewHolder>() {
+
+    private val viewBinderHelper = ViewBinderHelper().apply {
+        setOpenOnlyOne(true)
+    }
 
     fun updateData(newItems: List<DiaryEntry>) {
         items = newItems
@@ -27,25 +39,62 @@ class DiaryAdapter(
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val item = items[position]
-        holder.tvDate.text = DateUtils.formatDateDisplay(item.date)
-        holder.tvWeather.text = item.weather
-        holder.tvTitle.text = item.title
-        holder.tvPreview.text = item.content
-        holder.tvMood.text = item.mood
+        runCatching {
+            val item = items[position]
+            holder.tvDate.text = DateUtils.formatDateDisplay(item.date)
+            holder.tvWeather.text = item.weather
+            holder.tvTitle.text = item.title
+            holder.tvPreview.text = DiaryContentRenderer.getPlainPreview(item.content)
+            holder.ivMood.setImageResource(EasterEggManager.iconResForMood(item.mood))
+            viewBinderHelper.bind(holder.swipeLayout, "diary_${item.rowIndex}")
 
-        holder.tvMood.setOnClickListener { onMoodClick?.invoke(position) }
-        holder.itemView.setOnClickListener { onItemClick?.invoke(item) }
-        holder.itemView.setOnLongClickListener { onLongClick?.invoke(item); true }
+            if (item.location.isNotEmpty()) {
+                holder.tvLocationTag.text = item.location
+                holder.tvLocationTag.visibility = View.VISIBLE
+            } else {
+                holder.tvLocationTag.visibility = View.GONE
+            }
+
+            holder.ivMood.setOnClickListener { onMoodClick?.invoke(position) }
+            holder.cardForeground.setOnClickListener { onItemClick?.invoke(item) }
+            holder.cardForeground.setOnLongClickListener { onLongClick?.invoke(item); true }
+            holder.btnEdit.setOnClickListener {
+                holder.swipeLayout.close(true)
+                onEditClick?.invoke(item)
+            }
+            holder.btnDelete.setOnClickListener {
+                holder.swipeLayout.close(true)
+                onDeleteClick?.invoke(item)
+            }
+        }.onFailure {
+            holder.tvTitle.text = "日记加载异常"
+            holder.tvPreview.text = "该条目数据异常，请编辑或删除"
+            holder.tvWeather.text = ""
+            holder.tvDate.text = ""
+            holder.tvLocationTag.visibility = View.GONE
+            holder.ivMood.setImageResource(R.drawable.ic_mood)
+            holder.ivMood.setOnClickListener(null)
+            holder.cardForeground.setOnClickListener(null)
+            holder.cardForeground.setOnLongClickListener(null)
+            holder.btnEdit.setOnClickListener(null)
+            holder.btnDelete.setOnClickListener(null)
+        }
     }
 
     override fun getItemCount() = items.size
 
+    fun getItem(position: Int): DiaryEntry = items[position]
+
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+        val swipeLayout: SwipeRevealLayout = view.findViewById(R.id.swipe_layout)
+        val cardForeground: CardView = view.findViewById(R.id.card_foreground)
+        val btnEdit: TextView = view.findViewById(R.id.btn_edit)
+        val btnDelete: TextView = view.findViewById(R.id.btn_delete)
         val tvDate: TextView = view.findViewById(R.id.tv_date)
         val tvWeather: TextView = view.findViewById(R.id.tv_weather)
         val tvTitle: TextView = view.findViewById(R.id.tv_title)
         val tvPreview: TextView = view.findViewById(R.id.tv_preview)
-        val tvMood: TextView = view.findViewById(R.id.tv_mood)
+        val ivMood: ImageView = view.findViewById(R.id.iv_mood)
+        val tvLocationTag: TextView = view.findViewById(R.id.tv_location_tag)
     }
 }

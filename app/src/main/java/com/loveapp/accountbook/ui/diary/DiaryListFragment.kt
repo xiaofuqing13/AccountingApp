@@ -7,8 +7,12 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
+import android.widget.LinearLayout
+import android.widget.ScrollView
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
@@ -17,26 +21,32 @@ import androidx.recyclerview.widget.RecyclerView
 import com.loveapp.accountbook.R
 import com.loveapp.accountbook.data.model.DiaryEntry
 import com.loveapp.accountbook.ui.adapter.DiaryAdapter
+import com.loveapp.accountbook.util.DiaryContentRenderer
 import com.loveapp.accountbook.util.EasterEggManager
 
 class DiaryListFragment : Fragment() {
 
     private val viewModel: DiaryViewModel by activityViewModels()
     private lateinit var adapter: DiaryAdapter
+    private var lastErrorMessage: String? = null
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
-        return inflater.inflate(R.layout.fragment_diary_list, container, false)
-    }
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View = inflater.inflate(R.layout.fragment_diary_list, container, false)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         adapter = DiaryAdapter(
-            onMoodClick = { _ ->
+            onMoodClick = {
                 Toast.makeText(requireContext(), EasterEggManager.moodWords.random(), Toast.LENGTH_SHORT).show()
             },
-          onItemClick = { entry -> showDetailDialog(entry) },
-            onLongClick = { entry -> showEditDeleteDialog(entry) }
+            onItemClick = { entry -> showDetailDialog(entry) },
+            onLongClick = { entry -> showEditDeleteDialog(entry) },
+            onEditClick = { entry -> showEditDialog(entry) },
+            onDeleteClick = { entry -> showDeleteConfirmDialog(entry) }
         )
 
         view.findViewById<RecyclerView>(R.id.rv_diaries).apply {
@@ -44,32 +54,41 @@ class DiaryListFragment : Fragment() {
             adapter = this@DiaryListFragment.adapter
         }
 
-        viewModel.diaries.observe(viewLifecycleOwner) {
-            adapter.updateData(it)
-            view.findViewById<View>(R.id.empty_view)?.visibility = if (it.isEmpty()) View.VISIBLE else View.GONE
-            view.findViewById<View>(R.id.rv_diaries)?.visibility = if (it.isEmpty()) View.GONE else View.VISIBLE
+        viewModel.diaries.observe(viewLifecycleOwner) { diaries ->
+            adapter.updateData(diaries)
+            view.findViewById<View>(R.id.empty_view)?.visibility =
+                if (diaries.isEmpty()) View.VISIBLE else View.GONE
+            view.findViewById<View>(R.id.rv_diaries)?.visibility =
+                if (diaries.isEmpty()) View.GONE else View.VISIBLE
+        }
+        viewModel.errorMessage.observe(viewLifecycleOwner) { message ->
+            if (!message.isNullOrBlank() && message != lastErrorMessage) {
+                lastErrorMessage = message
+                Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
+            }
         }
 
         val etSearch = view.findViewById<EditText>(R.id.et_search)
         etSearch.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) = Unit
+
             override fun afterTextChanged(s: Editable?) {
-                val text = s.toString()
+                val text = s?.toString().orEmpty()
                 when {
-                    text.contains("爱") || text.contains("love") || text.contains("喜欢") -> {
+                    text.contains("love", ignoreCase = true) -> {
                         EasterEggManager.showLovePopup(requireContext(), EasterEggManager.eggSearch)
                         etSearch.setText("")
                     }
-                    text.contains("想你") || text.contains("miss") -> {
+                    text.contains("miss", ignoreCase = true) -> {
                         EasterEggManager.showLovePopup(requireContext(), EasterEggManager.eggMiss)
                         etSearch.setText("")
                     }
-                    text.contains("永远") || text.contains("forever") -> {
+                    text.contains("forever", ignoreCase = true) -> {
                         EasterEggManager.showLovePopup(requireContext(), EasterEggManager.eggForever)
                         etSearch.setText("")
                     }
-                    text.contains("开心") || text.contains("快乐") || text.contains("happy") -> {
+                    text.contains("happy", ignoreCase = true) -> {
                         EasterEggManager.showLovePopup(requireContext(), EasterEggManager.eggHappy)
                         etSearch.setText("")
                     }
@@ -86,18 +105,43 @@ class DiaryListFragment : Fragment() {
     }
 
     private fun showDetailDialog(entry: DiaryEntry) {
+        val scrollView = ScrollView(requireContext())
+        val container = LinearLayout(requireContext()).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(48, 24, 48, 24)
+        }
+        scrollView.addView(container)
+
+        container.addView(TextView(requireContext()).apply {
+            text = "${entry.date}  ${entry.weather}"
+            textSize = 13f
+            setTextColor(ContextCompat.getColor(requireContext(), R.color.text_hint))
+            setPadding(0, 0, 0, 16)
+        })
+
+        if (entry.location.isNotEmpty()) {
+            container.addView(TextView(requireContext()).apply {
+                text = "位置：${entry.location}"
+                textSize = 13f
+                setTextColor(ContextCompat.getColor(requireContext(), R.color.text_hint))
+                setPadding(0, 0, 0, 16)
+            })
+        }
+
+        DiaryContentRenderer.renderToContainer(requireContext(), container, entry.content, clearFirst = false)
+
         AlertDialog.Builder(requireContext())
-            .setTitle("${entry.mood} ${entry.title}")
-            .setMessage("📅 ${entry.date}  ${entry.weather}\n\n${entry.content}")
-            .setPositiveButton("关闭", null)
-            .setNeutralButton("✏️ 编辑") { _, _ -> showEditDialog(entry) }
+            .setTitle(entry.title)
+            .setView(scrollView)
+            .setPositiveButton("\u5173\u95ED", null)
+            .setNeutralButton("\u7F16\u8F91") { _, _ -> showEditDialog(entry) }
             .show()
     }
 
     private fun showEditDeleteDialog(entry: DiaryEntry) {
         AlertDialog.Builder(requireContext())
             .setTitle(entry.title)
-            .setItems(arrayOf("✏️ 编辑", "🗑️ 删除")) { _, which ->
+            .setItems(arrayOf("\u7F16\u8F91", "\u5220\u9664")) { _, which ->
                 when (which) {
                     0 -> showEditDialog(entry)
                     1 -> showDeleteConfirmDialog(entry)
@@ -107,36 +151,24 @@ class DiaryListFragment : Fragment() {
     }
 
     private fun showEditDialog(entry: DiaryEntry) {
-        val etTitle = EditText(requireContext()).apply { setText(entry.title); hint = "标题" }
-        val etContent = EditText(requireContext()).apply {
-            setText(entry.content); hint = "内容"
-            minLines = 4; gravity = android.view.Gravity.TOP
+        val bundle = Bundle().apply {
+            putInt("entryRowIndex", entry.rowIndex)
+            putString("entryTitle", entry.title)
+            putString("entryContent", entry.content)
+            putString("entryWeather", entry.weather)
+            putString("entryMood", entry.mood)
+            putString("entryLocation", entry.location)
+            putString("entryDate", entry.date)
         }
-        val layout = android.widget.LinearLayout(requireContext()).apply {
-            orientation = android.widget.LinearLayout.VERTICAL
-            setPadding(48, 24, 48, 0)
-            addView(etTitle)
-            addView(etContent)
-        }
-        AlertDialog.Builder(requireContext())
-            .setTitle("编辑日记")
-            .setView(layout)
-            .setPositiveButton("保存") { _, _ ->
-                viewModel.updateDiary(entry.copy(
-                    title = etTitle.text.toString(),
-                    content = etContent.text.toString()
-                ))
-            }
-            .setNegativeButton("取消", null)
-            .show()
+        findNavController().navigate(R.id.action_diary_to_add, bundle)
     }
 
     private fun showDeleteConfirmDialog(entry: DiaryEntry) {
         AlertDialog.Builder(requireContext())
-            .setTitle("确认删除")
-            .setMessage("删除日记「${entry.title}」？")
-            .setPositiveButton("删除") { _, _ -> viewModel.deleteDiary(entry) }
-            .setNegativeButton("取消", null)
+            .setTitle("\u786E\u8BA4\u5220\u9664")
+            .setMessage("\u5220\u9664\u65E5\u8BB0\u300A${entry.title}\u300B\uFF1F")
+            .setPositiveButton("\u5220\u9664") { _, _ -> viewModel.deleteDiary(entry) }
+            .setNegativeButton("\u53D6\u6D88", null)
             .show()
     }
 }
