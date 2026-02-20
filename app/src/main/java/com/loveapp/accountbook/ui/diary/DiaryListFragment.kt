@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.animation.DecelerateInterpolator
@@ -26,12 +27,15 @@ import com.loveapp.accountbook.data.model.DiaryEntry
 import com.loveapp.accountbook.ui.adapter.DiaryAdapter
 import com.loveapp.accountbook.util.DiaryContentRenderer
 import com.loveapp.accountbook.util.EasterEggManager
+import kotlin.math.abs
 
 class DiaryListFragment : Fragment() {
 
     private val viewModel: DiaryViewModel by activityViewModels()
     private lateinit var adapter: DiaryAdapter
+    private lateinit var rvDiaries: RecyclerView
     private var lastErrorMessage: String? = null
+    private var lastSwipeDx = 0f
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -48,30 +52,31 @@ class DiaryListFragment : Fragment() {
             },
             onItemClick = { entry, position ->
                 if (adapter.isSwipeOpenAt(position)) {
-                    view.findViewById<RecyclerView>(R.id.rv_diaries)?.let { closeSwipeAt(it, position) }
+                    closeSwipeAt(rvDiaries, position)
                 } else {
                     showDetailDialog(entry)
                 }
             },
             onEditClick = { entry ->
                 val openPosition = adapter.getSwipeOpenPosition()
-                view.findViewById<RecyclerView>(R.id.rv_diaries)?.let { closeSwipeAt(it, openPosition) }
+                closeSwipeAt(rvDiaries, openPosition)
                 showEditDialog(entry)
             },
             onDeleteClick = { entry ->
                 val openPosition = adapter.getSwipeOpenPosition()
-                view.findViewById<RecyclerView>(R.id.rv_diaries)?.let { closeSwipeAt(it, openPosition) }
+                closeSwipeAt(rvDiaries, openPosition)
                 showDeleteConfirmDialog(entry)
             }
         )
 
-        val rvDiaries = view.findViewById<RecyclerView>(R.id.rv_diaries)
+        rvDiaries = view.findViewById(R.id.rv_diaries)
         rvDiaries.apply {
             layoutManager = LinearLayoutManager(context)
             adapter = this@DiaryListFragment.adapter
             (itemAnimator as? SimpleItemAnimator)?.supportsChangeAnimations = false
         }
         attachSwipeActions(rvDiaries)
+        attachSwipeCloseFallback(rvDiaries)
 
         viewModel.diaries.observe(viewLifecycleOwner) { diaries ->
             adapter.updateData(diaries)
@@ -151,9 +156,19 @@ class DiaryListFragment : Fragment() {
             override fun clearView(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder) {
                 if (viewHolder is DiaryAdapter.ViewHolder) {
                     getDefaultUIUtil().clearView(viewHolder.cardForeground)
+                    val position = viewHolder.bindingAdapterPosition
+                    val closeThreshold = recyclerView.resources.displayMetrics.density * 12f
+                    if (
+                        position != RecyclerView.NO_POSITION &&
+                        adapter.isSwipeOpenAt(position) &&
+                        lastSwipeDx > closeThreshold
+                    ) {
+                        closeSwipeAt(recyclerView, position)
+                    }
                 } else {
                     super.clearView(recyclerView, viewHolder)
                 }
+                lastSwipeDx = 0f
             }
 
             override fun onChildDraw(
@@ -169,8 +184,15 @@ class DiaryListFragment : Fragment() {
                     super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive)
                     return
                 }
+                lastSwipeDx = dX
                 val maxSwipe = adapter.getSwipeActionTotalWidthPx().toFloat()
-                val clampedDx = dX.coerceIn(-maxSwipe, 0f)
+                val position = viewHolder.bindingAdapterPosition
+                val isOpen = position != RecyclerView.NO_POSITION && adapter.isSwipeOpenAt(position)
+                val clampedDx = when {
+                    dX < 0f -> dX.coerceAtLeast(-maxSwipe)
+                    isOpen -> (-maxSwipe + dX).coerceIn(-maxSwipe, 0f)
+                    else -> 0f
+                }
                 getDefaultUIUtil().onDraw(
                     c,
                     recyclerView,
@@ -193,6 +215,39 @@ class DiaryListFragment : Fragment() {
             }
         }
         ItemTouchHelper(swipeCallback).attachToRecyclerView(recyclerView)
+    }
+
+    private fun attachSwipeCloseFallback(recyclerView: RecyclerView) {
+        val closeTrigger = recyclerView.resources.displayMetrics.density * 24f
+        var downX = 0f
+        var downY = 0f
+        recyclerView.addOnItemTouchListener(object : RecyclerView.SimpleOnItemTouchListener() {
+            override fun onInterceptTouchEvent(rv: RecyclerView, e: MotionEvent): Boolean {
+                val openPosition = adapter.getSwipeOpenPosition()
+                if (openPosition == RecyclerView.NO_POSITION) return false
+                when (e.actionMasked) {
+                    MotionEvent.ACTION_DOWN -> {
+                        downX = e.x
+                        downY = e.y
+                        val touchedChild = rv.findChildViewUnder(e.x, e.y)
+                        val touchedPosition = touchedChild?.let { rv.getChildAdapterPosition(it) }
+                        if (touchedPosition != openPosition) {
+                            closeSwipeAt(rv, openPosition)
+                        }
+                    }
+
+                    MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                        val dx = e.x - downX
+                        val dy = e.y - downY
+                        if (dx > closeTrigger && abs(dx) > abs(dy)) {
+                            closeSwipeAt(rv, openPosition)
+                            return true
+                        }
+                    }
+                }
+                return false
+            }
+        })
     }
 
     private fun openSwipeAt(recyclerView: RecyclerView, position: Int) {
