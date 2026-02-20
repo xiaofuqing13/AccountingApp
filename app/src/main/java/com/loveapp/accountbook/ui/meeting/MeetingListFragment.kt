@@ -23,7 +23,11 @@ class MeetingListFragment : Fragment() {
     private val viewModel: MeetingViewModel by activityViewModels()
     private lateinit var adapter: MeetingAdapter
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
         return inflater.inflate(R.layout.fragment_meeting_list, container, false)
     }
 
@@ -50,8 +54,7 @@ class MeetingListFragment : Fragment() {
             view.findViewById<View>(R.id.rv_meetings)?.visibility = if (it.isEmpty()) View.GONE else View.VISIBLE
         }
 
-        val etSearch = view.findViewById<EditText?>(R.id.et_search)
-        etSearch?.addTextChangedListener(object : TextWatcher {
+        view.findViewById<EditText?>(R.id.et_search)?.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
             override fun afterTextChanged(s: Editable?) {
@@ -60,7 +63,7 @@ class MeetingListFragment : Fragment() {
         })
 
         view.findViewById<View>(R.id.fab_add).setOnClickListener {
-   findNavController().navigate(R.id.action_meeting_to_add)
+            findNavController().navigate(R.id.action_meeting_to_add)
         }
 
         viewModel.loadMeetings()
@@ -69,7 +72,7 @@ class MeetingListFragment : Fragment() {
     private fun showEditDeleteDialog(entry: MeetingEntry) {
         AlertDialog.Builder(requireContext())
             .setTitle(entry.topic)
-            .setItems(arrayOf("✏️ 编辑主题", "🗑️ 删除")) { _, which ->
+            .setItems(arrayOf("编辑主题", "删除")) { _, which ->
                 when (which) {
                     0 -> showEditTopicDialog(entry)
                     1 -> showDeleteConfirmDialog(entry)

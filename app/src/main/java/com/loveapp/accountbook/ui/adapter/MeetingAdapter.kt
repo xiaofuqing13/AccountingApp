@@ -32,24 +32,28 @@ class MeetingAdapter(
         holder.tvDay.text = if (dateParts.size >= 3) dateParts[2].trimStart('0') else ""
         holder.tvMonth.text = if (dateParts.size >= 2) "${dateParts[1].trimStart('0')}月" else ""
         holder.tvTitle.text = item.topic
-        holder.tvTimeLocation.text = "⏰ ${item.startTime}-${item.endTime} | ❤️ ${item.location}"
-        holder.tvAttendees.text = "👥 ${item.attendees}"
+        holder.tvTimeLocation.text = "${item.startTime}-${item.endTime}  ·  ${item.location}"
+        holder.tvAttendees.text = "参会：${item.attendees}"
 
-        // 标签
         holder.chipTags.removeAllViews()
-        item.tags.split(",").filter { it.isNotBlank() }.forEach { tag ->
-            val chip = Chip(holder.itemView.context).apply {
-                text = tag.trim()
-                textSize = 10f
-                isClickable = false
-                chipMinHeight = 0f
+        item.tags.split(",")
+            .filter { it.isNotBlank() }
+            .forEach { tag ->
+                val chip = Chip(holder.itemView.context).apply {
+                    text = tag.trim()
+                    textSize = 10f
+                    isClickable = false
+                    isCheckable = false
+                    chipMinHeight = 0f
+                }
+                holder.chipTags.addView(chip)
             }
-            holder.chipTags.addView(chip)
-        }
 
-        // 彩蛋: 14号点击
         holder.tvDay.setOnClickListener { onDayClick?.invoke(item) }
-        holder.itemView.setOnLongClickListener { onLongClick?.invoke(item); true }
+        holder.itemView.setOnLongClickListener {
+            onLongClick?.invoke(item)
+            true
+        }
     }
 
     override fun getItemCount() = items.size

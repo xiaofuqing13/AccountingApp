@@ -10,7 +10,7 @@
         android:id="@+id/header"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:background="@drawable/bg_gradient_pink"
+        android:background="@drawable/bg_page_header"
         android:gravity="center_vertical"
         android:padding="@dimen/page_margin"
         app:layout_constraintTop_toTopOf="parent"
@@ -34,7 +34,7 @@
         android:layout_marginHorizontal="12dp"
         android:layout_marginTop="10dp"
         android:background="@drawable/bg_search_rounded"
-        android:drawableStart="@android:drawable/ic_menu_search"
+        android:drawableStart="@drawable/ic_search"
         android:drawablePadding="8dp"
         android:hint="@string/diary_search_hint"
         android:paddingHorizontal="14dp"
@@ -59,23 +59,23 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="📝"
-            android:textSize="48sp" />
+        <androidx.appcompat.widget.AppCompatImageView
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:src="@drawable/ic_nav_diary"
+            app:tint="@color/pink_soft" />
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
             android:gravity="center"
             android:lineSpacingMultiplier="1.5"
-            android:text="还没有日记哦~\n记录今天的心情吧"
+            android:text="还没有日记记录\n点击右下角按钮开始写第一篇吧"
             android:textColor="@color/text_hint"
             android:textSize="14sp" />
     </LinearLayout>
 
-    <!-- 列表 -->
+    <!-- 日记列表 -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rv_diaries"
         android:layout_width="0dp"
@@ -93,7 +93,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="@dimen/page_margin"
-        android:src="@android:drawable/ic_input_add"
+        android:src="@drawable/ic_add"
         android:backgroundTint="@color/pink_primary"
         app:tint="@color/text_white"
         app:elevation="6dp"

@@ -5,51 +5,48 @@
     android:layout_height="match_parent"
     android:background="@color/pink_bg">
 
-    <!-- 顶部标题栏 -->
     <LinearLayout
         android:id="@+id/header"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:background="@drawable/bg_gradient_pink"
+        android:background="@drawable/bg_page_header"
         android:gravity="center_vertical"
         android:orientation="horizontal"
         android:padding="@dimen/page_margin"
-        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        app:layout_constraintTop_toTopOf="parent">
 
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="@string/account_title"
+            android:text="记账"
             android:textColor="@color/text_white"
             android:textSize="@dimen/title_size"
             android:textStyle="bold" />
 
-        <TextView
+        <ImageButton
             android:id="@+id/btn_stats"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="?android:attr/selectableItemBackgroundBorderless"
             android:padding="4dp"
-            android:text="📊 统计"
-            android:textColor="@color/text_white"
-            android:textSize="@dimen/body_size" />
+            android:src="@drawable/ic_stats"
+            app:tint="@color/text_white" />
     </LinearLayout>
 
-    <!-- 月份切换 + 汇总 -->
     <androidx.cardview.widget.CardView
         android:id="@+id/month_summary"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="12dp"
         android:layout_marginTop="12dp"
-        app:cardCornerRadius="14dp"
-        app:cardElevation="2dp"
-        app:layout_constraintTop_toBottomOf="@id/header"
+        app:cardCornerRadius="@dimen/card_radius_unified"
+        app:cardElevation="@dimen/card_elevation_unified"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        app:layout_constraintTop_toBottomOf="@id/header">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -61,9 +58,34 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center">
-                <TextView android:id="@+id/btn_prev_month" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="◀" android:textSize="14sp" android:padding="8dp" android:background="?android:attr/selectableItemBackgroundBorderless" />
-                <TextView android:id="@+id/tv_month" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:textColor="@color/text_primary" android:textSize="15sp" android:textStyle="bold" />
-                <TextView android:id="@+id/btn_next_month" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="▶" android:textSize="14sp" android:padding="8dp" android:background="?android:attr/selectableItemBackgroundBorderless" />
+
+                <ImageButton
+                    android:id="@+id/btn_prev_month"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:padding="8dp"
+                    android:src="@drawable/ic_chevron_left"
+                    app:tint="@color/text_primary" />
+
+                <TextView
+                    android:id="@+id/tv_month"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:textColor="@color/text_primary"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+
+                <ImageButton
+                    android:id="@+id/btn_next_month"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:padding="8dp"
+                    android:src="@drawable/ic_chevron_right"
+                    app:tint="@color/text_primary" />
             </LinearLayout>
 
             <LinearLayout
@@ -72,25 +94,93 @@
                 android:layout_marginTop="10dp"
                 android:orientation="horizontal">
 
-                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:orientation="vertical" android:background="@drawable/bg_stat_card_income" android:padding="10dp" android:layout_marginEnd="4dp">
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="收入" android:textColor="@color/income_green" android:textSize="11sp" />
-                    <TextView android:id="@+id/tv_income" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="¥0" android:textColor="@color/income_green" android:textSize="17sp" android:textStyle="bold" android:layout_marginTop="2dp" />
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="4dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_stat_card_income"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="10dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="收入"
+                        android:textColor="@color/income_green"
+                        android:textSize="11sp" />
+
+                    <TextView
+                        android:id="@+id/tv_income"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="¥0"
+                        android:textColor="@color/income_green"
+                        android:textSize="17sp"
+                        android:textStyle="bold" />
                 </LinearLayout>
 
-                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:orientation="vertical" android:background="@drawable/bg_stat_card_expense" android:padding="10dp" android:layout_marginHorizontal="4dp">
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="支出" android:textColor="@color/expense_pink" android:textSize="11sp" />
-                    <TextView android:id="@+id/tv_expense" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="¥0" android:textColor="@color/expense_pink" android:textSize="17sp" android:textStyle="bold" android:layout_marginTop="2dp" />
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="4dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_stat_card_expense"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="10dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="支出"
+                        android:textColor="@color/expense_pink"
+                        android:textSize="11sp" />
+
+                    <TextView
+                        android:id="@+id/tv_expense"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="¥0"
+                        android:textColor="@color/expense_pink"
+                        android:textSize="17sp"
+                        android:textStyle="bold" />
                 </LinearLayout>
 
-                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:orientation="vertical" android:background="@drawable/bg_stat_card_balance" android:padding="10dp" android:layout_marginStart="4dp">
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="结余" android:textColor="@color/lavender" android:textSize="11sp" />
-                    <TextView android:id="@+id/tv_balance" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="¥0" android:textColor="@color/lavender" android:textSize="17sp" android:textStyle="bold" android:layout_marginTop="2dp" />
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_stat_card_balance"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    android:padding="10dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="结余"
+                        android:textColor="@color/lavender"
+                        android:textSize="11sp" />
+
+                    <TextView
+                        android:id="@+id/tv_balance"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="¥0"
+                        android:textColor="@color/lavender"
+                        android:textSize="17sp"
+                        android:textStyle="bold" />
                 </LinearLayout>
             </LinearLayout>
         </LinearLayout>
     </androidx.cardview.widget.CardView>
 
-    <!-- 搜索框 -->
     <EditText
         android:id="@+id/et_search"
         android:layout_width="0dp"
@@ -98,19 +188,18 @@
         android:layout_marginHorizontal="12dp"
         android:layout_marginTop="10dp"
         android:background="@drawable/bg_search_rounded"
-        android:drawableStart="@android:drawable/ic_menu_search"
+        android:drawableStart="@drawable/ic_search"
         android:drawablePadding="8dp"
-        android:hint="搜索分类或备注..."
-        android:textColorHint="@color/text_hint"
-        android:textColor="@color/text_primary"
-        android:paddingHorizontal="14dp"
-        android:textSize="13sp"
+        android:hint="搜索分类或备注"
         android:inputType="text"
-        app:layout_constraintTop_toBottomOf="@id/month_summary"
+        android:paddingHorizontal="14dp"
+        android:textColor="@color/text_primary"
+        android:textColorHint="@color/text_hint"
+        android:textSize="13sp"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintTop_toBottomOf="@id/month_summary" />
 
-    <!-- 空状态视图 -->
     <LinearLayout
         android:id="@+id/empty_view"
         android:layout_width="wrap_content"
@@ -118,50 +207,49 @@
         android:gravity="center"
         android:orientation="vertical"
         android:visibility="gone"
-        app:layout_constraintTop_toBottomOf="@id/et_search"
         app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        app:layout_constraintTop_toBottomOf="@id/et_search">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="💰"
-            android:textSize="48sp" />
+        <androidx.appcompat.widget.AppCompatImageView
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:src="@drawable/ic_nav_account"
+            app:tint="@color/pink_soft" />
+
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
             android:gravity="center"
             android:lineSpacingMultiplier="1.5"
-            android:text="还没有记账记录哦~\n点击 + 开始记录吧"
+            android:text="还没有记账记录\n点击右下角按钮添加第一笔"
             android:textColor="@color/text_hint"
             android:textSize="14sp" />
     </LinearLayout>
 
-    <!-- 列表 -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rv_accounts"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:padding="12dp"
         android:clipToPadding="false"
-        app:layout_constraintTop_toBottomOf="@id/et_search"
+        android:padding="12dp"
         app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintTop_toBottomOf="@id/et_search" />
 
-    <!-- FAB -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fab_add"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="@dimen/page_margin"
-        android:src="@android:drawable/ic_input_add"
         android:backgroundTint="@color/pink_primary"
-        app:tint="@color/text_white"
+        android:src="@drawable/ic_add"
         app:elevation="6dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:tint="@color/text_white" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
