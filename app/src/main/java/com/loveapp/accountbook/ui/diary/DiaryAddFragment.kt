@@ -9,6 +9,7 @@ import android.graphics.BitmapFactory
 import android.graphics.drawable.BitmapDrawable
 import android.location.Geocoder
 import android.location.LocationManager
+import android.media.AudioAttributes
 import android.media.MediaRecorder
 import android.provider.Settings
 import android.os.Bundle
@@ -458,13 +459,13 @@ class DiaryAddFragment : Fragment() {
     private fun renderMediaPreview(content: String) {
         contentPreview.removeAllViews()
         val ctx = requireContext()
-        val pattern = Regex("\\[(IMG|AUDIO):(.+?)]")
+        val pattern = Regex("\\[(IMG|AUDIO)\\s*:(.+?)]", RegexOption.IGNORE_CASE)
 
         pattern.findAll(content).forEach { match ->
-            when (match.groupValues[1]) {
+            when (match.groupValues[1].uppercase(Locale.ROOT)) {
                 "IMG" -> {
-                    val fileName = match.groupValues[2]
-                    val file = DiaryMediaManager.getImageFile(ctx, fileName)
+                    val fileName = DiaryMediaManager.normalizeStoredFileName(match.groupValues[2])
+                    val file = DiaryMediaManager.resolveImageFile(ctx, match.groupValues[2])
                     if (file.exists()) {
                         val maxH = (280 * ctx.resources.displayMetrics.density).toInt()
                         contentPreview.addView(ImageView(ctx).apply {
@@ -511,20 +512,12 @@ class DiaryAddFragment : Fragment() {
                     }
                 }
                 "AUDIO" -> {
-                    val fileName = match.groupValues[2]
-                    val file = DiaryMediaManager.getAudioFile(ctx, fileName)
+                    val fileName = DiaryMediaManager.normalizeStoredFileName(match.groupValues[2])
+                    val file = DiaryMediaManager.resolveAudioFile(ctx, match.groupValues[2])
                     if (file.exists()) {
                         contentPreview.addView(createAudioPlayerView(file))
                     } else {
-                        val placeholder = LayoutInflater.from(ctx).inflate(R.layout.view_audio_player, null)
-                        placeholder.layoutParams = LinearLayout.LayoutParams(
-                            LinearLayout.LayoutParams.MATCH_PARENT,
-                            LinearLayout.LayoutParams.WRAP_CONTENT
-                        )
-                        placeholder.alpha = 0.5f
-                        placeholder.isEnabled = false
-                        placeholder.findViewById<TextView>(R.id.tv_duration).text = "0:00"
-                        contentPreview.addView(placeholder)
+                        contentPreview.addView(createMissingAudioView(fileName))
                     }
                 }
             }
@@ -534,14 +527,14 @@ class DiaryAddFragment : Fragment() {
     private fun refreshMediaPreview() {
         contentPreview.removeAllViews()
         val ctx = requireContext()
-        val pattern = Regex("\\[(IMG|AUDIO):(.+?)]")
+        val pattern = Regex("\\[(IMG|AUDIO)\\s*:(.+?)]", RegexOption.IGNORE_CASE)
 
         existingMediaMarkers.forEach { marker ->
             val match = pattern.find(marker) ?: return@forEach
-            when (match.groupValues[1]) {
+            when (match.groupValues[1].uppercase(Locale.ROOT)) {
                 "IMG" -> {
-                    val fileName = match.groupValues[2]
-                    val file = DiaryMediaManager.getImageFile(ctx, fileName)
+                    val fileName = DiaryMediaManager.normalizeStoredFileName(match.groupValues[2])
+                    val file = DiaryMediaManager.resolveImageFile(ctx, match.groupValues[2])
                     if (file.exists()) {
                         val maxH = (280 * ctx.resources.displayMetrics.density).toInt()
                         contentPreview.addView(ImageView(ctx).apply {
@@ -563,23 +556,41 @@ class DiaryAddFragment : Fragment() {
                     }
                 }
                 "AUDIO" -> {
-                    val fileName = match.groupValues[2]
-                    val file = DiaryMediaManager.getAudioFile(ctx, fileName)
+                    val fileName = DiaryMediaManager.normalizeStoredFileName(match.groupValues[2])
+                    val file = DiaryMediaManager.resolveAudioFile(ctx, match.groupValues[2])
                     if (file.exists()) {
                         contentPreview.addView(createAudioPlayerView(file))
                     } else {
-                        val placeholder = LayoutInflater.from(ctx).inflate(R.layout.view_audio_player, null)
-                        placeholder.layoutParams = LinearLayout.LayoutParams(
-                            LinearLayout.LayoutParams.MATCH_PARENT,
-                            LinearLayout.LayoutParams.WRAP_CONTENT
-                        )
-                        placeholder.alpha = 0.5f
-                        placeholder.isEnabled = false
-                        placeholder.findViewById<TextView>(R.id.tv_duration).text = "0:00"
-                        contentPreview.addView(placeholder)
+                        contentPreview.addView(createMissingAudioView(fileName))
                     }
                 }
             }
+        }
+    }
+
+    private fun createMissingAudioView(fileName: String): View {
+        val ctx = requireContext()
+        return LinearLayout(ctx).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = android.view.Gravity.CENTER_VERTICAL
+            setPadding(24, 16, 24, 16)
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply { setMargins(0, 8, 0, 8) }
+            background = ContextCompat.getDrawable(ctx, R.drawable.bg_tag_chip)
+            alpha = 0.75f
+
+            addView(TextView(ctx).apply {
+                text = "\u26A0\uFE0F"
+                textSize = 18f
+                setPadding(4, 4, 12, 4)
+            })
+            addView(TextView(ctx).apply {
+                text = "语音文件不存在（$fileName）\n请重新录音后保存日记"
+                textSize = 12f
+                setTextColor(ContextCompat.getColor(ctx, R.color.text_secondary))
+            })
         }
     }
 
@@ -602,7 +613,11 @@ class DiaryAddFragment : Fragment() {
         // 获取音频时长
         try {
             val mp = android.media.MediaPlayer()
-            mp.setDataSource(file.absolutePath)
+            if (!DiaryMediaManager.configurePlayerDataSource(mp, file)) {
+                mp.release()
+                tvDuration.text = "不可播放"
+                return view
+            }
             mp.prepare()
             tvDuration.text = formatAudioDuration(mp.duration)
             mp.release()
@@ -629,7 +644,15 @@ class DiaryAddFragment : Fragment() {
             if (!playing) {
                 try {
                     mediaPlayer = android.media.MediaPlayer().apply {
-                        setDataSource(file.absolutePath)
+                        setAudioAttributes(
+                            AudioAttributes.Builder()
+                                .setUsage(AudioAttributes.USAGE_MEDIA)
+                                .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                                .build()
+                        )
+                        if (!DiaryMediaManager.configurePlayerDataSource(this, file)) {
+                            throw IllegalStateException("setDataSource failed")
+                        }
                         prepare()
                         start()
                         setOnCompletionListener {
@@ -646,9 +669,11 @@ class DiaryAddFragment : Fragment() {
                     btnPlayPause.setImageResource(R.drawable.ic_pause)
                     handler.post(updateRunnable)
                 } catch (_: Exception) {
+                    Toast.makeText(ctx, "语音播放失败，请重新录音", Toast.LENGTH_SHORT).show()
                     mediaPlayer?.release()
                     mediaPlayer = null
                     playing = false
+                    btnPlayPause.setImageResource(R.drawable.ic_play)
                 }
             } else {
                 handler.removeCallbacks(updateRunnable)

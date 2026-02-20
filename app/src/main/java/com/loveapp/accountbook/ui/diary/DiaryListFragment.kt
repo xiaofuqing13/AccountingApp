@@ -135,6 +135,7 @@ class DiaryListFragment : Fragment() {
             .setView(scrollView)
             .setPositiveButton("\u5173\u95ED", null)
             .setNeutralButton("\u7F16\u8F91") { _, _ -> showEditDialog(entry) }
+            .setNegativeButton("\u5220\u9664") { _, _ -> showDeleteConfirmDialog(entry) }
             .show()
     }
 

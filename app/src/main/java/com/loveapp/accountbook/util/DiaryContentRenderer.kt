@@ -1,21 +1,24 @@
 package com.loveapp.accountbook.util
 
 import android.content.Context
+import android.media.AudioAttributes
 import android.media.MediaPlayer
 import android.view.Gravity
 import android.view.View
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.core.content.ContextCompat
 import coil.load
 import com.loveapp.accountbook.R
+import java.util.Locale
 
 object DiaryContentRenderer {
 
     fun renderToContainer(context: Context, container: LinearLayout, content: String, clearFirst: Boolean = true) {
         if (clearFirst) container.removeAllViews()
-        val pattern = Regex("\\[(IMG|AUDIO):(.+?)]")
+        val pattern = Regex("\\[(IMG|AUDIO)\\s*:(.+?)]", RegexOption.IGNORE_CASE)
         var lastEnd = 0
 
         pattern.findAll(content).forEach { match ->
@@ -32,10 +35,10 @@ object DiaryContentRenderer {
                 }
             }
 
-            when (match.groupValues[1]) {
+            when (match.groupValues[1].uppercase(Locale.ROOT)) {
                 "IMG" -> {
-                    val fileName = match.groupValues[2]
-                    val file = DiaryMediaManager.getImageFile(context, fileName)
+                    val fileName = DiaryMediaManager.normalizeStoredFileName(match.groupValues[2])
+                    val file = DiaryMediaManager.resolveImageFile(context, match.groupValues[2])
                     if (file.exists()) {
                         val maxH = (300 * context.resources.displayMetrics.density).toInt()
                         container.addView(ImageView(context).apply {
@@ -82,8 +85,8 @@ object DiaryContentRenderer {
                     }
                 }
                 "AUDIO" -> {
-                    val fileName = match.groupValues[2]
-                    val file = DiaryMediaManager.getAudioFile(context, fileName)
+                    val fileName = DiaryMediaManager.normalizeStoredFileName(match.groupValues[2])
+                    val file = DiaryMediaManager.resolveAudioFile(context, match.groupValues[2])
                     if (file.exists()) {
                         container.addView(createAudioPlayerView(context, file))
                     } else {
@@ -103,7 +106,7 @@ object DiaryContentRenderer {
                                 setPadding(8, 8, 16, 8)
                             })
                             addView(TextView(context).apply {
-                                text = "\u8BED\u97F3\u6587\u4EF6"
+                                text = "\u8BED\u97F3\u6587\u4EF6\u4E0D\u5B58\u5728\uFF08$fileName\uFF09"
                                 textSize = 14f
                                 setTextColor(ContextCompat.getColor(context, R.color.text_secondary))
                             })
@@ -145,7 +148,11 @@ object DiaryContentRenderer {
         // 获取音频时长
         try {
             val mp = MediaPlayer()
-            mp.setDataSource(file.absolutePath)
+            if (!DiaryMediaManager.configurePlayerDataSource(mp, file)) {
+                mp.release()
+                tvDuration.text = "不可播放"
+                return view
+            }
             mp.prepare()
             val totalMs = mp.duration
             tvDuration.text = formatDuration(totalMs)
@@ -173,7 +180,15 @@ object DiaryContentRenderer {
             if (!playing) {
                 try {
                     mediaPlayer = MediaPlayer().apply {
-                        setDataSource(file.absolutePath)
+                        setAudioAttributes(
+                            AudioAttributes.Builder()
+                                .setUsage(AudioAttributes.USAGE_MEDIA)
+                                .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                                .build()
+                        )
+                        if (!DiaryMediaManager.configurePlayerDataSource(this, file)) {
+                            throw IllegalStateException("setDataSource failed")
+                        }
                         prepare()
                         start()
                         setOnCompletionListener {
@@ -190,9 +205,11 @@ object DiaryContentRenderer {
                     btnPlayPause.setImageResource(R.drawable.ic_pause)
                     handler.post(updateRunnable)
                 } catch (_: Exception) {
+                    Toast.makeText(context, "语音播放失败，请重新录音", Toast.LENGTH_SHORT).show()
                     mediaPlayer?.release()
                     mediaPlayer = null
                     playing = false
+                    btnPlayPause.setImageResource(R.drawable.ic_play)
                 }
             } else {
                 handler.removeCallbacks(updateRunnable)
