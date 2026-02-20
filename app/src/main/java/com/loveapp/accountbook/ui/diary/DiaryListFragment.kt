@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.LayoutInflater
-import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.animation.DecelerateInterpolator
@@ -27,7 +26,6 @@ import com.loveapp.accountbook.data.model.DiaryEntry
 import com.loveapp.accountbook.ui.adapter.DiaryAdapter
 import com.loveapp.accountbook.util.DiaryContentRenderer
 import com.loveapp.accountbook.util.EasterEggManager
-import kotlin.math.abs
 
 class DiaryListFragment : Fragment() {
 
@@ -35,7 +33,6 @@ class DiaryListFragment : Fragment() {
     private lateinit var adapter: DiaryAdapter
     private lateinit var rvDiaries: RecyclerView
     private var lastErrorMessage: String? = null
-    private var forceCloseUntilNextClear = false
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -76,7 +73,6 @@ class DiaryListFragment : Fragment() {
             (itemAnimator as? SimpleItemAnimator)?.supportsChangeAnimations = false
         }
         attachSwipeActions(rvDiaries)
-        attachSwipeCloseFallback(rvDiaries)
 
         viewModel.diaries.observe(viewLifecycleOwner) { diaries ->
             adapter.updateData(diaries)
@@ -140,14 +136,8 @@ class DiaryListFragment : Fragment() {
             ): Boolean = false
 
             override fun getSwipeThreshold(viewHolder: RecyclerView.ViewHolder): Float {
-                val position = viewHolder.bindingAdapterPosition
-                if (position != RecyclerView.NO_POSITION && adapter.isSwipeOpenAt(position)) {
-                    // 已展开项右滑时降低触发门槛，确保容易收回。
-                    return 0.06f
-                }
-                val itemWidth = viewHolder.itemView.width.takeIf { it > 0 } ?: return 0.2f
-                val actionWidth = adapter.getSwipeActionTotalWidthPx().toFloat()
-                return (actionWidth / itemWidth.toFloat()).coerceIn(0.12f, 0.4f)
+                // Use clearView snap logic for open/close; avoid onSwiped state machine side effects.
+                return 1f
             }
 
             override fun getSwipeEscapeVelocity(defaultValue: Float): Float = defaultValue * 1.5f
@@ -165,25 +155,21 @@ class DiaryListFragment : Fragment() {
                     if (position != RecyclerView.NO_POSITION) {
                         val maxSwipe = adapter.getSwipeActionTotalWidthPx().toFloat()
                         val currentTx = viewHolder.cardForeground.translationX
-                        if (forceCloseUntilNextClear) {
-                            closeSwipeAt(recyclerView, position, force = false)
-                        } else if (adapter.isSwipeOpenAt(position)) {
-                            // 已展开状态下，除非几乎完全停留在展开位置，否则回收。
-                            if (currentTx <= -maxSwipe * 0.9f) {
+                        if (adapter.isSwipeOpenAt(position)) {
+                            if (currentTx <= -maxSwipe * 0.8f) {
                                 openSwipeAt(recyclerView, position)
                             } else {
-                                closeSwipeAt(recyclerView, position, force = false)
+                                closeSwipeAt(recyclerView, position)
                             }
                         } else if (currentTx <= -maxSwipe * 0.5f) {
                             openSwipeAt(recyclerView, position)
                         } else {
-                            closeSwipeAt(recyclerView, position, force = false)
+                            closeSwipeAt(recyclerView, position)
                         }
                     }
                 } else {
                     super.clearView(recyclerView, viewHolder)
                 }
-                forceCloseUntilNextClear = false
             }
 
             override fun onChildDraw(
@@ -219,77 +205,10 @@ class DiaryListFragment : Fragment() {
             }
 
             override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
-                val position = viewHolder.bindingAdapterPosition
-                if (position == RecyclerView.NO_POSITION) return
-                if (direction == ItemTouchHelper.RIGHT) {
-                    closeSwipeAt(recyclerView, position)
-                } else {
-                    openSwipeAt(recyclerView, position)
-                }
+                // No-op: with threshold 1f we use clearView to decide final state.
             }
         }
         ItemTouchHelper(swipeCallback).attachToRecyclerView(recyclerView)
-    }
-
-    private fun attachSwipeCloseFallback(recyclerView: RecyclerView) {
-        val closeTrigger = recyclerView.resources.displayMetrics.density * 10f
-        var downX = 0f
-        var downY = 0f
-        var downInActionArea = false
-        recyclerView.addOnItemTouchListener(object : RecyclerView.SimpleOnItemTouchListener() {
-            override fun onInterceptTouchEvent(rv: RecyclerView, e: MotionEvent): Boolean {
-                val openPosition = adapter.getSwipeOpenPosition()
-                if (openPosition == RecyclerView.NO_POSITION) return false
-                val actionWidth = adapter.getSwipeActionTotalWidthPx().toFloat()
-                when (e.actionMasked) {
-                    MotionEvent.ACTION_DOWN -> {
-                        downX = e.x
-                        downY = e.y
-                        val touchedChild = rv.findChildViewUnder(e.x, e.y)
-                        val touchedPosition = touchedChild?.let { rv.getChildAdapterPosition(it) }
-                        if (touchedPosition != openPosition) {
-                            closeSwipeAt(rv, openPosition)
-                        } else {
-                            // Use opened item's real bounds to avoid touch misclassification on padded RecyclerView.
-                            val openHolder =
-                                rv.findViewHolderForAdapterPosition(openPosition) as? DiaryAdapter.ViewHolder
-                            val itemRight = openHolder?.itemView?.right ?: (rv.width - rv.paddingRight)
-                            val actionLeft = itemRight - actionWidth
-                            downInActionArea = e.x >= actionLeft
-                            val isCardBodyArea = e.x < actionLeft
-                            if (isCardBodyArea) {
-                                closeSwipeAt(rv, openPosition)
-                                return true
-                            }
-                        }
-                    }
-
-                    MotionEvent.ACTION_MOVE -> {
-                        if (downInActionArea) return false
-                        val dx = e.x - downX
-                        val dy = e.y - downY
-                        if (dx > closeTrigger && abs(dx) >= abs(dy) * 0.6f) {
-                            closeSwipeAt(rv, openPosition)
-                            return true
-                        }
-                    }
-
-                    MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                        if (downInActionArea) {
-                            downInActionArea = false
-                            return false
-                        }
-                        val dx = e.x - downX
-                        val dy = e.y - downY
-                        if (dx > closeTrigger && abs(dx) >= abs(dy) * 0.6f) {
-                            closeSwipeAt(rv, openPosition)
-                            return true
-                        }
-                    }
-                }
-                return false
-            }
-        })
     }
 
     private fun openSwipeAt(recyclerView: RecyclerView, position: Int) {
@@ -322,8 +241,7 @@ class DiaryListFragment : Fragment() {
         }
     }
 
-    private fun closeSwipeAt(recyclerView: RecyclerView, position: Int, force: Boolean = true) {
-        if (force) forceCloseUntilNextClear = true
+    private fun closeSwipeAt(recyclerView: RecyclerView, position: Int) {
         val holder = recyclerView.findViewHolderForAdapterPosition(position) as? DiaryAdapter.ViewHolder
         if (holder != null) {
             holder.cardForeground.animate()
