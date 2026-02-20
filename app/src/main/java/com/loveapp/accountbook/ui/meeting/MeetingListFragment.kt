@@ -35,6 +35,7 @@ class MeetingListFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         adapter = MeetingAdapter(
+            onItemClick = { meeting -> showMeetingDetailDialog(meeting) },
             onDayClick = { meeting ->
                 if (meeting.date.endsWith("-14")) {
                     EasterEggManager.showLovePopup(requireContext(), EasterEggManager.egg214)
@@ -67,6 +68,27 @@ class MeetingListFragment : Fragment() {
         }
 
         viewModel.loadMeetings()
+    }
+
+    private fun showMeetingDetailDialog(entry: MeetingEntry) {
+        val details = buildString {
+            appendLine("日期：${entry.date}")
+            appendLine("时间：${entry.startTime} - ${entry.endTime}")
+            appendLine("地点：${entry.location.ifBlank { "未填写" }}")
+            appendLine("参会人：${entry.attendees.ifBlank { "未填写" }}")
+            appendLine("标签：${entry.tags.ifBlank { "无" }}")
+            appendLine()
+            appendLine("会议内容：")
+            appendLine(entry.content.ifBlank { "未填写" })
+            appendLine()
+            appendLine("待办事项：")
+            append(entry.todoItems.ifBlank { "未填写" })
+        }
+        AlertDialog.Builder(requireContext())
+            .setTitle(entry.topic.ifBlank { "会议详情" })
+            .setMessage(details)
+            .setPositiveButton("确定", null)
+            .show()
     }
 
     private fun showEditDeleteDialog(entry: MeetingEntry) {

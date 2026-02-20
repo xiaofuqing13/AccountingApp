@@ -12,6 +12,7 @@ import com.loveapp.accountbook.data.model.MeetingEntry
 
 class MeetingAdapter(
     private var items: List<MeetingEntry> = emptyList(),
+    private val onItemClick: ((MeetingEntry) -> Unit)? = null,
     private val onDayClick: ((MeetingEntry) -> Unit)? = null,
     private val onLongClick: ((MeetingEntry) -> Unit)? = null
 ) : RecyclerView.Adapter<MeetingAdapter.ViewHolder>() {
@@ -49,7 +50,15 @@ class MeetingAdapter(
                 holder.chipTags.addView(chip)
             }
 
-        holder.tvDay.setOnClickListener { onDayClick?.invoke(item) }
+        val clickAction = View.OnClickListener {
+            if (onItemClick != null) {
+                onItemClick.invoke(item)
+            } else {
+                onDayClick?.invoke(item)
+            }
+        }
+        holder.itemView.setOnClickListener(clickAction)
+        holder.tvDay.setOnClickListener(clickAction)
         holder.itemView.setOnLongClickListener {
             onLongClick?.invoke(item)
             true
