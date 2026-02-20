@@ -116,7 +116,7 @@
                 android:layout_gravity="center"
                 android:layout_marginTop="24dp"
                 android:text="— 💌 用心写给你 —"
-                android:textColor="#CCCCCC"
+                android:textColor="@color/footer_hint"
                 android:textSize="11sp" />
 
             <View android:layout_width="1dp" android:layout_height="40dp" />
