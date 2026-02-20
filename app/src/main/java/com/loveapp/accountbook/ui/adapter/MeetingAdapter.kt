@@ -60,7 +60,7 @@ class MeetingAdapter(
         val view = LayoutInflater.from(parent.context).inflate(R.layout.item_meeting, parent, false)
         if (swipeActionTotalWidthPx == 0) {
             swipeActionTotalWidthPx =
-                view.resources.getDimensionPixelSize(R.dimen.diary_swipe_action_width) * 2
+                view.resources.getDimensionPixelSize(R.dimen.meeting_swipe_action_width)
         }
         return ViewHolder(view)
     }
