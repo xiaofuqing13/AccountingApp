@@ -253,21 +253,26 @@ class DiaryListFragment : Fragment() {
 
                         if (touchedPosition != openPosition) {
                             closeSwipeAt(rv, openPosition)
+                            return false
                         } else {
                             val actionWidth = adapter.getSwipeActionTotalWidthPx().toFloat()
                             val localX = e.x - touchedChild.left
                             downActionZoneStartX = touchedChild.width - actionWidth
                             downInActionArea = localX >= downActionZoneStartX
-                            val isCardBodyArea = !downInActionArea
-                            if (isCardBodyArea) {
+
+                            if (downInActionArea) {
+                                // 点击操作区域，拦截事件以接收ACTION_UP
+                                return true
+                            } else {
+                                // 点击卡片主体，关闭滑动
                                 closeSwipeAt(rv, openPosition)
                                 return true
                             }
                         }
                     }
 
-                    MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                        if (downInActionArea && downTargetPosition == openPosition && e.actionMasked == MotionEvent.ACTION_UP) {
+                    MotionEvent.ACTION_UP -> {
+                        if (downInActionArea && downTargetPosition == openPosition) {
                             val touchedChild = rv.findChildViewUnder(e.x, e.y)
                             val touchedPosition = touchedChild?.let { rv.getChildAdapterPosition(it) }
                             val moveX = abs(e.x - downX)
@@ -292,13 +297,20 @@ class DiaryListFragment : Fragment() {
                                     return true
                                 }
                             }
+                            // 移动超出阈值或位置不对，只关闭滑动
+                            closeSwipeAt(rv, openPosition)
                         }
                         val dx = e.x - downX
-                        val dy = e.y - downY
-                        if (dx > closeTrigger && abs(dx) >= abs(dy) * 0.6f) {
+                        if (dx > closeTrigger) {
                             closeSwipeAt(rv, openPosition)
-                            return true
                         }
+                        return true
+                    }
+
+                    MotionEvent.ACTION_CANCEL -> {
+                        downInActionArea = false
+                        downTargetPosition = RecyclerView.NO_POSITION
+                        return true
                     }
                 }
                 return false
