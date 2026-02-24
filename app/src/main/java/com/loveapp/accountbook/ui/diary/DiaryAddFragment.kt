@@ -717,6 +717,7 @@ class DiaryAddFragment : Fragment() {
         val btnPlayPause = view.findViewById<ImageView>(R.id.btn_play_pause)
         val seekBar = view.findViewById<android.widget.SeekBar>(R.id.seek_bar)
         val tvDuration = view.findViewById<TextView>(R.id.tv_duration)
+        val voiceWave = view.findViewById<VoiceWaveView>(R.id.voice_wave)
 
         var mediaPlayer: android.media.MediaPlayer? = null
         var playing = false
@@ -770,6 +771,7 @@ class DiaryAddFragment : Fragment() {
                         setOnCompletionListener {
                             playing = false
                             btnPlayPause.setImageResource(R.drawable.ic_play)
+                            voiceWave.stopPlayingAnimation()
                             seekBar.progress = 0
                             tvDuration.text = formatAudioDuration(it.duration)
                             handler.removeCallbacks(updateRunnable)
@@ -779,6 +781,7 @@ class DiaryAddFragment : Fragment() {
                     }
                     playing = true
                     btnPlayPause.setImageResource(R.drawable.ic_pause)
+                    voiceWave.startPlayingAnimation()
                     handler.post(updateRunnable)
                 } catch (_: Exception) {
                     Toast.makeText(ctx, "语音播放失败，请重新录音", Toast.LENGTH_SHORT).show()
@@ -793,6 +796,7 @@ class DiaryAddFragment : Fragment() {
                 mediaPlayer = null
                 playing = false
                 btnPlayPause.setImageResource(R.drawable.ic_play)
+                voiceWave.stopPlayingAnimation()
             }
         }
         btnPlayPause.setOnClickListener { togglePlayPause() }
@@ -1182,11 +1186,12 @@ class DiaryAddFragment : Fragment() {
         val ctx = requireContext()
         val prefs = ctx.getSharedPreferences("diary_tags", Context.MODE_PRIVATE)
         val customTags = prefs.getStringSet("custom_tags", emptySet())!!.toList().sorted()
+        val hiddenTags = prefs.getStringSet("hidden_builtin_tags", emptySet())!!
         val tempSelected = selectedTags.toMutableSet()
 
-        // 收集所有标签名用于最终保存顺序
+        // 收集所有可见标签名
         val allTagNames = mutableListOf<String>()
-        tagCategories.values.forEach { allTagNames.addAll(it) }
+        tagCategories.values.forEach { tags -> allTagNames.addAll(tags.filter { it !in hiddenTags }) }
         if (customTags.isNotEmpty()) allTagNames.addAll(customTags)
         val distinctNames = allTagNames.distinct()
 
@@ -1266,9 +1271,10 @@ class DiaryAddFragment : Fragment() {
             container.addView(chipGroup)
         }
 
-        // 按分类添加内置标签
+        // 按分类添加内置标签（过滤已隐藏的）
         for ((category, tags) in tagCategories) {
-            addCategorySection(category, tags)
+            val visibleTags = tags.filter { it !in hiddenTags }
+            if (visibleTags.isNotEmpty()) addCategorySection(category, visibleTags)
         }
 
         // 自定义标签分类
@@ -1288,14 +1294,10 @@ class DiaryAddFragment : Fragment() {
         }
 
         val btnManage = sheetView.findViewById<TextView>(R.id.btn_manage)
-        if (customTags.isNotEmpty()) {
-            btnManage.visibility = View.VISIBLE
-            btnManage.setOnClickListener {
-                sheet.dismiss()
-                showManageTagsDialog()
-            }
-        } else {
-            btnManage.visibility = View.GONE
+        btnManage.visibility = View.VISIBLE
+        btnManage.setOnClickListener {
+            sheet.dismiss()
+            showManageTagsDialog()
         }
 
         sheet.show()
@@ -1360,12 +1362,10 @@ class DiaryAddFragment : Fragment() {
         val ctx = requireContext()
         val prefs = ctx.getSharedPreferences("diary_tags", Context.MODE_PRIVATE)
         val customTags = prefs.getStringSet("custom_tags", emptySet())!!.toList().sorted()
-
-        if (customTags.isEmpty()) {
-            Toast.makeText(ctx, "暂无自定义标签", Toast.LENGTH_SHORT).show()
-            showTagDialog()
-            return
-        }
+        val hiddenTags = prefs.getStringSet("hidden_builtin_tags", emptySet())!!.toMutableSet()
+        val allBuiltinTags = tagCategories.values.flatten()
+        val visibleBuiltin = allBuiltinTags.filter { it !in hiddenTags }
+        val hiddenBuiltin = allBuiltinTags.filter { it in hiddenTags }
 
         val sheet = BottomSheetDialog(ctx, R.style.BottomSheetDialogTheme)
         val sheetView = layoutInflater.inflate(R.layout.dialog_tag_manage, null)
@@ -1376,64 +1376,124 @@ class DiaryAddFragment : Fragment() {
 
         val container = sheetView.findViewById<LinearLayout>(R.id.tag_list_container)
         val dp = ctx.resources.displayMetrics.density
+        val pinkSoft = ContextCompat.getColor(ctx, R.color.pink_soft)
+        val pinkPrimary = ContextCompat.getColor(ctx, R.color.pink_primary)
+        val textPrimary = ContextCompat.getColor(ctx, R.color.text_primary)
+        val hintColor = ContextCompat.getColor(ctx, R.color.text_hint)
 
-        for (tagName in customTags) {
+        fun addSectionHeader(title: String) {
+            val header = TextView(ctx).apply {
+                text = title
+                textSize = 13f
+                setTextColor(hintColor)
+                setPadding(0, (14 * dp).toInt(), 0, (6 * dp).toInt())
+            }
+            container.addView(header)
+        }
+
+        fun addDivider() {
+            val divider = View(ctx).apply {
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT, (1 * dp).toInt()
+                ).also { it.marginStart = (4 * dp).toInt(); it.marginEnd = (4 * dp).toInt() }
+                setBackgroundColor(ContextCompat.getColor(ctx, R.color.divider))
+            }
+            container.addView(divider)
+        }
+
+        fun addTagRow(tagName: String, isBuiltin: Boolean) {
             val row = LinearLayout(ctx).apply {
                 orientation = LinearLayout.HORIZONTAL
                 gravity = android.view.Gravity.CENTER_VERTICAL
                 setPadding((4 * dp).toInt(), (10 * dp).toInt(), (4 * dp).toInt(), (10 * dp).toInt())
-                background = ContextCompat.getDrawable(ctx, android.R.drawable.list_selector_background)
             }
 
             val tvTag = TextView(ctx).apply {
                 text = "#$tagName"
                 textSize = 15f
-                setTextColor(ContextCompat.getColor(ctx, R.color.text_primary))
+                setTextColor(textPrimary)
                 layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
             }
 
-            val btnDel = TextView(ctx).apply {
-                text = "删除"
+            val btnAction = TextView(ctx).apply {
+                text = "隐藏"
                 textSize = 13f
-                setTextColor(ContextCompat.getColor(ctx, R.color.pink_soft))
+                setTextColor(pinkSoft)
                 setPadding((12 * dp).toInt(), (6 * dp).toInt(), (12 * dp).toInt(), (6 * dp).toInt())
             }
 
-            btnDel.setOnClickListener {
-                android.app.AlertDialog.Builder(ctx)
-                    .setMessage("确定删除标签 #$tagName 吗？")
-                    .setPositiveButton("删除") { _, _ ->
-                        val existing = prefs.getStringSet("custom_tags", emptySet())!!.toMutableSet()
-                        existing.remove(tagName)
-                        prefs.edit().putStringSet("custom_tags", existing).apply()
-                        // 同时从已选列表移除
-                        selectedTags.remove(tagName)
-                        // 动画移除
-                        row.animate().alpha(0f).translationX(row.width.toFloat()).setDuration(250).withEndAction {
-                            container.removeView(row)
-                            if (container.childCount == 0) {
-                                sheetView.findViewById<View>(R.id.tv_empty_hint).visibility = View.VISIBLE
-                            }
-                        }.start()
-                        Toast.makeText(ctx, "标签 #$tagName 已删除", Toast.LENGTH_SHORT).show()
-                    }
-                    .setNegativeButton("取消", null)
-                    .show()
+            btnAction.setOnClickListener {
+                if (isBuiltin) {
+                    hiddenTags.add(tagName)
+                    prefs.edit().putStringSet("hidden_builtin_tags", hiddenTags).apply()
+                } else {
+                    val existing = prefs.getStringSet("custom_tags", emptySet())!!.toMutableSet()
+                    existing.remove(tagName)
+                    prefs.edit().putStringSet("custom_tags", existing).apply()
+                }
+                selectedTags.remove(tagName)
+                row.animate().alpha(0f).translationX(row.width.toFloat()).setDuration(250).withEndAction {
+                    container.removeView(row)
+                }.start()
+                Toast.makeText(ctx, "#$tagName 已${if (isBuiltin) "隐藏" else "删除"}", Toast.LENGTH_SHORT).show()
             }
 
             row.addView(tvTag)
-            row.addView(btnDel)
+            row.addView(btnAction)
             container.addView(row)
+        }
 
-            // 分割线
-            if (tagName != customTags.last()) {
-                val divider = View(ctx).apply {
-                    layoutParams = LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT, (1 * dp).toInt()
-                    ).also { it.marginStart = (4 * dp).toInt(); it.marginEnd = (4 * dp).toInt() }
-                    setBackgroundColor(ContextCompat.getColor(ctx, R.color.divider))
+        // 内置标签（可隐藏）
+        if (visibleBuiltin.isNotEmpty()) {
+            addSectionHeader("内置标签")
+            visibleBuiltin.forEachIndexed { i, tag ->
+                addTagRow(tag, isBuiltin = true)
+                if (i < visibleBuiltin.size - 1) addDivider()
+            }
+        }
+
+        // 自定义标签（可删除）
+        if (customTags.isNotEmpty()) {
+            addSectionHeader("自定义标签")
+            customTags.forEachIndexed { i, tag ->
+                addTagRow(tag, isBuiltin = false)
+                if (i < customTags.size - 1) addDivider()
+            }
+        }
+
+        // 已隐藏的内置标签（可恢复）
+        if (hiddenBuiltin.isNotEmpty()) {
+            addSectionHeader("已隐藏")
+            for (tagName in hiddenBuiltin) {
+                val row = LinearLayout(ctx).apply {
+                    orientation = LinearLayout.HORIZONTAL
+                    gravity = android.view.Gravity.CENTER_VERTICAL
+                    setPadding((4 * dp).toInt(), (10 * dp).toInt(), (4 * dp).toInt(), (10 * dp).toInt())
                 }
-                container.addView(divider)
+                val tvTag = TextView(ctx).apply {
+                    text = "#$tagName"
+                    textSize = 15f
+                    setTextColor(hintColor)
+                    layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+                }
+                val btnRestore = TextView(ctx).apply {
+                    text = "恢复"
+                    textSize = 13f
+                    setTextColor(pinkPrimary)
+                    setPadding((12 * dp).toInt(), (6 * dp).toInt(), (12 * dp).toInt(), (6 * dp).toInt())
+                }
+                btnRestore.setOnClickListener {
+                    hiddenTags.remove(tagName)
+                    prefs.edit().putStringSet("hidden_builtin_tags", hiddenTags).apply()
+                    row.animate().alpha(0f).setDuration(200).withEndAction {
+                        container.removeView(row)
+                    }.start()
+                    Toast.makeText(ctx, "#$tagName 已恢复", Toast.LENGTH_SHORT).show()
+                }
+                row.addView(tvTag)
+                row.addView(btnRestore)
+                container.addView(row)
+                if (tagName != hiddenBuiltin.last()) addDivider()
             }
         }
 
