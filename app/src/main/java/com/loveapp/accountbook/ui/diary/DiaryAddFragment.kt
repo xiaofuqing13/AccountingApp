@@ -276,7 +276,7 @@ class DiaryAddFragment : Fragment() {
 
         // ===== 底部工具栏 =====
 
-        // 📷 拍照/选图
+        // 拍照/选图
         view.findViewById<View>(R.id.btn_photo).setOnClickListener {
             val options = arrayOf("拍照", "从相册选择")
             android.app.AlertDialog.Builder(requireContext())
@@ -297,7 +297,7 @@ class DiaryAddFragment : Fragment() {
                 .show()
         }
 
-        // 🎙️ 录音
+        // 录音
         view.findViewById<View>(R.id.btn_voice).setOnClickListener {
             if (ContextCompat.checkSelfPermission(requireContext(),
                     Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
@@ -307,7 +307,7 @@ class DiaryAddFragment : Fragment() {
             showRecordingDialog()
         }
 
-        // 📍 定位
+        // 定位
         view.findViewById<View>(R.id.btn_location).setOnClickListener {
             val hasFine = ContextCompat.checkSelfPermission(requireContext(),
                 Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
@@ -323,12 +323,12 @@ class DiaryAddFragment : Fragment() {
             }
         }
 
-        // 🏷️ 标签
+        // 标签
         view.findViewById<View>(R.id.btn_tag).setOnClickListener {
             showTagDialog()
         }
 
-        // 🗑️ 一键清空
+        // 一键清空
         view.findViewById<View>(R.id.btn_clear).setOnClickListener {
             if (etTitle.text.isNullOrEmpty() && etContent.text.isNullOrEmpty() && existingMediaMarkers.isEmpty()) {
                 Toast.makeText(requireContext(), "已经是空的啦~", Toast.LENGTH_SHORT).show()
@@ -729,7 +729,7 @@ class DiaryAddFragment : Fragment() {
         return "$min:${String.format("%02d", sec)}"
     }
 
-    // ===== 📷 拍照/图片 =====
+    // ===== 拍照/图片 =====
 
     private fun launchCamera() {
         cameraImageFileName = DiaryMediaManager.generateImageFileName()
@@ -788,7 +788,7 @@ class DiaryAddFragment : Fragment() {
         return inSampleSize
     }
 
-    // ===== 🎙️ 录音 =====
+    // ===== 录音 =====
 
     private fun showRecordingDialog() {
         val dialogView = LayoutInflater.from(requireContext())
@@ -967,7 +967,7 @@ class DiaryAddFragment : Fragment() {
         return true
     }
 
-    // ===== 📍 定位 =====
+    // ===== 定位 =====
 
     @SuppressLint("MissingPermission")
     private fun fetchLocation() {
@@ -1102,7 +1102,7 @@ class DiaryAddFragment : Fragment() {
             .show()
     }
 
-    // ===== 🏷️ 标签 =====
+    // ===== 标签 =====
 
     private fun showTagDialog() {
         val prefs = requireContext().getSharedPreferences("diary_tags", Context.MODE_PRIVATE)

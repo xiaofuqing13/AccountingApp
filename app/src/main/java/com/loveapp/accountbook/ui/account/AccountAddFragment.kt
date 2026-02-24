@@ -169,7 +169,7 @@ class AccountAddFragment : Fragment() {
         lifecycleScope.launch {
             val type = if (isExpense) "支出" else "收入"
             val builtIn = if (isExpense) AccountEntry.EXPENSE_CATEGORIES else AccountEntry.INCOME_CATEGORIES
-            // 内置分类去掉"更多"，末尾追加自定义分类 + "➕"添加按钮
+            // 内置分类去掉"更多"，末尾追加自定义分类 + 添加按钮
             val base = builtIn.filter { it.name != "更多" }
             val custom = repo.getCustomCategories(type)
             val categories = base + custom + Category(R.drawable.ic_add, "添加")
