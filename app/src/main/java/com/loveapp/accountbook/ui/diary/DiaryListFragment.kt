@@ -287,9 +287,10 @@ class DiaryListFragment : Fragment() {
                             val childLeft = rv.findChildViewUnder(downX, downY)?.left?.toFloat() ?: 0f
                             val actionOffset = (downX - childLeft - downActionZoneStartX).coerceIn(0f, actionWidth)
 
-                            closeSwipeAt(rv, targetPosition)
+                            // 先清除滑动状态（不触发notifyItemChanged）
+                            adapter.clearSwipeOpenPosition(targetPosition, notify = false)
 
-                            // 左半边编辑，右半边删除
+                            // 左半边编辑，右半边删除 - 立即执行操作
                             if (actionOffset < actionWidth / 2f) {
                                 showEditDialog(target)
                             } else {
