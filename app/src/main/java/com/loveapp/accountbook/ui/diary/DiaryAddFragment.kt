@@ -115,8 +115,7 @@ class DiaryAddFragment : Fragment() {
     ) { permissions ->
         val granted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true
                 || permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
-        if (granted) fetchLocation()
-        else showManualLocationDialog("权限被拒绝，请手动输入位置")
+        if (granted) silentFetchLocation()
     }
 
     // ===== Lifecycle =====
@@ -260,6 +259,11 @@ class DiaryAddFragment : Fragment() {
         DraftManager.bindAutoSave(requireContext(), etTitle, DraftManager.KEY_DIARY_TITLE)
         DraftManager.bindAutoSave(requireContext(), etContent, DraftManager.KEY_DIARY_CONTENT)
 
+        // 自动定位（非编辑模式）
+        if (!isEditMode) {
+            autoFetchLocation()
+        }
+
         // 彩蛋: 标题连点3次
         etTitle.setOnClickListener {
             titleClickCount++
@@ -301,22 +305,6 @@ class DiaryAddFragment : Fragment() {
                 return@setOnClickListener
             }
             showRecordingDialog()
-        }
-
-        // 定位
-        view.findViewById<View>(R.id.btn_location).setOnClickListener {
-            val hasFine = ContextCompat.checkSelfPermission(requireContext(),
-                Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
-            val hasCoarse = ContextCompat.checkSelfPermission(requireContext(),
-                Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
-            if (hasFine || hasCoarse) {
-                fetchLocation()
-            } else {
-                locationPermissionLauncher.launch(arrayOf(
-                    Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission.ACCESS_COARSE_LOCATION
-                ))
-            }
         }
 
         // 标签
@@ -1061,139 +1049,85 @@ class DiaryAddFragment : Fragment() {
         return true
     }
 
-    // ===== 定位 =====
+    // ===== 自动定位 =====
+
+    private fun autoFetchLocation() {
+        val hasFine = ContextCompat.checkSelfPermission(requireContext(),
+            Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        val hasCoarse = ContextCompat.checkSelfPermission(requireContext(),
+            Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        if (!hasFine && !hasCoarse) {
+            locationPermissionLauncher.launch(arrayOf(
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ))
+            return
+        }
+        silentFetchLocation()
+    }
 
     @SuppressLint("MissingPermission")
-    private fun fetchLocation() {
-        // 检查定位服务是否开启（小米手机用户经常关闭定位）
+    private fun silentFetchLocation() {
         val locationManager = requireContext().getSystemService(Context.LOCATION_SERVICE) as LocationManager
         val gpsEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
         val networkEnabled = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
-        if (!gpsEnabled && !networkEnabled) {
-            android.app.AlertDialog.Builder(requireContext())
-                .setTitle("定位服务未开启")
-                .setMessage("请在系统设置中开启定位服务，以便获取当前位置。")
-                .setPositiveButton("去设置") { _, _ ->
-                    try {
-                        startActivity(android.content.Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
-                    } catch (_: Exception) {}
-                }
-                .setNegativeButton("手动输入") { _, _ ->
-                    showManualLocationDialog("请手动输入位置")
-                }
-                .show()
-            return
-        }
-
-        Toast.makeText(requireContext(), "正在获取位置...", Toast.LENGTH_SHORT).show()
+        if (!gpsEnabled && !networkEnabled) return
 
         fusedLocationClient.lastLocation.addOnSuccessListener { location ->
             if (!isAdded) return@addOnSuccessListener
             if (location != null) {
-                reverseGeocode(location.latitude, location.longitude)
+                silentReverseGeocode(location.latitude, location.longitude)
             } else {
-                // lastLocation 为 null，请求一次新定位（设置15秒超时）
                 val request = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 5000)
                     .setMaxUpdates(1)
-                    .setDurationMillis(15000)
+                    .setDurationMillis(10000)
                     .build()
                 val callback = object : LocationCallback() {
                     override fun onLocationResult(result: LocationResult) {
                         fusedLocationClient.removeLocationUpdates(this)
                         locationTimeoutHandler.removeCallbacksAndMessages(null)
                         if (!isAdded) return
-                        val loc = result.lastLocation
-                        if (loc != null) {
-                            reverseGeocode(loc.latitude, loc.longitude)
-                        } else {
-                            showManualLocationDialog("无法获取位置，请手动输入")
-                        }
+                        result.lastLocation?.let { silentReverseGeocode(it.latitude, it.longitude) }
                     }
                 }
                 fusedLocationClient.requestLocationUpdates(request, callback, Looper.getMainLooper())
-                // 15秒超时兜底，防止回调永远不触发
                 locationTimeoutHandler.postDelayed({
                     fusedLocationClient.removeLocationUpdates(callback)
-                    if (isAdded) {
-                        showManualLocationDialog("定位超时，请检查定位设置或手动输入")
-                    }
-                }, 15000)
+                }, 10000)
             }
-        }.addOnFailureListener {
-            if (!isAdded) return@addOnFailureListener
-            showManualLocationDialog("定位失败，请手动输入")
         }
     }
 
-    private fun reverseGeocode(lat: Double, lng: Double) {
+    private fun silentReverseGeocode(lat: Double, lng: Double) {
         if (!isAdded) return
         val ctx = requireContext().applicationContext
         lifecycleScope.launch(Dispatchers.IO) {
-            val addressList = mutableListOf<String>()
+            var address = ""
             try {
                 @Suppress("DEPRECATION")
-                val results = Geocoder(ctx, Locale.CHINA).getFromLocation(lat, lng, 10)
-                results?.forEach { addr ->
-                    val name = buildString {
+                val results = Geocoder(ctx, Locale.CHINA).getFromLocation(lat, lng, 1)
+                val addr = results?.firstOrNull()
+                if (addr != null) {
+                    address = addr.getAddressLine(0) ?: buildString {
+                        addr.adminArea?.let { append(it) }
+                        addr.locality?.let { append(it) }
                         addr.subLocality?.let { append(it) }
                         addr.thoroughfare?.let { append(it) }
                         addr.featureName?.let { f ->
                             if (f != addr.thoroughfare) append(f)
                         }
-                    }.ifEmpty { addr.getAddressLine(0) ?: "" }
-                    if (name.isNotEmpty() && name !in addressList) {
-                        addressList.add(name)
                     }
                 }
             } catch (_: Exception) {}
-
-            if (addressList.isEmpty()) {
-                addressList.add("($lat, $lng)")
+            if (address.isEmpty()) {
+                address = "($lat, $lng)"
             }
-
             withContext(Dispatchers.Main) {
-                if (isAdded) showLocationPickerDialog(addressList)
-            }
-        }
-    }
-
-    private fun showLocationPickerDialog(addresses: List<String>) {
-        if (!isAdded) return
-        val items = addresses.toTypedArray()
-        android.app.AlertDialog.Builder(requireContext())
-            .setTitle("选择附近位置")
-            .setItems(items) { _, which ->
-                currentLocation = items[which]
-                Toast.makeText(requireContext(), "位置已设置：$currentLocation", Toast.LENGTH_SHORT).show()
-            }
-            .setNeutralButton("手动输入") { _, _ ->
-                showManualLocationDialog("手动输入位置")
-            }
-            .setNegativeButton("清除位置") { _, _ ->
-                currentLocation = ""
-                Toast.makeText(requireContext(), "位置已清除", Toast.LENGTH_SHORT).show()
-            }
-            .show()
-    }
-
-    private fun showManualLocationDialog(hint: String) {
-        if (!isAdded) return
-        val input = EditText(requireContext()).apply {
-            this.hint = "输入当前位置，如：星巴克咖啡厅"
-            setText(currentLocation)
-            setPadding(60, 40, 60, 40)
-        }
-        android.app.AlertDialog.Builder(requireContext())
-            .setTitle(hint)
-            .setView(input)
-            .setPositiveButton("确定") { _, _ ->
-                currentLocation = input.text.toString().trim()
-                if (currentLocation.isNotEmpty()) {
-                    Toast.makeText(requireContext(), "位置已设置：$currentLocation", Toast.LENGTH_SHORT).show()
+                if (isAdded) {
+                    currentLocation = address
                 }
             }
-            .setNegativeButton("取消", null)
-            .show()
+        }
     }
 
     // ===== 标签 =====
