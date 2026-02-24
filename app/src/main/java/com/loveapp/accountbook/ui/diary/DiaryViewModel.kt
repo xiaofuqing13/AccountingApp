@@ -17,19 +17,34 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
     val diaries: LiveData<List<DiaryEntry>> = _diaries
     private val _errorMessage = MutableLiveData<String?>()
     val errorMessage: LiveData<String?> = _errorMessage
+    private var allDiaries: List<DiaryEntry> = emptyList()
+    var currentTagFilter: String? = null
+        private set
 
     fun loadDiaries() {
         viewModelScope.launch {
             runCatching { repo.getDiaries() }
                 .onSuccess {
-                    _diaries.value = it
+                    allDiaries = it
+                    _diaries.value = applyTagFilter(it)
                     _errorMessage.value = null
                 }
                 .onFailure {
+                    allDiaries = emptyList()
                     _diaries.value = emptyList()
                     _errorMessage.value = "加载日记失败，请重试"
                 }
         }
+    }
+
+    fun filterByTag(tag: String?) {
+        currentTagFilter = tag
+        _diaries.value = applyTagFilter(allDiaries)
+    }
+
+    private fun applyTagFilter(list: List<DiaryEntry>): List<DiaryEntry> {
+        val tag = currentTagFilter ?: return list
+        return list.filter { it.tags.split(",").any { t -> t.trim() == tag } }
     }
 
     fun searchDiaries(keyword: String) {
@@ -37,7 +52,7 @@ class DiaryViewModel(application: Application) : AndroidViewModel(application) {
             runCatching {
                 val all = repo.getDiaries()
                 if (keyword.isBlank()) all
-                else all.filter { it.title.contains(keyword) || it.content.contains(keyword) }
+                else all.filter { it.title.contains(keyword) || it.content.contains(keyword) || it.tags.contains(keyword) }
             }.onSuccess {
                 _diaries.value = it
                 _errorMessage.value = null

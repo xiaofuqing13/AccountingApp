@@ -1,11 +1,15 @@
 package com.loveapp.accountbook.ui.diary
 
+import android.content.Context
+import android.content.res.ColorStateList
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.MotionEvent
+import android.view.VelocityTracker
 import android.view.View
+import android.view.ViewConfiguration
 import android.view.ViewGroup
 import android.view.animation.DecelerateInterpolator
 import android.widget.EditText
@@ -18,10 +22,11 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
-import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.SimpleItemAnimator
+import com.google.android.material.chip.Chip
+import com.google.android.material.chip.ChipGroup
 import com.loveapp.accountbook.R
 import com.loveapp.accountbook.data.model.DiaryEntry
 import com.loveapp.accountbook.ui.adapter.DiaryAdapter
@@ -35,10 +40,7 @@ class DiaryListFragment : Fragment() {
     private lateinit var adapter: DiaryAdapter
     private lateinit var rvDiaries: RecyclerView
     private var lastErrorMessage: String? = null
-    private var lastSwipeDx = 0f
-    private val swipeOpenScale = 0.96f
     private var isNavigating = false
-    private var swipingPosition = RecyclerView.NO_POSITION
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -83,8 +85,7 @@ class DiaryListFragment : Fragment() {
             adapter = this@DiaryListFragment.adapter
             (itemAnimator as? SimpleItemAnimator)?.supportsChangeAnimations = false
         }
-        attachSwipeCloseFallback(rvDiaries)
-        attachSwipeActions(rvDiaries)
+        attachSwipeHandler(rvDiaries)
 
         viewModel.diaries.observe(viewLifecycleOwner) { diaries ->
             adapter.updateData(diaries)
@@ -133,259 +134,305 @@ class DiaryListFragment : Fragment() {
             findNavController().navigate(R.id.action_diary_to_add)
         }
 
+        setupTagFilter(view)
         viewModel.loadDiaries()
     }
 
-    // ========== 与会议模块完全一致的滑动实现 ==========
+    private fun setupTagFilter(view: View) {
+        val chipGroup = view.findViewById<ChipGroup>(R.id.chip_group_filter)
+        val ctx = requireContext()
+        val prefs = ctx.getSharedPreferences("diary_tags", Context.MODE_PRIVATE)
+        val deletedBuiltin = prefs.getStringSet("deleted_builtin_tags", emptySet())!!
+        val customTags = prefs.getStringSet("custom_tags", emptySet())!!.toList().sorted()
 
-    private fun attachSwipeActions(recyclerView: RecyclerView) {
-        val swipeCallback = object : ItemTouchHelper.SimpleCallback(
-            0,
-            ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT
-        ) {
-            override fun getMovementFlags(
-                recyclerView: RecyclerView,
-                viewHolder: RecyclerView.ViewHolder
-            ): Int {
-                // 有已打开卡片时，阻止所有新滑动
-                if (adapter.getSwipeOpenPosition() != RecyclerView.NO_POSITION) {
-                    return makeMovementFlags(0, 0)
-                }
-                return super.getMovementFlags(recyclerView, viewHolder)
-            }
+        val builtinTags = listOf(
+            "日常", "美食", "运动", "购物",
+            "约会", "心情", "纪念日", "感恩",
+            "学习", "工作", "灵感", "阅读",
+            "旅行", "探店", "户外"
+        ).filter { it !in deletedBuiltin }
+        val allTags = (builtinTags + customTags).distinct()
+        if (allTags.isEmpty()) return
 
-            override fun onMove(
-                recyclerView: RecyclerView,
-                viewHolder: RecyclerView.ViewHolder,
-                target: RecyclerView.ViewHolder
-            ): Boolean = false
+        val pinkColor = ContextCompat.getColor(ctx, R.color.pink_primary)
+        val chipBg = ContextCompat.getColor(ctx, R.color.tag_chip_bg)
+        val strokeColor = ContextCompat.getColor(ctx, R.color.tag_chip_stroke)
+        val whiteColor = ContextCompat.getColor(ctx, R.color.text_white)
+        val textColor = ContextCompat.getColor(ctx, R.color.text_primary)
+        val dp = ctx.resources.displayMetrics.density
 
-            override fun getSwipeThreshold(viewHolder: RecyclerView.ViewHolder): Float {
-                val itemWidth = viewHolder.itemView.width.takeIf { it > 0 } ?: return 0.2f
-                val actionWidth = adapter.getSwipeActionTotalWidthPx().toFloat()
-                return ((actionWidth / itemWidth.toFloat()) + 0.03f).coerceIn(0.22f, 0.45f)
-            }
-
-            override fun getSwipeEscapeVelocity(defaultValue: Float): Float = defaultValue * 1.6f
-
-            override fun getSwipeVelocityThreshold(defaultValue: Float): Float = defaultValue * 1.4f
-
-            override fun onSelectedChanged(viewHolder: RecyclerView.ViewHolder?, actionState: Int) {
-                if (viewHolder is DiaryAdapter.ViewHolder) {
-                    getDefaultUIUtil().onSelected(viewHolder.cardForeground)
-                    swipingPosition = viewHolder.bindingAdapterPosition
-                }
-            }
-
-            override fun clearView(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder) {
-                if (viewHolder is DiaryAdapter.ViewHolder) {
-                    getDefaultUIUtil().clearView(viewHolder.cardForeground)
-                    val position = viewHolder.bindingAdapterPosition
-                    val closeThreshold = recyclerView.resources.displayMetrics.density * 12f
-                    if (
-                        position != RecyclerView.NO_POSITION &&
-                        adapter.isSwipeOpenAt(position) &&
-                        lastSwipeDx > closeThreshold
-                    ) {
-                        closeSwipeAt(recyclerView, position)
-                    }
-                } else {
-                    super.clearView(recyclerView, viewHolder)
-                }
-                lastSwipeDx = 0f
-            }
-
-            override fun onChildDraw(
-                c: android.graphics.Canvas,
-                recyclerView: RecyclerView,
-                viewHolder: RecyclerView.ViewHolder,
-                dX: Float,
-                dY: Float,
-                actionState: Int,
-                isCurrentlyActive: Boolean
-            ) {
-                if (viewHolder !is DiaryAdapter.ViewHolder) {
-                    super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive)
-                    return
-                }
-                lastSwipeDx = dX
-                val maxSwipe = adapter.getSwipeActionTotalWidthPx().toFloat()
-                val position = viewHolder.bindingAdapterPosition
-                val isOpen = position != RecyclerView.NO_POSITION && adapter.isSwipeOpenAt(position)
-
-                // 阻止过期恢复动画：非活跃、非打开、非当前滑动中的条目直接跳过
-                if (!isCurrentlyActive && !isOpen && position != swipingPosition) {
-                    return
-                }
-
-                val clampedDx = when {
-                    dX < 0f -> dX.coerceAtLeast(-maxSwipe)
-                    isOpen -> (-maxSwipe + dX).coerceIn(-maxSwipe, 0f)
-                    else -> 0f
-                }
-                val progress = (abs(clampedDx) / maxSwipe).coerceIn(0f, 1f)
-                val scale = 1f - (1f - swipeOpenScale) * progress
-                viewHolder.cardForeground.scaleX = scale
-                viewHolder.cardForeground.scaleY = scale
-                getDefaultUIUtil().onDraw(
-                    c,
-                    recyclerView,
-                    viewHolder.cardForeground,
-                    clampedDx,
-                    dY,
-                    actionState,
-                    isCurrentlyActive
-                )
-            }
-
-            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
-                swipingPosition = RecyclerView.NO_POSITION
-                val position = viewHolder.bindingAdapterPosition
-                if (position == RecyclerView.NO_POSITION) return
-                if (direction == ItemTouchHelper.LEFT) {
-                    openSwipeAt(recyclerView, position)
-                } else {
-                    adapter.clearSwipeOpenPosition(position)
-                }
+        fun styleChip(chip: Chip, selected: Boolean) {
+            if (selected) {
+                chip.chipBackgroundColor = ColorStateList.valueOf(pinkColor)
+                chip.setTextColor(whiteColor)
+                chip.chipStrokeWidth = 0f
+            } else {
+                chip.chipBackgroundColor = ColorStateList.valueOf(chipBg)
+                chip.setTextColor(textColor)
+                chip.chipStrokeWidth = 1f * dp
+                chip.chipStrokeColor = ColorStateList.valueOf(strokeColor)
             }
         }
-        ItemTouchHelper(swipeCallback).attachToRecyclerView(recyclerView)
+
+        // "全部" chip
+        val allChip = Chip(ctx).apply {
+            text = "全部"
+            isCheckable = false
+            textSize = 12f
+            chipMinHeight = 30f * dp
+            tag = null
+        }
+        styleChip(allChip, true)
+        chipGroup.addView(allChip)
+
+        val chips = mutableListOf(allChip)
+        for (tagName in allTags) {
+            val chip = Chip(ctx).apply {
+                text = "#$tagName"
+                isCheckable = false
+                textSize = 12f
+                chipMinHeight = 30f * dp
+                this.tag = tagName
+            }
+            styleChip(chip, false)
+            chipGroup.addView(chip)
+            chips.add(chip)
+        }
+
+        for (chip in chips) {
+            chip.setOnClickListener {
+                val selectedTag = chip.tag as? String
+                chips.forEach { c -> styleChip(c, c == chip) }
+                viewModel.filterByTag(selectedTag)
+            }
+        }
     }
 
-    private fun attachSwipeCloseFallback(recyclerView: RecyclerView) {
-        val touchSlop = recyclerView.resources.displayMetrics.density * 12f
+    // ========== Apple 备忘录风格滑动 ==========
+
+    private fun attachSwipeHandler(recyclerView: RecyclerView) {
+        val viewConfig = ViewConfiguration.get(requireContext())
+        val touchSlop = viewConfig.scaledTouchSlop
+        val minFlingVelocity = viewConfig.scaledMinimumFlingVelocity.toFloat()
+
         var downX = 0f
         var downY = 0f
-        var downInActionArea = false
-        var downActionZoneStartX = 0f
-        var downOpenPosition = RecyclerView.NO_POSITION
+        var dragging = false
+        var dragPosition = RecyclerView.NO_POSITION
+        var dragHolder: DiaryAdapter.ViewHolder? = null
+        var dragStartTx = 0f
+        var velocityTracker: VelocityTracker? = null
+
+        fun maxSwipe() = adapter.getSwipeActionTotalWidthPx().toFloat()
+
+        fun resetState() {
+            dragging = false
+            dragPosition = RecyclerView.NO_POSITION
+            dragHolder = null
+            velocityTracker?.recycle()
+            velocityTracker = null
+        }
+
+        // 滚动时自动关闭
+        recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrollStateChanged(rv: RecyclerView, newState: Int) {
+                if (newState == RecyclerView.SCROLL_STATE_DRAGGING) {
+                    val p = adapter.getSwipeOpenPosition()
+                    if (p != RecyclerView.NO_POSITION) closeSwipeAt(rv, p)
+                }
+            }
+        })
 
         recyclerView.addOnItemTouchListener(object : RecyclerView.OnItemTouchListener {
+
+            /** 是否已拦截当前手势 */
+            private var intercepted = false
+
             override fun onInterceptTouchEvent(rv: RecyclerView, e: MotionEvent): Boolean {
-                if (e.actionMasked != MotionEvent.ACTION_DOWN) return false
+                when (e.actionMasked) {
+                    MotionEvent.ACTION_DOWN -> {
+                        downX = e.x; downY = e.y
+                        dragging = false; intercepted = false
+                        dragPosition = RecyclerView.NO_POSITION; dragHolder = null
+                        velocityTracker?.recycle()
+                        velocityTracker = VelocityTracker.obtain()
+                        velocityTracker?.addMovement(e)
 
-                val openPosition = adapter.getSwipeOpenPosition()
-                if (openPosition == RecyclerView.NO_POSITION) return false
+                        val openPos = adapter.getSwipeOpenPosition()
+                        if (openPos != RecyclerView.NO_POSITION) {
+                            // —— 有打开项 ——
+                            val child = rv.findChildViewUnder(e.x, e.y)
+                            val touchedPos = child?.let { rv.getChildAdapterPosition(it) }
+                                ?: RecyclerView.NO_POSITION
+                            if (touchedPos != openPos) {
+                                // 触摸别处 → 关闭
+                                closeSwipeAt(rv, openPos)
+                                intercepted = true
+                                return true
+                            }
+                            // 触摸在打开条目上
+                            dragPosition = openPos
+                            dragHolder = rv.findViewHolderForAdapterPosition(openPos)
+                                    as? DiaryAdapter.ViewHolder
+                            dragHolder?.cardForeground?.animate()?.cancel()
+                            dragStartTx = dragHolder?.cardForeground?.translationX ?: 0f
+                            intercepted = true
+                            return true
+                        }
 
-                downX = e.x
-                downY = e.y
-                downInActionArea = false
-                downActionZoneStartX = 0f
-                downOpenPosition = openPosition
+                        // —— 无打开项 → 记录位置，不拦截 ——
+                        val child = rv.findChildViewUnder(e.x, e.y)
+                        if (child != null) {
+                            dragPosition = rv.getChildAdapterPosition(child)
+                            dragHolder = rv.findViewHolderForAdapterPosition(dragPosition)
+                                    as? DiaryAdapter.ViewHolder
+                        }
+                        dragStartTx = 0f
+                        return false
+                    }
 
-                val touchedChild = rv.findChildViewUnder(e.x, e.y) ?: return false
-                val touchedPosition = rv.getChildAdapterPosition(touchedChild)
+                    MotionEvent.ACTION_MOVE -> {
+                        if (intercepted) return true
+                        if (dragHolder == null) return false
+                        velocityTracker?.addMovement(e)
+                        val dx = e.x - downX
+                        val dy = e.y - downY
+                        // 仅在明确水平左滑时拦截
+                        if (!dragging && abs(dx) > touchSlop
+                            && abs(dx) > abs(dy) * 1.5f && dx < 0
+                        ) {
+                            dragging = true
+                            rv.parent?.requestDisallowInterceptTouchEvent(true)
+                            intercepted = true
+                            return true
+                        }
+                        return false
+                    }
 
-                if (touchedPosition != openPosition) {
-                    closeSwipeAt(rv, openPosition)
-                    return false
+                    MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                        if (!intercepted) resetState()
+                        return false
+                    }
                 }
-
-                val actionWidth = adapter.getSwipeActionTotalWidthPx().toFloat()
-                val localX = e.x - touchedChild.left
-                downActionZoneStartX = touchedChild.width - actionWidth
-                downInActionArea = localX >= downActionZoneStartX
-
-                // 拦截所有打开条目上的触摸，防止 ItemTouchHelper 干扰
-                return true
+                return false
             }
 
             override fun onTouchEvent(rv: RecyclerView, e: MotionEvent) {
-                val openPosition = downOpenPosition
-                if (openPosition == RecyclerView.NO_POSITION) return
-
+                velocityTracker?.addMovement(e)
                 when (e.actionMasked) {
                     MotionEvent.ACTION_MOVE -> {
-                        // 右滑跟手反馈
+                        val holder = dragHolder ?: return
                         val dx = e.x - downX
-                        if (dx > 0 && openPosition in 0 until adapter.itemCount) {
-                            val maxSwipe = adapter.getSwipeActionTotalWidthPx().toFloat()
-                            val holder = rv.findViewHolderForAdapterPosition(openPosition)
-                                    as? DiaryAdapter.ViewHolder
-                            if (holder != null) {
-                                val newTx = (-maxSwipe + dx).coerceIn(-maxSwipe, 0f)
-                                holder.cardForeground.translationX = newTx
-                                val progress = (abs(newTx) / maxSwipe).coerceIn(0f, 1f)
-                                val scale = 1f - (1f - swipeOpenScale) * progress
-                                holder.cardForeground.scaleX = scale
-                                holder.cardForeground.scaleY = scale
+                        val dy = e.y - downY
+                        if (!dragging && (abs(dx) > touchSlop || abs(dy) > touchSlop)) {
+                            if (abs(dx) > abs(dy)) {
+                                dragging = true
+                                holder.cardForeground.animate().cancel()
+                                rv.parent?.requestDisallowInterceptTouchEvent(true)
                             }
+                        }
+                        if (dragging) {
+                            val newTx = (dragStartTx + dx).coerceIn(-maxSwipe(), 0f)
+                            holder.cardForeground.translationX = newTx
                         }
                     }
 
                     MotionEvent.ACTION_UP -> {
-                        if (openPosition !in 0 until adapter.itemCount) {
-                            downOpenPosition = RecyclerView.NO_POSITION
-                            return
-                        }
-
-                        val moveX = abs(e.x - downX)
-                        val moveY = abs(e.y - downY)
-                        val isTap = moveX <= touchSlop && moveY <= touchSlop
-
-                        if (isTap && downInActionArea) {
-                            val touchedChild = rv.findChildViewUnder(downX, downY)
-                            if (touchedChild != null) {
-                                val localX = downX - touchedChild.left
-                                val actionWidth = adapter.getSwipeActionTotalWidthPx().toFloat()
-                                val actionOffset =
-                                    (localX - downActionZoneStartX).coerceIn(0f, actionWidth)
-
-                                val target = adapter.getItem(openPosition)
-                                closeSwipeAt(rv, openPosition)
-
-                                if (actionOffset < actionWidth / 2f) {
-                                    showEditDialog(target)
-                                } else {
-                                    showDeleteConfirmDialog(target)
-                                }
-                            }
-                        } else if (isTap) {
-                            closeSwipeAt(rv, openPosition)
-                        } else {
-                            // 非点击：判断右滑距离是否足够关闭
-                            val dx = e.x - downX
-                            val maxSwipe = adapter.getSwipeActionTotalWidthPx().toFloat()
-                            if (dx > maxSwipe * 0.25f) {
-                                closeSwipeAt(rv, openPosition)
+                        val holder = dragHolder
+                        val pos = dragPosition
+                        if (holder != null && pos != RecyclerView.NO_POSITION
+                            && pos in 0 until adapter.itemCount
+                        ) {
+                            if (!dragging) {
+                                handleTap(rv, holder, pos, maxSwipe(), downX)
                             } else {
-                                // 不够远，弹回打开位置
-                                val holder = rv.findViewHolderForAdapterPosition(openPosition)
-                                        as? DiaryAdapter.ViewHolder
-                                holder?.cardForeground?.animate()
-                                    ?.translationX(-maxSwipe)
-                                    ?.scaleX(swipeOpenScale)
-                                    ?.scaleY(swipeOpenScale)
-                                    ?.setDuration(150L)
-                                    ?.setInterpolator(DecelerateInterpolator())
-                                    ?.start()
+                                handleSwipeEnd(rv, holder, pos, maxSwipe(), minFlingVelocity, velocityTracker)
                             }
                         }
-
-                        downOpenPosition = RecyclerView.NO_POSITION
+                        intercepted = false
+                        resetState()
                     }
 
                     MotionEvent.ACTION_CANCEL -> {
-                        // 取消时弹回打开位置
-                        if (openPosition in 0 until adapter.itemCount) {
-                            val maxSwipe = adapter.getSwipeActionTotalWidthPx().toFloat()
-                            val holder = rv.findViewHolderForAdapterPosition(openPosition)
-                                    as? DiaryAdapter.ViewHolder
-                            holder?.cardForeground?.animate()
-                                ?.translationX(-maxSwipe)
-                                ?.scaleX(swipeOpenScale)
-                                ?.scaleY(swipeOpenScale)
-                                ?.setDuration(150L)
-                                ?.setInterpolator(DecelerateInterpolator())
-                                ?.start()
+                        val holder = dragHolder
+                        val pos = dragPosition
+                        if (holder != null && pos != RecyclerView.NO_POSITION) {
+                            if (adapter.isSwipeOpenAt(pos)) {
+                                animateTo(holder, -maxSwipe())
+                            } else {
+                                animateTo(holder, 0f)
+                            }
                         }
-                        downOpenPosition = RecyclerView.NO_POSITION
+                        intercepted = false
+                        resetState()
                     }
                 }
             }
 
             override fun onRequestDisallowInterceptTouchEvent(disallowIntercept: Boolean) {}
         })
+    }
+
+    /** 点击处理：按钮 / 卡片体 */
+    private fun handleTap(
+        rv: RecyclerView, holder: DiaryAdapter.ViewHolder,
+        position: Int, maxSwipe: Float, downX: Float
+    ) {
+        if (!adapter.isSwipeOpenAt(position)) return
+        val touchLocalX = downX - holder.itemView.left
+        val cardEndX = holder.itemView.width + holder.cardForeground.translationX
+
+        if (touchLocalX > cardEndX) {
+            // 按钮区域
+            val offset = touchLocalX - cardEndX
+            val target = adapter.getItem(position)
+            closeSwipeAt(rv, position)
+            if (offset < maxSwipe / 2f) {
+                showEditDialog(target)
+            } else {
+                showDeleteConfirmDialog(target)
+            }
+        } else {
+            // 卡片体 → 关闭
+            closeSwipeAt(rv, position)
+        }
+    }
+
+    /** 滑动结束：根据位置和速度决定打开/关闭 */
+    private fun handleSwipeEnd(
+        rv: RecyclerView, holder: DiaryAdapter.ViewHolder,
+        position: Int, maxSwipe: Float, minFlingVelocity: Float,
+        velocityTracker: VelocityTracker?
+    ) {
+        velocityTracker?.computeCurrentVelocity(1000)
+        val vx = velocityTracker?.xVelocity ?: 0f
+        val tx = holder.cardForeground.translationX
+        val isOpen = adapter.isSwipeOpenAt(position)
+
+        if (isOpen) {
+            // 已打开 → 判断是否关闭
+            if (tx > -maxSwipe * 0.5f || vx > minFlingVelocity) {
+                closeSwipeAt(rv, position)
+            } else {
+                animateTo(holder, -maxSwipe)
+            }
+        } else {
+            // 未打开 → 判断是否打开
+            if (tx < -maxSwipe * 0.4f || vx < -minFlingVelocity) {
+                openSwipeAt(rv, position)
+            } else {
+                animateTo(holder, 0f)
+            }
+        }
+    }
+
+    /** 平滑动画到目标 translationX */
+    private fun animateTo(holder: DiaryAdapter.ViewHolder, targetTx: Float) {
+        holder.cardForeground.animate()
+            .translationX(targetTx)
+            .setDuration(250L)
+            .setInterpolator(DecelerateInterpolator())
+            .start()
     }
 
     private fun openSwipeAt(recyclerView: RecyclerView, position: Int) {
@@ -396,28 +443,14 @@ class DiaryListFragment : Fragment() {
         }
         adapter.setSwipeOpenPosition(position, notify = false)
         val holder = recyclerView.findViewHolderForAdapterPosition(position) as? DiaryAdapter.ViewHolder
-        if (holder != null) {
-            holder.cardForeground.animate()
-                .translationX(-maxSwipe)
-                .scaleX(swipeOpenScale)
-                .scaleY(swipeOpenScale)
-                .setDuration(150L)
-                .setInterpolator(DecelerateInterpolator())
-                .start()
-        }
+        if (holder != null) animateTo(holder, -maxSwipe)
     }
 
     private fun closeSwipeAt(recyclerView: RecyclerView, position: Int) {
         if (position == RecyclerView.NO_POSITION) return
         val holder = recyclerView.findViewHolderForAdapterPosition(position) as? DiaryAdapter.ViewHolder
         if (holder != null) {
-            holder.cardForeground.animate()
-                .translationX(0f)
-                .scaleX(1f)
-                .scaleY(1f)
-                .setDuration(120L)
-                .setInterpolator(DecelerateInterpolator())
-                .start()
+            animateTo(holder, 0f)
             adapter.clearSwipeOpenPosition(position, notify = false)
         } else {
             adapter.clearSwipeOpenPosition(position)
@@ -471,6 +504,7 @@ class DiaryListFragment : Fragment() {
             putString("entryWeather", entry.weather)
             putString("entryMood", entry.mood)
             putString("entryLocation", entry.location)
+            putString("entryTags", entry.tags)
             putString("entryDate", entry.date)
         }
         findNavController().navigate(R.id.action_diary_to_add, bundle)
