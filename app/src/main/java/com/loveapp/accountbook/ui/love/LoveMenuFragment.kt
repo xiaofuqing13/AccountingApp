@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
@@ -24,48 +25,44 @@ class LoveMenuFragment : Fragment() {
 
     private var currentDaily: LoveWord = EasterEggManager.dailyLoveWord()
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         return inflater.inflate(R.layout.fragment_love_menu, container, false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // 返回按钮
-        view.findViewById<TextView>(R.id.btn_back).setOnClickListener {
+        view.findViewById<View>(R.id.btn_back).setOnClickListener {
             findNavController().navigateUp()
         }
 
-        // 每日情话
         updateDailyCard(view)
 
-        // 换一句按钮
         view.findViewById<TextView>(R.id.btn_random).setOnClickListener {
             currentDaily = EasterEggManager.loveWords.random()
             updateDailyCard(view)
         }
 
-        // 点击每日卡片弹出完整情话
         view.findViewById<CardView>(R.id.card_daily).setOnClickListener {
             EasterEggManager.showLovePopup(requireContext(), currentDaily)
         }
 
-        // 分类标签
         val categories = EasterEggManager.getLoveWordCategories()
         val chipGroup = view.findViewById<ChipGroup>(R.id.chip_categories)
         val countText = view.findViewById<TextView>(R.id.tv_count)
 
         categories.keys.forEachIndexed { index, name ->
+            val checked = index == categories.size - 1
             val chip = Chip(requireContext()).apply {
                 text = name
                 isCheckable = true
-                isChecked = index == categories.size - 1 // 默认选中"全部情话"
+                isChecked = checked
                 chipBackgroundColor = android.content.res.ColorStateList.valueOf(
-                    if (isChecked) ContextCompat.getColor(requireContext(), R.color.pink_primary)
+                    if (checked) ContextCompat.getColor(requireContext(), R.color.pink_primary)
                     else ContextCompat.getColor(requireContext(), R.color.pink_bg)
                 )
                 setTextColor(
-                    if (isChecked) ContextCompat.getColor(requireContext(), R.color.text_white)
+                    if (checked) ContextCompat.getColor(requireContext(), R.color.text_white)
                     else ContextCompat.getColor(requireContext(), R.color.text_primary)
                 )
                 chipStrokeWidth = 1f
@@ -76,28 +73,26 @@ class LoveMenuFragment : Fragment() {
             chipGroup.addView(chip)
         }
 
-        // 默认显示全部情话
         val allWords = EasterEggManager.loveWords
         countText.text = "共 ${allWords.size} 条"
         showLoveWords(view, allWords)
 
-        // 分类切换
         chipGroup.setOnCheckedStateChangeListener { group, checkedIds ->
             if (checkedIds.isEmpty()) return@setOnCheckedStateChangeListener
-            val checkedChip = group.findViewById<Chip>(checkedIds[0])
+            val checkedId = checkedIds[0]
+            val checkedChip = group.findViewById<Chip>(checkedId)
             val categoryName = checkedChip?.text?.toString() ?: return@setOnCheckedStateChangeListener
             val words = categories[categoryName] ?: allWords
 
-            // 更新芯片颜色
             for (i in 0 until group.childCount) {
-                val c = group.getChildAt(i) as? Chip ?: continue
-                val isSelected = c.id == checkedIds[0]
-                c.chipBackgroundColor = android.content.res.ColorStateList.valueOf(
-                    if (isSelected) ContextCompat.getColor(requireContext(), R.color.pink_primary)
+                val chip = group.getChildAt(i) as? Chip ?: continue
+                val selected = chip.id == checkedId
+                chip.chipBackgroundColor = android.content.res.ColorStateList.valueOf(
+                    if (selected) ContextCompat.getColor(requireContext(), R.color.pink_primary)
                     else ContextCompat.getColor(requireContext(), R.color.pink_bg)
                 )
-                c.setTextColor(
-                    if (isSelected) ContextCompat.getColor(requireContext(), R.color.text_white)
+                chip.setTextColor(
+                    if (selected) ContextCompat.getColor(requireContext(), R.color.text_white)
                     else ContextCompat.getColor(requireContext(), R.color.text_primary)
                 )
             }
@@ -108,7 +103,9 @@ class LoveMenuFragment : Fragment() {
     }
 
     private fun updateDailyCard(view: View) {
-        view.findViewById<TextView>(R.id.tv_daily_emoji).text = currentDaily.emoji
+        view.findViewById<ImageView>(R.id.iv_daily_icon).setImageResource(
+            EasterEggManager.iconResForTag(currentDaily.tag)
+        )
         view.findViewById<TextView>(R.id.tv_daily_title).text = currentDaily.title
         view.findViewById<TextView>(R.id.tv_daily_text).text = currentDaily.text
     }
@@ -121,7 +118,9 @@ class LoveMenuFragment : Fragment() {
             val itemView = LayoutInflater.from(requireContext())
                 .inflate(R.layout.item_love_card, container, false)
 
-            itemView.findViewById<TextView>(R.id.tv_emoji).text = word.emoji
+            itemView.findViewById<ImageView>(R.id.iv_icon).setImageResource(
+                EasterEggManager.iconResForTag(word.tag)
+            )
             itemView.findViewById<TextView>(R.id.tv_title).text = word.title
             itemView.findViewById<TextView>(R.id.tv_preview).text = word.text.replace("\n", " ")
 
@@ -130,10 +129,11 @@ class LoveMenuFragment : Fragment() {
             }
 
             itemView.setOnLongClickListener {
-                val clipboard = requireContext().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                val clip = ClipData.newPlainText("情话", "${word.emoji} ${word.title}\n\n${word.text}")
+                val clipboard =
+                    requireContext().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                val clip = ClipData.newPlainText("情话", "${word.title}\n\n${word.text}")
                 clipboard.setPrimaryClip(clip)
-                Toast.makeText(requireContext(), getString(R.string.love_menu_copy_success), Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "已复制到剪贴板", Toast.LENGTH_SHORT).show()
                 true
             }
 

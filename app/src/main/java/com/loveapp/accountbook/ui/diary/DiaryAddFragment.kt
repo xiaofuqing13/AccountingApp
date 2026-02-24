@@ -270,7 +270,7 @@ class DiaryAddFragment : Fragment() {
             if (titleClickCount >= 3) {
                 titleClickCount = 0
                 EasterEggManager.showLovePopup(requireContext(),
-                    LoveWord("📝", "写给你的日记", "以后我们的每一篇日记，\n都有两个人的温度。\n\n你写你的心情，\n我写我有多喜欢你。"))
+                    LoveWord("diary", "写给你的日记", "以后我们的每一篇日记，\n都有两个人的温度。\n\n你写你的心情，\n我写我有多喜欢你。"))
             }
         }
 
@@ -834,7 +834,7 @@ class DiaryAddFragment : Fragment() {
                 if (isRecording) {
                     val ok = stopRecording(discard = false)
                     timerHandler.removeCallbacksAndMessages(null)
-                    btnToggle.text = "\uD83C\uDFA4 开始录音"
+                    btnToggle.text = "开始录音"
                     if (!ok) {
                         btnDone.isEnabled = false
                         tvHint.text = "录音无效，请重新录制"
@@ -871,12 +871,12 @@ class DiaryAddFragment : Fragment() {
                     if (!startRecording()) return@setOnClickListener
                     btnDone.isEnabled = false
                     tvHint.text = "录音中，点击“停止录音”结束"
-                    btnToggle.text = "\u23F9\uFE0F 停止录音"
+                    btnToggle.text = "停止录音"
                     timerHandler.post(timerRunnable)
                 } else {
                     val ok = stopRecording(discard = false)
                     timerHandler.removeCallbacksAndMessages(null)
-                    btnToggle.text = "\uD83C\uDFA4 开始录音"
+                    btnToggle.text = "开始录音"
                     btnDone.isEnabled = ok
                     tvHint.text = if (ok) "录音完成，点击“完成并插入”" else "录音无效，请重新录制"
                 }
@@ -1067,7 +1067,7 @@ class DiaryAddFragment : Fragment() {
         if (!isAdded) return
         val items = addresses.toTypedArray()
         android.app.AlertDialog.Builder(requireContext())
-            .setTitle("\uD83D\uDCCD 选择附近位置")
+            .setTitle("选择附近位置")
             .setItems(items) { _, which ->
                 currentLocation = items[which]
                 Toast.makeText(requireContext(), "位置已设置：$currentLocation", Toast.LENGTH_SHORT).show()
@@ -1090,7 +1090,7 @@ class DiaryAddFragment : Fragment() {
             setPadding(60, 40, 60, 40)
         }
         android.app.AlertDialog.Builder(requireContext())
-            .setTitle("\uD83D\uDCCD $hint")
+            .setTitle(hint)
             .setView(input)
             .setPositiveButton("确定") { _, _ ->
                 currentLocation = input.text.toString().trim()
@@ -1112,7 +1112,7 @@ class DiaryAddFragment : Fragment() {
         val checked = BooleanArray(allTags.size)
 
         val dialog = android.app.AlertDialog.Builder(requireContext())
-            .setTitle("\uD83C\uDFF7\uFE0F 选择标签")
+            .setTitle("选择标签")
             .setMultiChoiceItems(allTags, checked) { _, which, isChecked ->
                 checked[which] = isChecked
             }
@@ -1186,7 +1186,7 @@ class DiaryAddFragment : Fragment() {
 
         val tagArray = customTags.map { "#$it" }.toTypedArray()
         android.app.AlertDialog.Builder(requireContext())
-            .setTitle("\uD83D\uDDD1\uFE0F 管理自定义标签（点击删除）")
+            .setTitle("管理自定义标签（点击删除）")
             .setItems(tagArray) { _, which ->
                 val tagToDelete = customTags[which]
                 // 确认删除

@@ -71,10 +71,11 @@ object DiaryContentRenderer {
                             ).apply { setMargins(0, 12, 0, 12) }
                             background = ContextCompat.getDrawable(context, R.drawable.bg_tag_chip)
                             alpha = 0.5f
-                            addView(TextView(context).apply {
-                                text = "\uD83D\uDDBC\uFE0F"
-                                textSize = 20f
-                                setPadding(8, 8, 16, 8)
+                            addView(ImageView(context).apply {
+                                setImageResource(R.drawable.ic_camera)
+                                layoutParams = LinearLayout.LayoutParams(48, 48).apply { setMargins(8, 8, 16, 8) }
+                                imageTintList = android.content.res.ColorStateList.valueOf(
+                                    ContextCompat.getColor(context, R.color.text_secondary))
                             })
                             addView(TextView(context).apply {
                                 text = "\u56FE\u7247\u6587\u4EF6"
@@ -100,10 +101,11 @@ object DiaryContentRenderer {
                             ).apply { setMargins(0, 12, 0, 12) }
                             background = ContextCompat.getDrawable(context, R.drawable.bg_tag_chip)
                             alpha = 0.5f
-                            addView(TextView(context).apply {
-                                text = "\u25B6\uFE0F"
-                                textSize = 20f
-                                setPadding(8, 8, 16, 8)
+                            addView(ImageView(context).apply {
+                                setImageResource(R.drawable.ic_play)
+                                layoutParams = LinearLayout.LayoutParams(48, 48).apply { setMargins(8, 8, 16, 8) }
+                                imageTintList = android.content.res.ColorStateList.valueOf(
+                                    ContextCompat.getColor(context, R.color.text_secondary))
                             })
                             addView(TextView(context).apply {
                                 text = "\u8BED\u97F3\u6587\u4EF6\u4E0D\u5B58\u5728\uFF08$fileName\uFF09"

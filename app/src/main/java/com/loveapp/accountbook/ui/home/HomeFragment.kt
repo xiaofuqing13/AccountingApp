@@ -59,7 +59,7 @@ class HomeFragment : Fragment() {
                 EasterEggManager.showLovePopup(
                     requireContext(),
                     LoveWord(
-                        "✨",
+                        "shine",
                         "被你发现啦！",
                         "连续点击了 5 次 Banner。\n你真的很认真在看我做的小细节。\n\n谢谢你，愿今天也被温柔对待。"
                     )
@@ -97,7 +97,7 @@ class HomeFragment : Fragment() {
 
         val dailyLove = EasterEggManager.dailyLoveWord()
         view.findViewById<ImageView>(R.id.iv_daily_love_icon)
-            .setImageResource(EasterEggManager.iconResForLoveWord(dailyLove))
+            .setImageResource(EasterEggManager.iconResForTag(dailyLove.tag))
         view.findViewById<TextView>(R.id.tv_daily_love_title).text = dailyLove.title
         view.findViewById<TextView>(R.id.tv_daily_love_text).text = dailyLove.text
         view.findViewById<View>(R.id.card_daily_love).setOnClickListener {

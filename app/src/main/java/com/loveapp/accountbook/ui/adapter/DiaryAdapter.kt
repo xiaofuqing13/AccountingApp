@@ -73,7 +73,7 @@ class DiaryAdapter(
         holder.tvWeather.text = item.weather
         holder.tvTitle.text = item.title
         holder.tvPreview.text = DiaryContentRenderer.getPlainPreview(item.content)
-        holder.ivMood.setImageResource(EasterEggManager.iconResForMood(item.mood))
+        holder.ivMood.setImageResource(R.drawable.ic_mood)
 
         if (item.location.isNotEmpty()) {
             holder.tvLocationTag.text = item.location
