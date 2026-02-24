@@ -190,79 +190,96 @@ class AccountAddFragment : Fragment() {
         findNavController().popBackStack()
     }
 
+    private fun getHiddenCategories(type: String): MutableSet<String> {
+        val prefs = requireContext().getSharedPreferences("hidden_categories", android.content.Context.MODE_PRIVATE)
+        return prefs.getStringSet("hidden_$type", emptySet())?.toMutableSet() ?: mutableSetOf()
+    }
+
+    private fun hideBuiltInCategory(type: String, name: String) {
+        val prefs = requireContext().getSharedPreferences("hidden_categories", android.content.Context.MODE_PRIVATE)
+        val hidden = getHiddenCategories(type)
+        hidden.add(name)
+        prefs.edit().putStringSet("hidden_$type", hidden).apply()
+    }
+
     private fun updateCategoryGrid(rv: androidx.recyclerview.widget.RecyclerView) {
         lifecycleScope.launch {
             val type = if (isExpense) "支出" else "收入"
             val builtIn = if (isExpense) AccountEntry.EXPENSE_CATEGORIES else AccountEntry.INCOME_CATEGORIES
-            // 内置分类去掉"更多"，末尾追加自定义分类 + 添加按钮
-            val base = builtIn.filter { it.name != "更多" }
+            val hidden = getHiddenCategories(type)
+            val base = builtIn.filter { it.name != "更多" && it.name !in hidden }
             val custom = repo.getCustomCategories(type)
             val categories = base + custom + Category(R.drawable.ic_add, "添加")
-            selectedCategory = base.first().name
+            selectedCategory = if (base.isNotEmpty()) base.first().name else if (custom.isNotEmpty()) custom.first().name else ""
 
             rv.adapter = object : androidx.recyclerview.widget.RecyclerView.Adapter<androidx.recyclerview.widget.RecyclerView.ViewHolder>() {
                 private var selected = 0
                 override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): androidx.recyclerview.widget.RecyclerView.ViewHolder {
-                    val tv = TextView(parent.context).apply {
-                        gravity = android.view.Gravity.CENTER
-                        setPadding(8, 16, 8, 16)
-                        textSize = 13f
-                        layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
-                    }
-                    return object : androidx.recyclerview.widget.RecyclerView.ViewHolder(tv) {}
+                    val itemView = LayoutInflater.from(parent.context).inflate(R.layout.item_category, parent, false)
+                    return object : androidx.recyclerview.widget.RecyclerView.ViewHolder(itemView) {}
                 }
                 override fun onBindViewHolder(holder: androidx.recyclerview.widget.RecyclerView.ViewHolder, position: Int) {
                     val cat = categories[position]
                     val isAddBtn = cat.name == "添加"
-                    (holder.itemView as TextView).apply {
-                        text = "${cat.icon}\n${cat.name}"
-                        setTextColor(ContextCompat.getColor(requireContext(),
-                            if (isAddBtn) R.color.text_hint
-                            else if (position == selected) R.color.pink_primary
-                            else R.color.text_primary))
-                        setBackgroundResource(if (!isAddBtn && position == selected) R.drawable.bg_tag_pink else 0)
-                        setOnClickListener {
-                            if (isAddBtn) {
-                                showAddCategoryDialog(rv)
-                            } else {
-                                val adapterPos = holder.bindingAdapterPosition
-                                if (adapterPos == androidx.recyclerview.widget.RecyclerView.NO_POSITION) return@setOnClickListener
-                                val old = selected
-                                @Suppress("DEPRECATION")
-                                selected = adapterPos
-                                selectedCategory = cat.name
-                                notifyItemChanged(old)
-                                notifyItemChanged(selected)
-                            }
-                        }
-                        // 长按删除自定义分类
-                        setOnLongClickListener {
+                    val ivIcon = holder.itemView.findViewById<ImageView>(R.id.iv_icon)
+                    val tvName = holder.itemView.findViewById<TextView>(R.id.tv_name)
+
+                    val iconResId = cat.iconRes
+                    if (iconResId != null) {
+                        ivIcon.setImageResource(iconResId)
+                    }
+                    val tintColor = ContextCompat.getColor(requireContext(),
+                        if (isAddBtn) R.color.text_hint
+                        else if (position == selected) R.color.pink_primary
+                        else R.color.text_secondary)
+                    ivIcon.imageTintList = android.content.res.ColorStateList.valueOf(tintColor)
+
+                    tvName.text = cat.name
+                    tvName.setTextColor(ContextCompat.getColor(requireContext(),
+                        if (isAddBtn) R.color.text_hint
+                        else if (position == selected) R.color.pink_primary
+                        else R.color.text_primary))
+
+                    holder.itemView.setBackgroundResource(
+                        if (!isAddBtn && position == selected) R.drawable.bg_tag_pink else 0)
+
+                    holder.itemView.setOnClickListener {
+                        if (isAddBtn) {
+                            showAddCategoryDialog(rv)
+                        } else {
                             val adapterPos = holder.bindingAdapterPosition
-                            if (adapterPos == androidx.recyclerview.widget.RecyclerView.NO_POSITION) return@setOnLongClickListener true
-                            val currentCat = categories[adapterPos]
-                            val isCurrentAddBtn = currentCat.name == "添加"
-                            if (isCurrentAddBtn) {
-                                Toast.makeText(requireContext(), "请点击“添加”按钮新增分类", Toast.LENGTH_SHORT).show()
-                                return@setOnLongClickListener true
-                            }
-                            val isCustomCategory = adapterPos >= base.size && adapterPos < categories.size - 1
-                            if (!isCustomCategory) {
-                                Toast.makeText(requireContext(), "内置分类不支持删除，请长按自定义分类", Toast.LENGTH_SHORT).show()
-                                return@setOnLongClickListener true
-                            }
-                            android.app.AlertDialog.Builder(requireContext())
-                                .setTitle("删除分类")
-                                .setMessage("确定删除「${currentCat.name}」分类吗？")
-                                .setPositiveButton("删除") { _, _ ->
-                                    lifecycleScope.launch {
-                                        repo.deleteCustomCategory(currentCat.name, type)
-                                        updateCategoryGrid(rv)
-                                    }
-                                }
-                                .setNegativeButton("取消", null)
-                                .show()
-                            true
+                            if (adapterPos == androidx.recyclerview.widget.RecyclerView.NO_POSITION) return@setOnClickListener
+                            val old = selected
+                            @Suppress("DEPRECATION")
+                            selected = adapterPos
+                            selectedCategory = cat.name
+                            notifyItemChanged(old)
+                            notifyItemChanged(selected)
                         }
+                    }
+                    // 长按删除分类
+                    holder.itemView.setOnLongClickListener {
+                        val adapterPos = holder.bindingAdapterPosition
+                        if (adapterPos == androidx.recyclerview.widget.RecyclerView.NO_POSITION) return@setOnLongClickListener true
+                        val currentCat = categories[adapterPos]
+                        if (currentCat.name == "添加") return@setOnLongClickListener true
+                        val isCustom = adapterPos >= base.size && adapterPos < categories.size - 1
+                        android.app.AlertDialog.Builder(requireContext())
+                            .setTitle("删除分类")
+                            .setMessage("确定删除「${currentCat.name}」分类吗？")
+                            .setPositiveButton("删除") { _, _ ->
+                                lifecycleScope.launch {
+                                    if (isCustom) {
+                                        repo.deleteCustomCategory(currentCat.name, type)
+                                    } else {
+                                        hideBuiltInCategory(type, currentCat.name)
+                                    }
+                                    updateCategoryGrid(rv)
+                                }
+                            }
+                            .setNegativeButton("取消", null)
+                            .show()
+                        true
                     }
                 }
                 override fun getItemCount() = categories.size
