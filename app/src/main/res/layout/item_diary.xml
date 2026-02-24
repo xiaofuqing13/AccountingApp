@@ -24,7 +24,6 @@
             android:layout_width="@dimen/diary_swipe_action_width"
             android:layout_height="match_parent"
             android:clickable="true"
-            android:focusable="true"
             android:gravity="center"
             android:orientation="vertical">
 
@@ -51,7 +50,6 @@
             android:layout_width="@dimen/diary_swipe_action_width"
             android:layout_height="match_parent"
             android:clickable="true"
-            android:focusable="true"
             android:gravity="center"
             android:orientation="vertical">
 

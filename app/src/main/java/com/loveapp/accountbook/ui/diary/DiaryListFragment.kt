@@ -227,7 +227,7 @@ class DiaryListFragment : Fragment() {
     }
 
     private fun attachSwipeCloseFallback(recyclerView: RecyclerView) {
-        val closeTrigger = recyclerView.resources.displayMetrics.density * 8f
+        val closeTrigger = recyclerView.resources.displayMetrics.density * 24f
         var downX = 0f
         var downY = 0f
         var downInActionArea = false
