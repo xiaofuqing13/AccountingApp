@@ -63,52 +63,64 @@ class ExcelRepository(private val context: Context) {
 
     private fun getOrCreateWorkbook(): XSSFWorkbook {
         val file = getFile()
-        return if (file.exists()) {
-            FileInputStream(file).use { XSSFWorkbook(it) }
-        } else {
-            XSSFWorkbook().apply {
-                createSheet(sheetAccount).also { sheet ->
-                    sheet.createRow(0).apply {
-                        createCell(0).setCellValue("日期")
-                        createCell(1).setCellValue("类型")
-                        createCell(2).setCellValue("分类")
-                        createCell(3).setCellValue("金额")
-                        createCell(4).setCellValue("备注")
-                    }
-                }
-                createSheet(sheetDiary).also { sheet ->
-                    sheet.createRow(0).apply {
-                        createCell(0).setCellValue("日期")
-                        createCell(1).setCellValue("标题")
-                        createCell(2).setCellValue("内容")
-                        createCell(3).setCellValue("天气")
-                        createCell(4).setCellValue("心情")
-                        createCell(5).setCellValue("位置")
-                        createCell(6).setCellValue("标签")
-                    }
-                }
-                createSheet(sheetMeeting).also { sheet ->
-                    sheet.createRow(0).apply {
-                        createCell(0).setCellValue("日期")
-                        createCell(1).setCellValue("主题")
-                        createCell(2).setCellValue("开始时间")
-                        createCell(3).setCellValue("结束时间")
-                        createCell(4).setCellValue("地点")
-                        createCell(5).setCellValue("参会人")
-                        createCell(6).setCellValue("内容")
-                        createCell(7).setCellValue("待办事项")
-                        createCell(8).setCellValue("标签")
-                    }
-                }
-                createSheet(sheetCategory).also { sheet ->
-                    sheet.createRow(0).apply {
-                        createCell(0).setCellValue("分类名称")
-                        createCell(1).setCellValue("类型")
-                        createCell(2).setCellValue("图标")
-                    }
-                }
-                saveWorkbook(this)
+        return if (file.exists() && file.length() > 0) {
+            try {
+                FileInputStream(file).use { XSSFWorkbook(it) }
+            } catch (e: Exception) {
+                // 文件损坏，备份后重建
+                val backup = File(file.parentFile, "${file.nameWithoutExtension}_backup_${System.currentTimeMillis()}.xlsx")
+                try { file.copyTo(backup, overwrite = true) } catch (_: Exception) {}
+                file.delete()
+                createNewWorkbook()
             }
+        } else {
+            createNewWorkbook()
+        }
+    }
+
+    private fun createNewWorkbook(): XSSFWorkbook {
+        return XSSFWorkbook().apply {
+            createSheet(sheetAccount).also { sheet ->
+                sheet.createRow(0).apply {
+                    createCell(0).setCellValue("日期")
+                    createCell(1).setCellValue("类型")
+                    createCell(2).setCellValue("分类")
+                    createCell(3).setCellValue("金额")
+                    createCell(4).setCellValue("备注")
+                }
+            }
+            createSheet(sheetDiary).also { sheet ->
+                sheet.createRow(0).apply {
+                    createCell(0).setCellValue("日期")
+                    createCell(1).setCellValue("标题")
+                    createCell(2).setCellValue("内容")
+                    createCell(3).setCellValue("天气")
+                    createCell(4).setCellValue("心情")
+                    createCell(5).setCellValue("位置")
+                    createCell(6).setCellValue("标签")
+                }
+            }
+            createSheet(sheetMeeting).also { sheet ->
+                sheet.createRow(0).apply {
+                    createCell(0).setCellValue("日期")
+                    createCell(1).setCellValue("主题")
+                    createCell(2).setCellValue("开始时间")
+                    createCell(3).setCellValue("结束时间")
+                    createCell(4).setCellValue("地点")
+                    createCell(5).setCellValue("参会人")
+                    createCell(6).setCellValue("内容")
+                    createCell(7).setCellValue("待办事项")
+                    createCell(8).setCellValue("标签")
+                }
+            }
+            createSheet(sheetCategory).also { sheet ->
+                sheet.createRow(0).apply {
+                    createCell(0).setCellValue("分类名称")
+                    createCell(1).setCellValue("类型")
+                    createCell(2).setCellValue("图标")
+                }
+            }
+            saveWorkbook(this)
         }
     }
 
