@@ -455,14 +455,11 @@ class DiaryAddFragment : Fragment() {
                 if (index < icons.size) {
                     chipIcon = ContextCompat.getDrawable(ctx, icons[index])
                     isChipIconVisible = true
-                    // 天气图标保留原色，选中时变白
-                    chipIconTint = android.content.res.ColorStateList(
-                        arrayOf(
-                            intArrayOf(android.R.attr.state_checked),
-                            intArrayOf()
-                        ),
-                        intArrayOf(whiteColor, 0) // 0 = 不着色，保留原始颜色
-                    )
+                    chipIconTint = if (index == initialSelected) {
+                        android.content.res.ColorStateList.valueOf(whiteColor)
+                    } else {
+                        null // 保留原始颜色
+                    }
                 }
                 @Suppress("DEPRECATION")
                 chipCornerRadius = resources.getDimension(R.dimen.radius_lg)
@@ -484,7 +481,12 @@ class DiaryAddFragment : Fragment() {
                 ))
                 isChecked = index == initialSelected
             }
-            chip.setOnCheckedChangeListener { _, isChecked ->
+            chip.setOnCheckedChangeListener { chipView, isChecked ->
+                (chipView as Chip).chipIconTint = if (isChecked) {
+                    android.content.res.ColorStateList.valueOf(whiteColor)
+                } else {
+                    null
+                }
                 if (isChecked) {
                     tag.text = label
                     onSelected(index)
@@ -520,13 +522,11 @@ class DiaryAddFragment : Fragment() {
                 if (index < moodIcons.size) {
                     chipIcon = ContextCompat.getDrawable(ctx, moodIcons[index])
                     isChipIconVisible = true
-                    chipIconTint = android.content.res.ColorStateList(
-                        arrayOf(
-                            intArrayOf(android.R.attr.state_checked),
-                            intArrayOf()
-                        ),
-                        intArrayOf(whiteColor, pinkColor)
-                    )
+                    chipIconTint = if (index == initialSelected) {
+                        android.content.res.ColorStateList.valueOf(whiteColor)
+                    } else {
+                        null // 保留原始颜色
+                    }
                 }
                 @Suppress("DEPRECATION")
                 chipCornerRadius = resources.getDimension(R.dimen.radius_lg)
@@ -548,7 +548,12 @@ class DiaryAddFragment : Fragment() {
                 ))
                 isChecked = index == initialSelected
             }
-            chip.setOnCheckedChangeListener { _, isChecked ->
+            chip.setOnCheckedChangeListener { chipView, isChecked ->
+                (chipView as Chip).chipIconTint = if (isChecked) {
+                    android.content.res.ColorStateList.valueOf(whiteColor)
+                } else {
+                    null
+                }
                 if (isChecked) {
                     tagMood.text = mood
                     onSelected(index)
