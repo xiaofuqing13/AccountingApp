@@ -37,12 +37,18 @@ class DiaryListFragment : Fragment() {
     private var lastErrorMessage: String? = null
     private var lastSwipeDx = 0f
     private val swipeOpenScale = 0.96f
+    private var isNavigating = false
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View = inflater.inflate(R.layout.fragment_diary_list, container, false)
+
+    override fun onResume() {
+        super.onResume()
+        isNavigating = false
+    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -407,6 +413,8 @@ class DiaryListFragment : Fragment() {
     }
 
     private fun showEditDialog(entry: DiaryEntry) {
+        if (isNavigating) return
+        isNavigating = true
         val bundle = Bundle().apply {
             putInt("entryRowIndex", entry.rowIndex)
             putString("entryTitle", entry.title)
