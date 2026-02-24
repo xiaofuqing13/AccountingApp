@@ -40,7 +40,7 @@ class ExcelRepository(private val context: Context) {
         val publicFile = File(publicDir, fileName)
         val legacyFile = File(context.getExternalFilesDir(null), "DataManager/$fileName")
 
-        // 公共目录可写 → 优先用公共目录
+        // 公共目录可写 -> 优先用公共目录
         if (publicDir.canWrite()) {
             // 自动迁移：旧路径有数据但公共目录没有
             if (!publicFile.exists() && legacyFile.exists()) {
@@ -53,7 +53,7 @@ class ExcelRepository(private val context: Context) {
             return publicFile
         }
 
-        // 公共目录不可写（权限未授予）→ fallback 到旧路径
+        // 公共目录不可写（权限未授予）-> fallback 到旧路径
         val fallbackDir = File(context.getExternalFilesDir(null), "DataManager")
         if (!fallbackDir.exists()) fallbackDir.mkdirs()
         val fallbackFile = File(fallbackDir, fileName)
@@ -700,7 +700,7 @@ class ExcelRepository(private val context: Context) {
         var meetingCount = 0
         var categoryCount = 0
 
-        // 判断版本：有"元信息"sheet 或 sheet名为"记账" → v2新版，否则旧版
+        // 判断版本：有"元信息"sheet 或 sheet名为"记账" -> v2新版，否则旧版
         val isV2 = importWb.getSheet("元信息") != null || importWb.getSheet(sheetAccount) != null
 
         // ===== 记账 =====

@@ -12,7 +12,7 @@
         android:background="@drawable/bg_love_menu_header"
         android:gravity="center_vertical"
         android:padding="@dimen/page_margin">
-        <TextView android:id="@+id/btn_back" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="← " android:textColor="@color/text_white" android:textSize="18sp" android:padding="4dp" />
+        <ImageButton android:id="@+id/btn_back" android:layout_width="wrap_content" android:layout_height="wrap_content" android:src="@drawable/ic_arrow_back" android:background="?android:attr/selectableItemBackgroundBorderless" app:tint="@color/text_white" android:padding="4dp" />
         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/love_letter_title" android:textColor="@color/text_white" android:textSize="@dimen/title_size" android:textStyle="bold" />
     </LinearLayout>
 
@@ -32,9 +32,9 @@
                 android:layout_gravity="center"
                 android:gravity="center"
                 android:orientation="horizontal">
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="✨" android:textSize="18sp" android:layout_marginEnd="8dp" />
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="💌" android:textSize="52sp" />
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="✨" android:textSize="18sp" android:layout_marginStart="8dp" />
+                <ImageView android:layout_width="18dp" android:layout_height="18dp" android:src="@drawable/ic_love_shine" app:tint="@color/pink_primary" android:layout_marginEnd="8dp" />
+                <ImageView android:layout_width="52dp" android:layout_height="52dp" android:src="@drawable/ic_love_heart" app:tint="@color/pink_primary" />
+                <ImageView android:layout_width="18dp" android:layout_height="18dp" android:src="@drawable/ic_love_shine" app:tint="@color/pink_primary" android:layout_marginStart="8dp" />
             </LinearLayout>
 
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="写给最特别的你" android:textColor="@color/pink_primary" android:textSize="22sp" android:textStyle="bold" android:layout_gravity="center" android:layout_marginTop="10dp" />
@@ -48,7 +48,7 @@
                 android:gravity="center"
                 android:layout_marginTop="16dp">
                 <View android:layout_width="30dp" android:layout_height="1dp" android:background="@color/pink_soft" />
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text=" 💕 " android:textSize="12sp" android:layout_marginHorizontal="6dp" />
+                <ImageView android:layout_width="12dp" android:layout_height="12dp" android:src="@drawable/ic_love_heart" app:tint="@color/pink_primary" android:layout_marginHorizontal="6dp" />
                 <View android:layout_width="30dp" android:layout_height="1dp" android:background="@color/pink_soft" />
             </LinearLayout>
 
@@ -74,12 +74,15 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="永远爱你的我 ❤️"
+                        android:text="永远爱你的我"
                         android:textColor="@color/pink_primary"
                         android:textSize="@dimen/body_size"
                         android:textStyle="italic"
                         android:layout_gravity="end"
-                        android:layout_marginTop="8dp" />
+                        android:layout_marginTop="8dp"
+                        android:drawableEnd="@drawable/ic_love_heart"
+                        android:drawablePadding="4dp"
+                        app:drawableTint="@color/pink_primary" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
@@ -91,14 +94,21 @@
                 android:gravity="center"
                 android:layout_marginTop="28dp">
                 <View android:layout_width="20dp" android:layout_height="1dp" android:background="@color/pink_soft" />
-                <TextView
+                <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text=" 🤙 我对你的承诺 "
-                    android:textColor="@color/pink_primary"
-                    android:textSize="15sp"
-                    android:textStyle="bold"
-                    android:layout_marginHorizontal="8dp" />
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:layout_marginHorizontal="8dp">
+                    <ImageView android:layout_width="16dp" android:layout_height="16dp" android:src="@drawable/ic_promise" app:tint="@color/pink_primary" android:layout_marginEnd="4dp" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="我对你的承诺"
+                        android:textColor="@color/pink_primary"
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
                 <View android:layout_width="20dp" android:layout_height="1dp" android:background="@color/pink_soft" />
             </LinearLayout>
 
@@ -110,14 +120,17 @@
                 app:chipSpacingVertical="8dp" />
 
             <!-- 底部装饰 -->
-            <TextView
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:layout_marginTop="24dp"
-                android:text="— 💌 用心写给你 —"
-                android:textColor="@color/footer_hint"
-                android:textSize="11sp" />
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:layout_marginTop="24dp">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="—" android:textColor="@color/footer_hint" android:textSize="11sp" />
+                <ImageView android:layout_width="12dp" android:layout_height="12dp" android:src="@drawable/ic_love_heart" app:tint="@color/footer_hint" android:layout_marginHorizontal="4dp" />
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="用心写给你 —" android:textColor="@color/footer_hint" android:textSize="11sp" />
+            </LinearLayout>
 
             <View android:layout_width="1dp" android:layout_height="40dp" />
         </LinearLayout>
