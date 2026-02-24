@@ -84,6 +84,7 @@ class ExcelRepository(private val context: Context) {
                         createCell(3).setCellValue("天气")
                         createCell(4).setCellValue("心情")
                         createCell(5).setCellValue("位置")
+                        createCell(6).setCellValue("标签")
                     }
                 }
                 createSheet(sheetMeeting).also { sheet ->
@@ -216,6 +217,7 @@ class ExcelRepository(private val context: Context) {
                 category = getCellString(row.getCell(2)),
                 amount = getCellDouble(row.getCell(3)),
                 note = getCellString(row.getCell(4)),
+                location = getCellString(row.getCell(5)),
                 rowIndex = i - 1
             ))
         }
@@ -233,6 +235,7 @@ class ExcelRepository(private val context: Context) {
             createCell(2).setCellValue(entry.category)
             createCell(3).setCellValue(entry.amount)
             createCell(4).setCellValue(entry.note)
+            createCell(5).setCellValue(entry.location)
         }
         saveWorkbook(workbook)
         workbook.close()
@@ -253,6 +256,7 @@ class ExcelRepository(private val context: Context) {
             row.getCell(2)?.setCellValue(entry.category)
             row.getCell(3)?.setCellValue(entry.amount)
             row.getCell(4)?.setCellValue(entry.note)
+            (row.getCell(5) ?: row.createCell(5)).setCellValue(entry.location)
             saveWorkbook(workbook)
         } finally {
             workbook.close()
@@ -292,6 +296,7 @@ class ExcelRepository(private val context: Context) {
                 weather = getCellString(row.getCell(3)),
                 mood = getCellString(row.getCell(4)),
                 location = getCellString(row.getCell(5)),
+                tags = getCellString(row.getCell(6)),
                 rowIndex = i - 1
             ))
         }
@@ -310,6 +315,7 @@ class ExcelRepository(private val context: Context) {
             createCell(3).setCellValue(entry.weather)
             createCell(4).setCellValue(entry.mood)
             createCell(5).setCellValue(entry.location)
+            createCell(6).setCellValue(entry.tags)
         }
         saveWorkbook(workbook)
         workbook.close()
@@ -327,6 +333,7 @@ class ExcelRepository(private val context: Context) {
             row.getCell(3)?.setCellValue(entry.weather)
             row.getCell(4)?.setCellValue(entry.mood)
             row.getCell(5)?.setCellValue(entry.location)
+            (row.getCell(6) ?: row.createCell(6)).setCellValue(entry.tags)
             saveWorkbook(workbook)
         } finally {
             workbook.close()
@@ -526,6 +533,7 @@ class ExcelRepository(private val context: Context) {
             newRow.createCell(3).setCellValue(d.weather)
             newRow.createCell(4).setCellValue(d.mood)
             newRow.createCell(5).setCellValue("")
+            newRow.createCell(6).setCellValue("")
             existingDiaries.add(key)
             diaryCount++
         }
@@ -584,7 +592,7 @@ class ExcelRepository(private val context: Context) {
             for (i in 0..srcAccount.lastRowNum) {
                 val srcRow = srcAccount.getRow(i) ?: continue
                 val newRow = expAccount.createRow(i)
-                for (c in 0 until 5) {
+                for (c in 0 until 6) {
                     val cell = srcRow.getCell(c)
                     if (cell?.cellType == CellType.NUMERIC) {
                         newRow.createCell(c).setCellValue(cell.numericCellValue)
@@ -600,6 +608,7 @@ class ExcelRepository(private val context: Context) {
                 createCell(2).setCellValue("分类")
                 createCell(3).setCellValue("金额")
                 createCell(4).setCellValue("备注")
+                createCell(5).setCellValue("位置")
             }
         }
 
@@ -610,7 +619,7 @@ class ExcelRepository(private val context: Context) {
             for (i in 0..srcDiary.lastRowNum) {
                 val srcRow = srcDiary.getRow(i) ?: continue
                 val newRow = expDiary.createRow(i)
-                for (c in 0 until 6) {
+                for (c in 0 until 7) {
                     newRow.createCell(c).setCellValue(getCellString(srcRow.getCell(c)))
                 }
             }
@@ -622,6 +631,7 @@ class ExcelRepository(private val context: Context) {
                 createCell(3).setCellValue("天气")
                 createCell(4).setCellValue("心情")
                 createCell(5).setCellValue("位置")
+                createCell(6).setCellValue("标签")
             }
         }
 
@@ -725,6 +735,7 @@ class ExcelRepository(private val context: Context) {
                 val category = getCellString(row.getCell(2))
                 val amount = getCellDouble(row.getCell(3))
                 val note = if (isLegacy6Col) getCellString(row.getCell(5)) else getCellString(row.getCell(4))
+                val location = if (isLegacy6Col) "" else getCellString(row.getCell(5))
                 if (date.isBlank() || type.isBlank()) continue
                 val key = "${date}_${type}_${category}_${amount}_${note}"
                 if (key in existing) continue
@@ -734,6 +745,7 @@ class ExcelRepository(private val context: Context) {
                 newRow.createCell(2).setCellValue(category)
                 newRow.createCell(3).setCellValue(amount)
                 newRow.createCell(4).setCellValue(note)
+                newRow.createCell(5).setCellValue(location)
                 existing.add(key)
                 accountCount++
             }
@@ -760,6 +772,7 @@ class ExcelRepository(private val context: Context) {
                 val weather: String
                 val mood: String
                 val location: String
+                val tags: String
                 if (isLegacyDiary) {
                     date = getCellString(row.getCell(0))
                     weather = getCellString(row.getCell(1))
@@ -767,6 +780,7 @@ class ExcelRepository(private val context: Context) {
                     title = getCellString(row.getCell(3))
                     content = getCellString(row.getCell(4))
                     location = ""
+                    tags = ""
                 } else {
                     date = getCellString(row.getCell(0))
                     title = getCellString(row.getCell(1))
@@ -774,6 +788,7 @@ class ExcelRepository(private val context: Context) {
                     weather = getCellString(row.getCell(3))
                     mood = getCellString(row.getCell(4))
                     location = getCellString(row.getCell(5))
+                    tags = getCellString(row.getCell(6))
                 }
                 if (date.isBlank()) continue
                 val key = "${date}_${title}"
@@ -785,6 +800,7 @@ class ExcelRepository(private val context: Context) {
                 newRow.createCell(3).setCellValue(weather)
                 newRow.createCell(4).setCellValue(mood)
                 newRow.createCell(5).setCellValue(location)
+                newRow.createCell(6).setCellValue(tags)
                 existing.add(key)
                 diaryCount++
             }

@@ -1,5 +1,6 @@
 package com.loveapp.accountbook.ui.account
 
+import android.Manifest
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -9,6 +10,7 @@ import android.widget.GridLayout
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -21,6 +23,7 @@ import com.loveapp.accountbook.data.repository.ExcelRepository
 import com.loveapp.accountbook.util.DateUtils
 import com.loveapp.accountbook.util.DraftManager
 import com.loveapp.accountbook.util.EasterEggManager
+import com.loveapp.accountbook.util.LocationHelper
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 
@@ -31,6 +34,16 @@ class AccountAddFragment : Fragment() {
     private var isExpense = true
     private var selectedCategory = "餐饮"
     private var amountStr = ""
+    private var currentLocation = ""
+    private lateinit var locationHelper: LocationHelper
+
+    private val locationPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val granted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true
+                || permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+        if (granted) locationHelper.fetchLocation { address -> currentLocation = address }
+    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         return inflater.inflate(R.layout.fragment_account_add, container, false)
@@ -122,6 +135,17 @@ class AccountAddFragment : Fragment() {
             }
         }
 
+        // 自动获取定位
+        locationHelper = LocationHelper(requireContext())
+        if (locationHelper.hasPermission()) {
+            locationHelper.fetchLocation { address -> currentLocation = address }
+        } else {
+            locationPermissionLauncher.launch(arrayOf(
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ))
+        }
+
         view.findViewById<View>(R.id.btn_back).setOnClickListener { findNavController().popBackStack() }
     }
 
@@ -153,7 +177,8 @@ class AccountAddFragment : Fragment() {
             type = if (isExpense) "支出" else "收入",
             category = selectedCategory,
             amount = amount,
-            note = etNote.text.toString()
+            note = etNote.text.toString(),
+            location = currentLocation
         )
         viewModel.addAccount(entry)
         DraftManager.clearDrafts(requireContext(), "draft_account_")

@@ -8,6 +8,7 @@ data class AccountEntry(
     val category: String,
     val amount: Double,
     val note: String = "",
+    val location: String = "",
     val rowIndex: Int = -1
 ) {
     val isIncome: Boolean get() = type == "收入"

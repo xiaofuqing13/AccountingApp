@@ -1,5 +1,6 @@
 package com.loveapp.accountbook.ui.meeting
 
+import android.Manifest
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -7,6 +8,7 @@ import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
@@ -15,10 +17,22 @@ import com.loveapp.accountbook.data.model.MeetingEntry
 import com.loveapp.accountbook.util.DateUtils
 import com.loveapp.accountbook.util.DraftManager
 import com.loveapp.accountbook.util.EasterEggManager
+import com.loveapp.accountbook.util.LocationHelper
 
 class MeetingAddFragment : Fragment() {
 
     private val viewModel: MeetingViewModel by activityViewModels()
+    private lateinit var locationHelper: LocationHelper
+
+    private val locationPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val granted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true
+                || permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+        if (granted) locationHelper.fetchLocation { address -> autoFillLocation(address) }
+    }
+
+    private var etLocationRef: EditText? = null
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         return inflater.inflate(R.layout.fragment_meeting_add, container, false)
@@ -32,6 +46,7 @@ class MeetingAddFragment : Fragment() {
         val tvStartTime = view.findViewById<TextView>(R.id.tv_start_time)
         val tvEndTime = view.findViewById<TextView>(R.id.tv_end_time)
         val etLocation = view.findViewById<EditText>(R.id.et_location)
+        etLocationRef = etLocation
         val etAttendees = view.findViewById<EditText>(R.id.et_attendees)
         val etContent = view.findViewById<EditText>(R.id.et_content)
         val etTodo = view.findViewById<EditText>(R.id.et_todo)
@@ -54,6 +69,17 @@ class MeetingAddFragment : Fragment() {
         DraftManager.bindAutoSave(requireContext(), etAttendees, DraftManager.KEY_MEETING_ATTENDEES)
         DraftManager.bindAutoSave(requireContext(), etContent, DraftManager.KEY_MEETING_CONTENT)
         DraftManager.bindAutoSave(requireContext(), etTodo, DraftManager.KEY_MEETING_TODO)
+
+        // 自动获取定位
+        locationHelper = LocationHelper(requireContext())
+        if (locationHelper.hasPermission()) {
+            locationHelper.fetchLocation { address -> autoFillLocation(address) }
+        } else {
+            locationPermissionLauncher.launch(arrayOf(
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ))
+        }
 
         view.findViewById<View>(R.id.btn_back).setOnClickListener { findNavController().popBackStack() }
         view.findViewById<View>(R.id.btn_save).setOnClickListener {
@@ -79,6 +105,13 @@ class MeetingAddFragment : Fragment() {
                 EasterEggManager.showLovePopup(requireContext(), EasterEggManager.eggMeetingSave)
             }
             findNavController().popBackStack()
+        }
+    }
+
+    private fun autoFillLocation(address: String) {
+        val et = etLocationRef ?: return
+        if (et.text.isNullOrBlank()) {
+            et.setText(address)
         }
     }
 }
