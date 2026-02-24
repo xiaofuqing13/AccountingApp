@@ -80,6 +80,17 @@ class AccountViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
+    fun loadAccountsByRange(startDate: String, endDate: String) {
+        viewModelScope.launch {
+            val all = repo.getAccounts()
+            val filtered = all.filter { it.date >= startDate && it.date <= endDate }
+            _accounts.value = filtered
+            _totalExpense.value = filtered.filter { it.isExpense }.sumOf { it.amount }
+            _totalIncome.value = filtered.filter { it.isIncome }.sumOf { it.amount }
+            _balance.value = (_totalIncome.value ?: 0.0) - (_totalExpense.value ?: 0.0)
+        }
+    }
+
     fun getCategoryStats(): List<Pair<String, Double>> {
         val list = _accounts.value?.filter { it.isExpense } ?: emptyList()
         return list.groupBy { it.category }
