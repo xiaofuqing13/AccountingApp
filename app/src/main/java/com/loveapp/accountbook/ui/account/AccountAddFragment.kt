@@ -36,6 +36,7 @@ class AccountAddFragment : Fragment() {
     private var amountStr = ""
     private var currentLocation = ""
     private lateinit var locationHelper: LocationHelper
+    private val selectedCalendar: java.util.Calendar = java.util.Calendar.getInstance()
 
     private val locationPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -60,7 +61,7 @@ class AccountAddFragment : Fragment() {
         val tabType = view.findViewById<TabLayout>(R.id.tab_type)
         val numpad = view.findViewById<GridLayout>(R.id.numpad)
 
-        tvDate.text = DateUtils.today()
+        tvDate.text = DateUtils.formatDateTime(selectedCalendar)
 
         // 自动保存：恢复草稿
         val draftAmount = DraftManager.getDraft(requireContext(), DraftManager.KEY_ACCOUNT_AMOUNT)
@@ -146,7 +147,27 @@ class AccountAddFragment : Fragment() {
             ))
         }
 
+        // 点击日期行弹出日期时间选择器
+        tvDate.setOnClickListener { showDateTimePicker(tvDate) }
         view.findViewById<View>(R.id.btn_back).setOnClickListener { findNavController().popBackStack() }
+    }
+
+    private fun showDateTimePicker(tvDate: TextView) {
+        val year = selectedCalendar.get(java.util.Calendar.YEAR)
+        val month = selectedCalendar.get(java.util.Calendar.MONTH)
+        val day = selectedCalendar.get(java.util.Calendar.DAY_OF_MONTH)
+        android.app.DatePickerDialog(requireContext(), { _, y, m, d ->
+            selectedCalendar.set(java.util.Calendar.YEAR, y)
+            selectedCalendar.set(java.util.Calendar.MONTH, m)
+            selectedCalendar.set(java.util.Calendar.DAY_OF_MONTH, d)
+            val hour = selectedCalendar.get(java.util.Calendar.HOUR_OF_DAY)
+            val minute = selectedCalendar.get(java.util.Calendar.MINUTE)
+            android.app.TimePickerDialog(requireContext(), { _, h, min ->
+                selectedCalendar.set(java.util.Calendar.HOUR_OF_DAY, h)
+                selectedCalendar.set(java.util.Calendar.MINUTE, min)
+                tvDate.text = DateUtils.formatDateTime(selectedCalendar)
+            }, hour, minute, true).show()
+        }, year, month, day).show()
     }
 
     private fun onKeyPress(key: String, tvAmount: TextView, etNote: EditText) {
@@ -154,7 +175,8 @@ class AccountAddFragment : Fragment() {
             "BS" -> { if (amountStr.isNotEmpty()) amountStr = amountStr.dropLast(1) }
             "·" -> { if (!amountStr.contains(".")) amountStr += "." }
             "OK" -> { saveAccount(etNote); return }
-            "CAL", "+", "-" -> return
+            "CAL" -> { showDateTimePicker(tvAmount.rootView.findViewById(R.id.tv_date)); return }
+            "+", "-" -> return
             else -> {
                 if (amountStr.contains(".") && amountStr.substringAfter(".").length >= 2) return
                 amountStr += key
@@ -173,7 +195,7 @@ class AccountAddFragment : Fragment() {
             return
         }
         val entry = AccountEntry(
-            date = DateUtils.today(),
+            date = DateUtils.formatDateTimeStore(selectedCalendar),
             type = if (isExpense) "支出" else "收入",
             category = selectedCategory,
             amount = amount,

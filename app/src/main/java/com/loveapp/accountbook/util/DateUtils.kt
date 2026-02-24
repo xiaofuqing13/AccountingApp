@@ -5,13 +5,18 @@ import java.util.*
 
 object DateUtils {
     private val sdfDate = SimpleDateFormat("yyyy-MM-dd", Locale.CHINA)
+    private val sdfDateTime = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.CHINA)
     private val sdfMonth = SimpleDateFormat("yyyy年M月", Locale.CHINA)
     private val sdfDisplay = SimpleDateFormat("M月d日 E", Locale.CHINA)
+    private val sdfDisplayTime = SimpleDateFormat("M月d日 E HH:mm", Locale.CHINA)
     private val sdfFull = SimpleDateFormat("yyyy年M月d日 E", Locale.CHINA)
     private val sdfTime = SimpleDateFormat("HH:mm", Locale.CHINA)
     private val sdfYearMonth = SimpleDateFormat("yyyy-MM", Locale.CHINA)
 
     fun today(): String = sdfDate.format(Date())
+    fun todayWithTime(): String = sdfDateTime.format(Date())
+    fun formatDateTime(cal: Calendar): String = sdfDateTime.format(cal.time)
+    fun formatDateTimeStore(cal: Calendar): String = sdfDateTime.format(cal.time)
     fun todayDisplay(): String = sdfFull.format(Date())
     fun currentTime(): String = sdfTime.format(Date())
     fun currentYearMonth(): String = sdfYearMonth.format(Date())
@@ -23,8 +28,14 @@ object DateUtils {
     }
     fun formatDateDisplay(dateStr: String): String {
         return try {
-            val date = sdfDate.parse(dateStr)
-            sdfDisplay.format(date!!)
+            // 兼容 yyyy-MM-dd HH:mm 和 yyyy-MM-dd 两种格式
+            if (dateStr.contains(" ")) {
+                val date = sdfDateTime.parse(dateStr)
+                sdfDisplayTime.format(date!!)
+            } else {
+                val date = sdfDate.parse(dateStr)
+                sdfDisplay.format(date!!)
+            }
         } catch (e: Exception) { dateStr }
     }
 
@@ -94,11 +105,11 @@ object DateUtils {
             )
         }
         val main = when {
-            hour in 6..10 -> "早安，我的小太阳 ☀️"
-            hour in 11..13 -> "中午好，记得吃饭哦 🍱"
-            hour in 14..17 -> "下午好，今天也想你了 💭"
-            hour in 18..21 -> "晚上好，今天辛苦了 🌙"
-            else -> "夜深了，还没睡吗 🌟"
+            hour in 6..10 -> "早安，我的小太阳"
+            hour in 11..13 -> "中午好，记得吃饭哦"
+            hour in 14..17 -> "下午好，今天也想你了"
+            hour in 18..21 -> "晚上好，今天辛苦了"
+            else -> "夜深了，还没睡吗"
         }
         return main to subs.random()
     }
