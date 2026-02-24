@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.AccountBook.Splash" parent="Theme.Material3.DayNight.NoActionBar">
-        <item name="android:windowBackground">@drawable/bg_gradient_pink</item>
-        <item name="android:statusBarColor">@android:color/transparent</item>
-        <item name="android:navigationBarColor">@color/pink_bg</item>
+    <style name="Theme.AccountBook.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/pink_bg</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_brand</item>
+        <item name="windowSplashScreenIconBackgroundColor">@color/pink_soft</item>
+        <item name="postSplashScreenTheme">@style/Theme.AccountBook</item>
     </style>
 </resources>
