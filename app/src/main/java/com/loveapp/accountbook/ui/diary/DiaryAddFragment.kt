@@ -37,10 +37,14 @@ import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.google.android.gms.location.*
+import android.content.res.ColorStateList
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
+import com.google.android.material.shape.ShapeAppearanceModel
 import com.loveapp.accountbook.R
 import com.loveapp.accountbook.data.model.DiaryEntry
+import com.loveapp.accountbook.ui.widget.VoiceWaveView
 import com.loveapp.accountbook.util.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -55,6 +59,7 @@ class DiaryAddFragment : Fragment() {
     private var currentLocation = ""
     private var editRowIndex = -1
     private var isEditMode = false
+    private val selectedTags = mutableListOf<String>()
 
     // 录音相关
     private var mediaRecorder: MediaRecorder? = null
@@ -191,6 +196,13 @@ class DiaryAddFragment : Fragment() {
             }
 
             currentLocation = editLocation
+
+            // 恢复标签
+            val editTags = arguments?.getString("entryTags", "") ?: ""
+            if (editTags.isNotEmpty()) {
+                selectedTags.clear()
+                selectedTags.addAll(editTags.split(",").filter { it.isNotBlank() })
+            }
 
             // 设置天气标签（找到匹配的选项）
             if (editWeather.isNotEmpty()) {
@@ -353,6 +365,7 @@ class DiaryAddFragment : Fragment() {
             }
             val weatherText = tagWeather.text.toString()
             val moodText = tagMood.text.toString()
+            val tagsText = selectedTags.joinToString(",")
             if (isEditMode) {
                 viewModel.updateDiary(DiaryEntry(
                     date = arguments?.getString("entryDate", "") ?: DateUtils.todayWithTime(),
@@ -361,6 +374,7 @@ class DiaryAddFragment : Fragment() {
                     weather = weatherText,
                     mood = moodText,
                     location = currentLocation,
+                    tags = tagsText,
                     rowIndex = editRowIndex
                 ))
             } else {
@@ -370,7 +384,8 @@ class DiaryAddFragment : Fragment() {
                     content = finalContent,
                     weather = weatherText,
                     mood = moodText,
-                    location = currentLocation
+                    location = currentLocation,
+                    tags = tagsText
                 ))
             }
             DraftManager.clearDrafts(requireContext(), "draft_diary_")
@@ -873,13 +888,40 @@ class DiaryAddFragment : Fragment() {
     // ===== 录音 =====
 
     private fun showRecordingDialog() {
-        val dialogView = LayoutInflater.from(requireContext())
-            .inflate(R.layout.dialog_voice_record, null)
-        val tvTimer = dialogView.findViewById<TextView>(R.id.tv_timer)
-        val tvHint = dialogView.findViewById<TextView>(R.id.tv_record_hint)
-        val btnToggle = dialogView.findViewById<TextView>(R.id.btn_record_toggle)
+        val ctx = requireContext()
+        val sheet = BottomSheetDialog(ctx, R.style.BottomSheetDialogTheme)
+        val sheetView = layoutInflater.inflate(R.layout.dialog_voice_record, null)
+        sheet.setContentView(sheetView)
+        sheet.setCancelable(false)
+
+        val bottomSheet = sheet.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
+        bottomSheet?.background = ContextCompat.getDrawable(ctx, R.drawable.bg_bottom_sheet_tag)
+
+        val tvTimer = sheetView.findViewById<TextView>(R.id.tv_timer)
+        val tvHint = sheetView.findViewById<TextView>(R.id.tv_record_hint)
+        val btnToggle = sheetView.findViewById<TextView>(R.id.btn_record_toggle)
+        val btnCancel = sheetView.findViewById<View>(R.id.btn_cancel)
+        val btnDone = sheetView.findViewById<TextView>(R.id.btn_done)
+        val voiceWave = sheetView.findViewById<VoiceWaveView>(R.id.voice_wave)
+
         tvTimer.text = "00:00"
-        tvHint.text = "点击开始录音，录完后再点完成并插入"
+        btnDone.alpha = 0.4f
+        btnDone.isEnabled = false
+        voiceWave.startIdleAnimation()
+
+        // 定时读取振幅并更新波形
+        val amplitudeRunnable = object : Runnable {
+            override fun run() {
+                if (isRecording) {
+                    val amp = try {
+                        mediaRecorder?.maxAmplitude?.toFloat() ?: 0f
+                    } catch (_: Exception) { 0f }
+                    // maxAmplitude 范围 0~32767，归一化到 0~1
+                    voiceWave.setAmplitude((amp / 32767f).coerceIn(0f, 1f))
+                    timerHandler.postDelayed(this, 80)
+                }
+            }
+        }
 
         val timerRunnable = object : Runnable {
             override fun run() {
@@ -893,84 +935,80 @@ class DiaryAddFragment : Fragment() {
             }
         }
 
-        val dialog = android.app.AlertDialog.Builder(requireContext())
-            .setTitle("录音")
-            .setView(dialogView)
-            .setCancelable(false)
-            .setNegativeButton("取消", null)
-            .setPositiveButton("完成并插入", null)
-            .create()
+        btnCancel.setOnClickListener {
+            stopRecording(discard = true)
+            timerHandler.removeCallbacksAndMessages(null)
+            voiceWave.reset()
+            sheet.dismiss()
+        }
 
-        dialog.setOnShowListener {
-            val btnCancel = dialog.getButton(android.app.AlertDialog.BUTTON_NEGATIVE)
-            val btnDone = dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE)
-            btnDone.isEnabled = false
-
-            btnCancel.setOnClickListener {
-                stopRecording(discard = true)
+        btnDone.setOnClickListener {
+            if (isRecording) {
+                val ok = stopRecording(discard = false)
                 timerHandler.removeCallbacksAndMessages(null)
-                dialog.dismiss()
-            }
-
-            btnDone.setOnClickListener {
-                if (isRecording) {
-                    val ok = stopRecording(discard = false)
-                    timerHandler.removeCallbacksAndMessages(null)
-                    btnToggle.text = "开始录音"
-                    if (!ok) {
-                        btnDone.isEnabled = false
-                        tvHint.text = "录音无效，请重新录制"
-                        return@setOnClickListener
-                    }
-                }
-
-                val fileName = currentAudioFileName
-                if (!hasValidRecording || fileName.isNullOrBlank()) {
-                    Toast.makeText(requireContext(), "请先完成一段有效录音", Toast.LENGTH_SHORT).show()
+                voiceWave.reset()
+                btnToggle.text = "开始录音"
+                if (!ok) {
+                    btnDone.isEnabled = false
+                    btnDone.alpha = 0.4f
+                    tvHint.text = "录音无效，请重新录制"
+                    voiceWave.startIdleAnimation()
                     return@setOnClickListener
                 }
-
-                val marker = "[AUDIO:$fileName]"
-                if (marker !in existingMediaMarkers) {
-                    existingMediaMarkers.add(marker)
-                }
-                contentPreview.visibility = View.VISIBLE
-                refreshMediaPreview()
-                Toast.makeText(requireContext(), "语音已添加（${formatAudioDuration(lastRecordingDurationMs.toInt())}）", Toast.LENGTH_SHORT).show()
-
-                currentAudioFileName = null
-                hasValidRecording = false
-                lastRecordingDurationMs = 0L
-                dialog.dismiss()
             }
 
-            btnToggle.setOnClickListener {
-                if (!isRecording) {
-                    // 开始新录音前，清理上一段未插入的临时音频
-                    if (hasValidRecording && !currentAudioFileName.isNullOrBlank()) {
-                        stopRecording(discard = true)
-                    }
-                    if (!startRecording()) return@setOnClickListener
-                    btnDone.isEnabled = false
-                    tvHint.text = "录音中，点击“停止录音”结束"
-                    btnToggle.text = "停止录音"
-                    timerHandler.post(timerRunnable)
-                } else {
-                    val ok = stopRecording(discard = false)
-                    timerHandler.removeCallbacksAndMessages(null)
-                    btnToggle.text = "开始录音"
-                    btnDone.isEnabled = ok
-                    tvHint.text = if (ok) "录音完成，点击“完成并插入”" else "录音无效，请重新录制"
+            val fileName = currentAudioFileName
+            if (!hasValidRecording || fileName.isNullOrBlank()) {
+                Toast.makeText(ctx, "请先完成一段有效录音", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            val marker = "[AUDIO:$fileName]"
+            if (marker !in existingMediaMarkers) {
+                existingMediaMarkers.add(marker)
+            }
+            contentPreview.visibility = View.VISIBLE
+            refreshMediaPreview()
+            Toast.makeText(ctx, "语音已添加（${formatAudioDuration(lastRecordingDurationMs.toInt())}）", Toast.LENGTH_SHORT).show()
+
+            currentAudioFileName = null
+            hasValidRecording = false
+            lastRecordingDurationMs = 0L
+            sheet.dismiss()
+        }
+
+        btnToggle.setOnClickListener {
+            if (!isRecording) {
+                if (hasValidRecording && !currentAudioFileName.isNullOrBlank()) {
+                    stopRecording(discard = true)
                 }
+                if (!startRecording()) return@setOnClickListener
+                btnDone.isEnabled = false
+                btnDone.alpha = 0.4f
+                tvHint.text = "录音中..."
+                btnToggle.text = "停止录音"
+                voiceWave.stopIdleAnimation()
+                timerHandler.post(timerRunnable)
+                timerHandler.post(amplitudeRunnable)
+            } else {
+                val ok = stopRecording(discard = false)
+                timerHandler.removeCallbacksAndMessages(null)
+                voiceWave.reset()
+                voiceWave.startIdleAnimation()
+                btnToggle.text = "开始录音"
+                btnDone.isEnabled = ok
+                btnDone.alpha = if (ok) 1f else 0.4f
+                tvHint.text = if (ok) "录音完成，点击“完成并插入”" else "录音无效，请重新录制"
             }
         }
 
-        dialog.setOnDismissListener {
+        sheet.setOnDismissListener {
             timerHandler.removeCallbacksAndMessages(null)
+            voiceWave.reset()
             if (isRecording) stopRecording(discard = true)
         }
 
-        dialog.show()
+        sheet.show()
     }
 
     @Suppress("DEPRECATION")
@@ -1132,112 +1170,278 @@ class DiaryAddFragment : Fragment() {
 
     // ===== 标签 =====
 
+    // 标签分类定义
+    private val tagCategories = linkedMapOf(
+        "生活" to listOf("日常", "美食", "运动", "购物"),
+        "情感" to listOf("约会", "心情", "纪念日", "感恩"),
+        "成长" to listOf("学习", "工作", "灵感", "阅读"),
+        "出行" to listOf("旅行", "探店", "户外")
+    )
+
     private fun showTagDialog() {
-        val prefs = requireContext().getSharedPreferences("diary_tags", Context.MODE_PRIVATE)
+        val ctx = requireContext()
+        val prefs = ctx.getSharedPreferences("diary_tags", Context.MODE_PRIVATE)
         val customTags = prefs.getStringSet("custom_tags", emptySet())!!.toList().sorted()
-        val defaultTags = listOf("#日常", "#美食", "#旅行", "#学习", "#运动", "#约会", "#工作", "#心情", "#纪念日", "#灵感")
-        val allTags = (defaultTags + customTags.map { "#$it" }).distinct().toTypedArray()
-        val checked = BooleanArray(allTags.size)
+        val tempSelected = selectedTags.toMutableSet()
 
-        val dialog = android.app.AlertDialog.Builder(requireContext())
-            .setTitle("选择标签")
-            .setMultiChoiceItems(allTags, checked) { _, which, isChecked ->
-                checked[which] = isChecked
-            }
-            .setPositiveButton("插入") { _, _ ->
-                val selected = allTags.filterIndexed { i, _ -> checked[i] }
-                if (selected.isNotEmpty()) {
-                    val tagText = "\n${selected.joinToString(" ")}\n"
-                    val start = etContent.selectionStart.coerceAtLeast(0)
-                    etContent.text.insert(start, tagText)
-                }
-            }
-            .setNegativeButton("取消", null)
-            .setNeutralButton("+ 新标签", null)
-            .create()
+        // 收集所有标签名用于最终保存顺序
+        val allTagNames = mutableListOf<String>()
+        tagCategories.values.forEach { allTagNames.addAll(it) }
+        if (customTags.isNotEmpty()) allTagNames.addAll(customTags)
+        val distinctNames = allTagNames.distinct()
 
-        dialog.setOnShowListener {
-            // 重写中性按钮点击，弹出添加对话框后自动重新打开标签选择
-            dialog.getButton(android.app.AlertDialog.BUTTON_NEUTRAL).setOnClickListener {
-                dialog.dismiss()
-                showAddCustomTagDialog { showTagDialog() }
+        val sheet = BottomSheetDialog(ctx, R.style.BottomSheetDialogTheme)
+        val sheetView = layoutInflater.inflate(R.layout.dialog_tag_selector, null)
+        sheet.setContentView(sheetView)
+
+        val bottomSheet = sheet.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
+        bottomSheet?.background = ContextCompat.getDrawable(ctx, R.drawable.bg_bottom_sheet_tag)
+
+        val container = sheetView.findViewById<LinearLayout>(R.id.tag_categories_container)
+        val dp = ctx.resources.displayMetrics.density
+        val pinkColor = ContextCompat.getColor(ctx, R.color.pink_primary)
+        val chipBgColor = ContextCompat.getColor(ctx, R.color.tag_chip_bg)
+        val strokeColor = ContextCompat.getColor(ctx, R.color.tag_chip_stroke)
+        val whiteColor = ContextCompat.getColor(ctx, R.color.text_white)
+        val textPrimary = ContextCompat.getColor(ctx, R.color.text_primary)
+        val hintColor = ContextCompat.getColor(ctx, R.color.text_hint)
+
+        fun styleChip(chip: Chip, isSelected: Boolean) {
+            if (isSelected) {
+                chip.chipBackgroundColor = ColorStateList.valueOf(pinkColor)
+                chip.setTextColor(whiteColor)
+                chip.chipStrokeWidth = 0f
+            } else {
+                chip.chipBackgroundColor = ColorStateList.valueOf(chipBgColor)
+                chip.setTextColor(textPrimary)
+                chip.chipStrokeWidth = 1f * dp
+                chip.chipStrokeColor = ColorStateList.valueOf(strokeColor)
             }
         }
-        dialog.show()
 
-        // 在按钮栏上方添加"管理标签"入口
+        fun addCategorySection(title: String, tags: List<String>) {
+            // 分类标题
+            val header = TextView(ctx).apply {
+                text = title
+                textSize = 13f
+                setTextColor(hintColor)
+                setPadding(0, (12 * dp).toInt(), 0, (4 * dp).toInt())
+            }
+            container.addView(header)
+
+            // 标签Chip组
+            val chipGroup = ChipGroup(ctx).apply {
+                chipSpacingHorizontal = (8 * dp).toInt()
+                chipSpacingVertical = (8 * dp).toInt()
+            }
+            for (tagName in tags) {
+                val chip = Chip(ctx).apply {
+                    text = "#$tagName"
+                    isCheckable = false
+                    shapeAppearanceModel = com.google.android.material.shape.ShapeAppearanceModel.builder()
+                        .setAllCornerSizes(18f * dp).build()
+                    chipMinHeight = 36f * dp
+                    this.textSize = 14f
+                    tag = tagName
+                }
+                styleChip(chip, tempSelected.contains(tagName))
+                chip.setOnClickListener {
+                    val name = chip.tag as String
+                    if (tempSelected.contains(name)) {
+                        tempSelected.remove(name)
+                        styleChip(chip, false)
+                        chip.animate().scaleX(0.85f).scaleY(0.85f).setDuration(100).withEndAction {
+                            chip.animate().scaleX(1f).scaleY(1f).setDuration(100).start()
+                        }.start()
+                    } else {
+                        tempSelected.add(name)
+                        styleChip(chip, true)
+                        chip.animate().scaleX(1.1f).scaleY(1.1f).setDuration(100).withEndAction {
+                            chip.animate().scaleX(1f).scaleY(1f).setDuration(100).start()
+                        }.start()
+                    }
+                }
+                chipGroup.addView(chip)
+            }
+            container.addView(chipGroup)
+        }
+
+        // 按分类添加内置标签
+        for ((category, tags) in tagCategories) {
+            addCategorySection(category, tags)
+        }
+
+        // 自定义标签分类
         if (customTags.isNotEmpty()) {
-            dialog.getButton(android.app.AlertDialog.BUTTON_NEGATIVE).text = "管理标签"
-            dialog.getButton(android.app.AlertDialog.BUTTON_NEGATIVE).setOnClickListener {
-                dialog.dismiss()
+            addCategorySection("自定义", customTags)
+        }
+
+        sheetView.findViewById<View>(R.id.btn_confirm).setOnClickListener {
+            selectedTags.clear()
+            selectedTags.addAll(distinctNames.filter { tempSelected.contains(it) })
+            sheet.dismiss()
+        }
+
+        sheetView.findViewById<View>(R.id.btn_add_tag).setOnClickListener {
+            sheet.dismiss()
+            showAddCustomTagDialog { showTagDialog() }
+        }
+
+        val btnManage = sheetView.findViewById<TextView>(R.id.btn_manage)
+        if (customTags.isNotEmpty()) {
+            btnManage.visibility = View.VISIBLE
+            btnManage.setOnClickListener {
+                sheet.dismiss()
                 showManageTagsDialog()
             }
+        } else {
+            btnManage.visibility = View.GONE
         }
+
+        sheet.show()
     }
 
     private fun showAddCustomTagDialog(onAdded: (() -> Unit)? = null) {
-        val input = EditText(requireContext()).apply {
-            hint = "输入新标签名（不需要#号）"
-            setPadding(60, 40, 60, 40)
+        val ctx = requireContext()
+        val sheet = BottomSheetDialog(ctx, R.style.BottomSheetDialogTheme)
+        val sheetView = layoutInflater.inflate(R.layout.dialog_tag_selector, null)
+        sheet.setContentView(sheetView)
+
+        val bottomSheet = sheet.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
+        bottomSheet?.background = ContextCompat.getDrawable(ctx, R.drawable.bg_bottom_sheet_tag)
+
+        sheetView.findViewById<TextView>(R.id.tv_sheet_title).text = "添加新标签"
+        sheetView.findViewById<View>(R.id.btn_manage).visibility = View.GONE
+        sheetView.findViewById<View>(R.id.btn_add_tag).visibility = View.GONE
+
+        // 替换 chipGroup 区域为输入框
+        val chipGroup = sheetView.findViewById<ChipGroup>(R.id.chip_group_tags)
+        chipGroup.removeAllViews()
+
+        val input = EditText(ctx).apply {
+            hint = "输入标签名（不需要#号）"
+            textSize = 15f
+            setTextColor(ContextCompat.getColor(ctx, R.color.text_primary))
+            setHintTextColor(ContextCompat.getColor(ctx, R.color.text_hint))
+            setPadding(0, 24, 0, 24)
+            background = null
+            requestFocus()
         }
-        android.app.AlertDialog.Builder(requireContext())
-            .setTitle("添加自定义标签")
-            .setView(input)
-            .setPositiveButton("添加") { _, _ ->
-                val tag = input.text.toString().trim()
-                if (tag.isNotEmpty()) {
-                    val prefs = requireContext().getSharedPreferences("diary_tags", Context.MODE_PRIVATE)
-                    val existing = prefs.getStringSet("custom_tags", emptySet())!!.toMutableSet()
-                    existing.add(tag)
-                    prefs.edit().putStringSet("custom_tags", existing).apply()
-                    Toast.makeText(requireContext(), "标签 #$tag 已添加", Toast.LENGTH_SHORT).show()
-                    onAdded?.invoke()
-                }
+        // 将 EditText 加入 chipGroup 的父容器
+        val scrollView = chipGroup.parent as ViewGroup
+        scrollView.addView(input, 0)
+        chipGroup.visibility = View.GONE
+
+        sheetView.findViewById<TextView>(R.id.btn_confirm).text = "添加"
+        sheetView.findViewById<View>(R.id.btn_confirm).setOnClickListener {
+            val tag = input.text.toString().trim()
+            if (tag.isNotEmpty()) {
+                val prefs = ctx.getSharedPreferences("diary_tags", Context.MODE_PRIVATE)
+                val existing = prefs.getStringSet("custom_tags", emptySet())!!.toMutableSet()
+                existing.add(tag)
+                prefs.edit().putStringSet("custom_tags", existing).apply()
+                Toast.makeText(ctx, "标签 #$tag 已添加", Toast.LENGTH_SHORT).show()
             }
-            .setNegativeButton("取消") { _, _ ->
-                // 取消时也回到标签选择对话框
-                onAdded?.invoke()
-            }
-            .show()
+            sheet.dismiss()
+            onAdded?.invoke()
+        }
+
+        sheet.setOnShowListener {
+            input.postDelayed({
+                val imm = ctx.getSystemService(Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+                imm.showSoftInput(input, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT)
+            }, 200)
+        }
+
+        sheet.show()
     }
 
-    // 管理自定义标签：查看和删除
     private fun showManageTagsDialog() {
-        val prefs = requireContext().getSharedPreferences("diary_tags", Context.MODE_PRIVATE)
+        val ctx = requireContext()
+        val prefs = ctx.getSharedPreferences("diary_tags", Context.MODE_PRIVATE)
         val customTags = prefs.getStringSet("custom_tags", emptySet())!!.toList().sorted()
 
         if (customTags.isEmpty()) {
-            Toast.makeText(requireContext(), "暂无自定义标签", Toast.LENGTH_SHORT).show()
+            Toast.makeText(ctx, "暂无自定义标签", Toast.LENGTH_SHORT).show()
             showTagDialog()
             return
         }
 
-        val tagArray = customTags.map { "#$it" }.toTypedArray()
-        android.app.AlertDialog.Builder(requireContext())
-            .setTitle("管理自定义标签（点击删除）")
-            .setItems(tagArray) { _, which ->
-                val tagToDelete = customTags[which]
-                // 确认删除
-                android.app.AlertDialog.Builder(requireContext())
-                    .setTitle("删除标签")
-                    .setMessage("确定删除标签 #$tagToDelete 吗？")
+        val sheet = BottomSheetDialog(ctx, R.style.BottomSheetDialogTheme)
+        val sheetView = layoutInflater.inflate(R.layout.dialog_tag_manage, null)
+        sheet.setContentView(sheetView)
+
+        val bottomSheet = sheet.findViewById<View>(com.google.android.material.R.id.design_bottom_sheet)
+        bottomSheet?.background = ContextCompat.getDrawable(ctx, R.drawable.bg_bottom_sheet_tag)
+
+        val container = sheetView.findViewById<LinearLayout>(R.id.tag_list_container)
+        val dp = ctx.resources.displayMetrics.density
+
+        for (tagName in customTags) {
+            val row = LinearLayout(ctx).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = android.view.Gravity.CENTER_VERTICAL
+                setPadding((4 * dp).toInt(), (10 * dp).toInt(), (4 * dp).toInt(), (10 * dp).toInt())
+                background = ContextCompat.getDrawable(ctx, android.R.drawable.list_selector_background)
+            }
+
+            val tvTag = TextView(ctx).apply {
+                text = "#$tagName"
+                textSize = 15f
+                setTextColor(ContextCompat.getColor(ctx, R.color.text_primary))
+                layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+            }
+
+            val btnDel = TextView(ctx).apply {
+                text = "删除"
+                textSize = 13f
+                setTextColor(ContextCompat.getColor(ctx, R.color.pink_soft))
+                setPadding((12 * dp).toInt(), (6 * dp).toInt(), (12 * dp).toInt(), (6 * dp).toInt())
+            }
+
+            btnDel.setOnClickListener {
+                android.app.AlertDialog.Builder(ctx)
+                    .setMessage("确定删除标签 #$tagName 吗？")
                     .setPositiveButton("删除") { _, _ ->
                         val existing = prefs.getStringSet("custom_tags", emptySet())!!.toMutableSet()
-                        existing.remove(tagToDelete)
+                        existing.remove(tagName)
                         prefs.edit().putStringSet("custom_tags", existing).apply()
-                        Toast.makeText(requireContext(), "标签 #$tagToDelete 已删除", Toast.LENGTH_SHORT).show()
-                        // 删除后重新打开管理对话框
-                        showManageTagsDialog()
+                        // 同时从已选列表移除
+                        selectedTags.remove(tagName)
+                        // 动画移除
+                        row.animate().alpha(0f).translationX(row.width.toFloat()).setDuration(250).withEndAction {
+                            container.removeView(row)
+                            if (container.childCount == 0) {
+                                sheetView.findViewById<View>(R.id.tv_empty_hint).visibility = View.VISIBLE
+                            }
+                        }.start()
+                        Toast.makeText(ctx, "标签 #$tagName 已删除", Toast.LENGTH_SHORT).show()
                     }
-                    .setNegativeButton("取消") { _, _ ->
-                        showManageTagsDialog()
-                    }
+                    .setNegativeButton("取消", null)
                     .show()
             }
-            .setPositiveButton("返回选择标签") { _, _ ->
-                showTagDialog()
+
+            row.addView(tvTag)
+            row.addView(btnDel)
+            container.addView(row)
+
+            // 分割线
+            if (tagName != customTags.last()) {
+                val divider = View(ctx).apply {
+                    layoutParams = LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT, (1 * dp).toInt()
+                    ).also { it.marginStart = (4 * dp).toInt(); it.marginEnd = (4 * dp).toInt() }
+                    setBackgroundColor(ContextCompat.getColor(ctx, R.color.divider))
+                }
+                container.addView(divider)
             }
-            .setNegativeButton("关闭", null)
-            .show()
+        }
+
+        sheetView.findViewById<View>(R.id.btn_back_to_select).setOnClickListener {
+            sheet.dismiss()
+            showTagDialog()
+        }
+
+        sheet.show()
     }
 }
