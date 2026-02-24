@@ -227,53 +227,94 @@ class DiaryListFragment : Fragment() {
     }
 
     private fun attachSwipeCloseFallback(recyclerView: RecyclerView) {
-        val tapSlop = recyclerView.resources.displayMetrics.density * 12f
+        val tapSlop = recyclerView.resources.displayMetrics.density * 24f
         var downX = 0f
         var downY = 0f
+        var downInActionArea = false
+        var downActionZoneStartX = 0f
+        var downOpenPosition = RecyclerView.NO_POSITION
 
-        recyclerView.addOnItemTouchListener(object : RecyclerView.SimpleOnItemTouchListener() {
+        recyclerView.addOnItemTouchListener(object : RecyclerView.OnItemTouchListener {
             override fun onInterceptTouchEvent(rv: RecyclerView, e: MotionEvent): Boolean {
                 val openPosition = adapter.getSwipeOpenPosition()
-                if (openPosition == RecyclerView.NO_POSITION) return false
 
                 when (e.actionMasked) {
                     MotionEvent.ACTION_DOWN -> {
                         downX = e.x
                         downY = e.y
+                        downInActionArea = false
+                        downActionZoneStartX = 0f
+                        downOpenPosition = openPosition
+
+                        if (openPosition == RecyclerView.NO_POSITION) return false
 
                         val touchedChild = rv.findChildViewUnder(e.x, e.y) ?: return false
                         val touchedPosition = rv.getChildAdapterPosition(touchedChild)
 
-                        // 点击其他项，关闭当前展开项
                         if (touchedPosition != openPosition) {
                             closeSwipeAt(rv, openPosition)
                             return false
                         }
 
-                        // 点击展开项的卡片主体区域，关闭滑动
+                        // 计算操作区域（卡片右侧露出的按钮区域）
                         val actionWidth = adapter.getSwipeActionTotalWidthPx().toFloat()
                         val localX = e.x - touchedChild.left
-                        val actionZoneStartX = touchedChild.width - actionWidth
-                        if (localX < actionZoneStartX) {
-                            closeSwipeAt(rv, openPosition)
-                            return true
-                        }
+                        downActionZoneStartX = touchedChild.width - actionWidth
+                        downInActionArea = localX >= downActionZoneStartX
 
-                        // 点击操作区域，不拦截，让按钮的点击监听器处理
-                        return false
-                    }
-
-                    MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                        // 检测右滑关闭
-                        val dx = e.x - downX
-                        val dy = abs(e.y - downY)
-                        if (dx > tapSlop && dx > dy) {
-                            closeSwipeAt(rv, openPosition)
-                        }
+                        // 无论点击哪里都拦截，在 onTouchEvent 中处理
+                        return true
                     }
                 }
                 return false
             }
+
+            override fun onTouchEvent(rv: RecyclerView, e: MotionEvent) {
+                when (e.actionMasked) {
+                    MotionEvent.ACTION_UP -> {
+                        val openPosition = downOpenPosition
+                        if (openPosition == RecyclerView.NO_POSITION) return
+
+                        val moveX = abs(e.x - downX)
+                        val moveY = abs(e.y - downY)
+                        val isTap = moveX <= tapSlop && moveY <= tapSlop
+
+                        if (isTap && downInActionArea) {
+                            // 点击了操作区域
+                            val touchedChild = rv.findChildViewUnder(downX, downY)
+                            if (touchedChild != null) {
+                                val localX = downX - touchedChild.left
+                                val actionWidth = adapter.getSwipeActionTotalWidthPx().toFloat()
+                                val actionOffset = localX - downActionZoneStartX
+
+                                val target = adapter.getItem(openPosition)
+                                closeSwipeAt(rv, openPosition)
+
+                                // 左半边是编辑，右半边是删除
+                                if (actionOffset < actionWidth / 2f) {
+                                    showEditDialog(target)
+                                } else {
+                                    showDeleteConfirmDialog(target)
+                                }
+                            }
+                        } else if (isTap) {
+                            // 点击了卡片主体，关闭
+                            closeSwipeAt(rv, openPosition)
+                        } else if (e.x - downX > tapSlop) {
+                            // 右滑关闭
+                            closeSwipeAt(rv, openPosition)
+                        }
+
+                        downOpenPosition = RecyclerView.NO_POSITION
+                    }
+
+                    MotionEvent.ACTION_CANCEL -> {
+                        downOpenPosition = RecyclerView.NO_POSITION
+                    }
+                }
+            }
+
+            override fun onRequestDisallowInterceptTouchEvent(disallowIntercept: Boolean) {}
         })
     }
 
