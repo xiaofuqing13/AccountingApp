@@ -22,6 +22,9 @@ class ExcelRepository(private val context: Context) {
     private val sheetCategory = "分类配置"
 
     companion object {
+        /** 全局文件锁，防止多实例并发读写 */
+        private val fileLock = Any()
+
         /** 公共存储目录：Documents/我们的小账本/ */
         fun getPublicDir(): File {
             val dir = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS), "我们的小账本")
@@ -61,9 +64,9 @@ class ExcelRepository(private val context: Context) {
         return fallbackFile
     }
 
-    private fun getOrCreateWorkbook(): XSSFWorkbook {
+    private fun getOrCreateWorkbook(): XSSFWorkbook = synchronized(fileLock) {
         val file = getFile()
-        return if (file.exists() && file.length() > 0) {
+        if (file.exists() && file.length() > 0) {
             try {
                 FileInputStream(file).use { XSSFWorkbook(it) }
             } catch (e: Exception) {
@@ -79,49 +82,54 @@ class ExcelRepository(private val context: Context) {
     }
 
     private fun createNewWorkbook(): XSSFWorkbook {
-        return XSSFWorkbook().apply {
-            createSheet(sheetAccount).also { sheet ->
-                sheet.createRow(0).apply {
-                    createCell(0).setCellValue("日期")
-                    createCell(1).setCellValue("类型")
-                    createCell(2).setCellValue("分类")
-                    createCell(3).setCellValue("金额")
-                    createCell(4).setCellValue("备注")
-                }
+        val wb = XSSFWorkbook()
+        wb.createSheet(sheetAccount).also { sheet ->
+            sheet.createRow(0).apply {
+                createCell(0).setCellValue("日期")
+                createCell(1).setCellValue("类型")
+                createCell(2).setCellValue("分类")
+                createCell(3).setCellValue("金额")
+                createCell(4).setCellValue("备注")
             }
-            createSheet(sheetDiary).also { sheet ->
-                sheet.createRow(0).apply {
-                    createCell(0).setCellValue("日期")
-                    createCell(1).setCellValue("标题")
-                    createCell(2).setCellValue("内容")
-                    createCell(3).setCellValue("天气")
-                    createCell(4).setCellValue("心情")
-                    createCell(5).setCellValue("位置")
-                    createCell(6).setCellValue("标签")
-                }
-            }
-            createSheet(sheetMeeting).also { sheet ->
-                sheet.createRow(0).apply {
-                    createCell(0).setCellValue("日期")
-                    createCell(1).setCellValue("主题")
-                    createCell(2).setCellValue("开始时间")
-                    createCell(3).setCellValue("结束时间")
-                    createCell(4).setCellValue("地点")
-                    createCell(5).setCellValue("参会人")
-                    createCell(6).setCellValue("内容")
-                    createCell(7).setCellValue("待办事项")
-                    createCell(8).setCellValue("标签")
-                }
-            }
-            createSheet(sheetCategory).also { sheet ->
-                sheet.createRow(0).apply {
-                    createCell(0).setCellValue("分类名称")
-                    createCell(1).setCellValue("类型")
-                    createCell(2).setCellValue("图标")
-                }
-            }
-            saveWorkbook(this)
         }
+        wb.createSheet(sheetDiary).also { sheet ->
+            sheet.createRow(0).apply {
+                createCell(0).setCellValue("日期")
+                createCell(1).setCellValue("标题")
+                createCell(2).setCellValue("内容")
+                createCell(3).setCellValue("天气")
+                createCell(4).setCellValue("心情")
+                createCell(5).setCellValue("位置")
+                createCell(6).setCellValue("标签")
+            }
+        }
+        wb.createSheet(sheetMeeting).also { sheet ->
+            sheet.createRow(0).apply {
+                createCell(0).setCellValue("日期")
+                createCell(1).setCellValue("主题")
+                createCell(2).setCellValue("开始时间")
+                createCell(3).setCellValue("结束时间")
+                createCell(4).setCellValue("地点")
+                createCell(5).setCellValue("参会人")
+                createCell(6).setCellValue("内容")
+                createCell(7).setCellValue("待办事项")
+                createCell(8).setCellValue("标签")
+            }
+        }
+        wb.createSheet(sheetCategory).also { sheet ->
+            sheet.createRow(0).apply {
+                createCell(0).setCellValue("分类名称")
+                createCell(1).setCellValue("类型")
+                createCell(2).setCellValue("图标")
+            }
+        }
+        // 先保存到文件，再从文件重新打开，避免 write() 后 workbook 对象状态损坏
+        val file = getFile()
+        val tmpFile = File(file.parentFile, "${file.name}.tmp")
+        FileOutputStream(tmpFile).use { wb.write(it) }
+        wb.close()
+        tmpFile.renameTo(file)
+        return FileInputStream(file).use { XSSFWorkbook(it) }
     }
 
     private fun ensureCategorySheet(workbook: XSSFWorkbook): Sheet {
@@ -134,8 +142,13 @@ class ExcelRepository(private val context: Context) {
         }
     }
 
-    private fun saveWorkbook(workbook: XSSFWorkbook) {
-        FileOutputStream(getFile()).use { workbook.write(it) }
+    private fun saveWorkbook(workbook: XSSFWorkbook) = synchronized(fileLock) {
+        val file = getFile()
+        val tmpFile = File(file.parentFile, "${file.name}.tmp")
+        FileOutputStream(tmpFile).use { workbook.write(it) }
+        // 原子替换，防止写入中途文件损坏
+        if (file.exists()) file.delete()
+        tmpFile.renameTo(file)
     }
 
     private fun getCellString(cell: Cell?): String {
