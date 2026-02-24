@@ -836,7 +836,7 @@ class DiaryAddFragment : Fragment() {
                     override fun onWaveFormDataCapture(vis: Visualizer?, waveform: ByteArray, samplingRate: Int) {
                         var sum = 0.0
                         for (b in waveform) {
-                            val sample = (b.toInt() - 128).toDouble()
+                            val sample = ((b.toInt() and 0xFF) - 128).toDouble()
                             sum += sample * sample
                         }
                         val rms = (kotlin.math.sqrt(sum / waveform.size) / 128.0).toFloat()
@@ -1242,6 +1242,14 @@ class DiaryAddFragment : Fragment() {
         return prefs.getStringSet("custom_tags", emptySet())!!.map { parseCustomTag(it).second }.sorted()
     }
 
+    /** 获取所有可见分类名（内置未删除 + 自定义） */
+    private fun getVisibleCategoryNames(prefs: android.content.SharedPreferences): List<String> {
+        val deletedCats = prefs.getStringSet("deleted_builtin_categories", emptySet())!!
+        val customCats = prefs.getStringSet("custom_categories", emptySet())!!.sorted()
+        val builtinVisible = tagCategories.keys.filter { it !in deletedCats }
+        return builtinVisible + customCats
+    }
+
     private fun showTagDialog() {
         val ctx = requireContext()
         val prefs = ctx.getSharedPreferences("diary_tags", Context.MODE_PRIVATE)
@@ -1250,9 +1258,13 @@ class DiaryAddFragment : Fragment() {
         val tempSelected = selectedTags.toMutableSet()
 
         // 收集所有可见标签名
+        val visibleCats = getVisibleCategoryNames(prefs)
         val allTagNames = mutableListOf<String>()
-        tagCategories.values.forEach { tags -> allTagNames.addAll(tags.filter { it !in deletedBuiltin }) }
-        customByCategory.values.forEach { allTagNames.addAll(it) }
+        for (catName in visibleCats) {
+            allTagNames.addAll(tagCategories[catName]?.filter { it !in deletedBuiltin } ?: emptyList())
+            allTagNames.addAll(customByCategory[catName] ?: emptyList())
+        }
+        allTagNames.addAll(customByCategory["自定义"] ?: emptyList())
         val distinctNames = allTagNames.distinct()
 
         val sheet = BottomSheetDialog(ctx, R.style.BottomSheetDialogTheme)
@@ -1331,12 +1343,12 @@ class DiaryAddFragment : Fragment() {
             container.addView(chipGroup)
         }
 
-        // 按分类添加内置标签 + 归属该分类的自定义标签
-        for ((category, builtinTags) in tagCategories) {
-            val visible = builtinTags.filter { it !in deletedBuiltin }
-            val customInCat = customByCategory[category] ?: emptyList()
-            val merged = (visible + customInCat).distinct()
-            if (merged.isNotEmpty()) addCategorySection(category, merged)
+        // 按分类添加标签（内置 + 自定义分类）
+        for (catName in visibleCats) {
+            val builtinTags = tagCategories[catName]?.filter { it !in deletedBuiltin } ?: emptyList()
+            val customInCat = customByCategory[catName] ?: emptyList()
+            val merged = (builtinTags + customInCat).distinct()
+            if (merged.isNotEmpty()) addCategorySection(catName, merged)
         }
         // 未归类的自定义标签
         val uncategorized = customByCategory["自定义"] ?: emptyList()
@@ -1397,12 +1409,14 @@ class DiaryAddFragment : Fragment() {
         container.addView(catLabel)
 
         // 分类Chip组
-        var selectedCategory = tagCategories.keys.first()
+        val prefs = ctx.getSharedPreferences("diary_tags", Context.MODE_PRIVATE)
+        val visibleCats = getVisibleCategoryNames(prefs)
+        var selectedCategory = visibleCats.firstOrNull() ?: tagCategories.keys.first()
         val catChipGroup = ChipGroup(ctx).apply {
             chipSpacingHorizontal = (8 * dp).toInt()
         }
         val catChips = mutableListOf<Chip>()
-        for (catName in tagCategories.keys) {
+        for (catName in visibleCats) {
             val chip = Chip(ctx).apply {
                 text = catName
                 isCheckable = false
@@ -1563,6 +1577,84 @@ class DiaryAddFragment : Fragment() {
             container.addView(row)
         }
 
+        // ===== 分类管理 =====
+        addSectionHeader("分类管理")
+        val visibleCats = getVisibleCategoryNames(prefs)
+        fun addCategoryRow(catName: String, isBuiltin: Boolean) {
+            val row = LinearLayout(ctx).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = android.view.Gravity.CENTER_VERTICAL
+                setPadding((4 * dp).toInt(), (10 * dp).toInt(), (4 * dp).toInt(), (10 * dp).toInt())
+            }
+            val tvCat = TextView(ctx).apply {
+                text = catName
+                textSize = 15f
+                setTextColor(textPrimary)
+                layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+            }
+            val btnDel = TextView(ctx).apply {
+                text = "删除"
+                textSize = 13f
+                setTextColor(pinkSoft)
+                setPadding((12 * dp).toInt(), (6 * dp).toInt(), (12 * dp).toInt(), (6 * dp).toInt())
+            }
+            btnDel.setOnClickListener {
+                android.app.AlertDialog.Builder(ctx)
+                    .setTitle("删除分类")
+                    .setMessage("删除「$catName」将同时删除该分类下的所有标签，确定吗？")
+                    .setPositiveButton("删除") { _, _ ->
+                        if (isBuiltin) {
+                            val delCats = prefs.getStringSet("deleted_builtin_categories", emptySet())!!.toMutableSet()
+                            delCats.add(catName)
+                            val tagsInCat = tagCategories[catName] ?: emptyList()
+                            val delTags = prefs.getStringSet("deleted_builtin_tags", emptySet())!!.toMutableSet()
+                            delTags.addAll(tagsInCat)
+                            val existingCustom = prefs.getStringSet("custom_tags", emptySet())!!.toMutableSet()
+                            existingCustom.removeAll { it.startsWith("$catName:") }
+                            prefs.edit()
+                                .putStringSet("deleted_builtin_categories", delCats)
+                                .putStringSet("deleted_builtin_tags", delTags)
+                                .putStringSet("custom_tags", existingCustom)
+                                .apply()
+                        } else {
+                            val customCats = prefs.getStringSet("custom_categories", emptySet())!!.toMutableSet()
+                            customCats.remove(catName)
+                            val existingCustom = prefs.getStringSet("custom_tags", emptySet())!!.toMutableSet()
+                            existingCustom.removeAll { it.startsWith("$catName:") }
+                            prefs.edit()
+                                .putStringSet("custom_categories", customCats)
+                                .putStringSet("custom_tags", existingCustom)
+                                .apply()
+                        }
+                        sheet.dismiss()
+                        showManageTagsDialog()
+                        Toast.makeText(ctx, "分类「$catName」已删除", Toast.LENGTH_SHORT).show()
+                    }
+                    .setNegativeButton("取消", null)
+                    .show()
+            }
+            row.addView(tvCat)
+            row.addView(btnDel)
+            container.addView(row)
+        }
+        visibleCats.forEachIndexed { i, catName ->
+            addCategoryRow(catName, catName in tagCategories)
+            if (i < visibleCats.size - 1) addDivider()
+        }
+        val btnAddCat = TextView(ctx).apply {
+            text = "+ 添加新分类"
+            textSize = 14f
+            setTextColor(pinkPrimary)
+            setPadding((4 * dp).toInt(), (12 * dp).toInt(), (4 * dp).toInt(), (8 * dp).toInt())
+        }
+        btnAddCat.setOnClickListener {
+            showAddCategoryDialog {
+                sheet.dismiss()
+                showManageTagsDialog()
+            }
+        }
+        container.addView(btnAddCat)
+
         // 内置标签
         if (visibleBuiltin.isNotEmpty()) {
             addSectionHeader("内置标签")
@@ -1588,5 +1680,37 @@ class DiaryAddFragment : Fragment() {
         }
 
         sheet.show()
+    }
+
+    private fun showAddCategoryDialog(onAdded: (() -> Unit)? = null) {
+        val ctx = requireContext()
+        val dp = ctx.resources.displayMetrics.density
+        val input = EditText(ctx).apply {
+            hint = "输入分类名称"
+            textSize = 15f
+            setPadding((20 * dp).toInt(), (16 * dp).toInt(), (20 * dp).toInt(), (16 * dp).toInt())
+        }
+        android.app.AlertDialog.Builder(ctx)
+            .setTitle("添加新分类")
+            .setView(input)
+            .setPositiveButton("添加") { _, _ ->
+                val name = input.text.toString().trim()
+                if (name.isEmpty()) {
+                    Toast.makeText(ctx, "分类名称不能为空", Toast.LENGTH_SHORT).show()
+                    return@setPositiveButton
+                }
+                val prefs = ctx.getSharedPreferences("diary_tags", Context.MODE_PRIVATE)
+                val existing = prefs.getStringSet("custom_categories", emptySet())!!.toMutableSet()
+                if (name in tagCategories.keys || name in existing) {
+                    Toast.makeText(ctx, "该分类已存在", Toast.LENGTH_SHORT).show()
+                    return@setPositiveButton
+                }
+                existing.add(name)
+                prefs.edit().putStringSet("custom_categories", existing).apply()
+                Toast.makeText(ctx, "分类「$name」已添加", Toast.LENGTH_SHORT).show()
+                onAdded?.invoke()
+            }
+            .setNegativeButton("取消", null)
+            .show()
     }
 }
