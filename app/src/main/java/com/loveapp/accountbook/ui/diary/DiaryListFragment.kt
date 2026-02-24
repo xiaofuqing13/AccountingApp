@@ -142,6 +142,17 @@ class DiaryListFragment : Fragment() {
                 target: RecyclerView.ViewHolder
             ): Boolean = false
 
+            override fun getSwipeDirs(
+                recyclerView: RecyclerView,
+                viewHolder: RecyclerView.ViewHolder
+            ): Int {
+                // 展开状态下禁用 ItemTouchHelper 的滑动，让 OnItemTouchListener 处理
+                if (adapter.getSwipeOpenPosition() != RecyclerView.NO_POSITION) {
+                    return 0
+                }
+                return super.getSwipeDirs(recyclerView, viewHolder)
+            }
+
             override fun getSwipeThreshold(viewHolder: RecyclerView.ViewHolder): Float {
                 val itemWidth = viewHolder.itemView.width.takeIf { it > 0 } ?: return 0.2f
                 val actionWidth = adapter.getSwipeActionTotalWidthPx().toFloat()
@@ -161,19 +172,9 @@ class DiaryListFragment : Fragment() {
             override fun clearView(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder) {
                 if (viewHolder is DiaryAdapter.ViewHolder) {
                     getDefaultUIUtil().clearView(viewHolder.cardForeground)
-                    val position = viewHolder.bindingAdapterPosition
-                    val closeThreshold = recyclerView.resources.displayMetrics.density * 12f
-                    if (
-                        position != RecyclerView.NO_POSITION &&
-                        adapter.isSwipeOpenAt(position) &&
-                        lastSwipeDx > closeThreshold
-                    ) {
-                        closeSwipeAt(recyclerView, position)
-                    }
                 } else {
                     super.clearView(recyclerView, viewHolder)
                 }
-                lastSwipeDx = 0f
             }
 
             override fun onChildDraw(
@@ -191,13 +192,7 @@ class DiaryListFragment : Fragment() {
                 }
                 lastSwipeDx = dX
                 val maxSwipe = adapter.getSwipeActionTotalWidthPx().toFloat()
-                val position = viewHolder.bindingAdapterPosition
-                val isOpen = position != RecyclerView.NO_POSITION && adapter.isSwipeOpenAt(position)
-                val clampedDx = when {
-                    dX < 0f -> dX.coerceAtLeast(-maxSwipe)
-                    isOpen -> (-maxSwipe + dX).coerceIn(-maxSwipe, 0f)
-                    else -> 0f
-                }
+                val clampedDx = if (dX < 0f) dX.coerceAtLeast(-maxSwipe) else 0f
                 val progress = (abs(clampedDx) / maxSwipe).coerceIn(0f, 1f)
                 val scale = 1f - (1f - swipeOpenScale) * progress
                 viewHolder.cardForeground.scaleX = scale
@@ -216,9 +211,7 @@ class DiaryListFragment : Fragment() {
             override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
                 val position = viewHolder.bindingAdapterPosition
                 if (position == RecyclerView.NO_POSITION) return
-                if (direction == ItemTouchHelper.RIGHT) {
-                    closeSwipeAt(recyclerView, position)
-                } else {
+                if (direction == ItemTouchHelper.LEFT) {
                     openSwipeAt(recyclerView, position)
                 }
             }
@@ -227,39 +220,39 @@ class DiaryListFragment : Fragment() {
     }
 
     private fun attachSwipeCloseFallback(recyclerView: RecyclerView) {
-        // 点击判定阈值：24dp，允许手指轻微移动
-        val tapSlop = recyclerView.resources.displayMetrics.density * 24f
+        // 点击判定阈值
+        val tapSlop = recyclerView.resources.displayMetrics.density * 20f
         var downX = 0f
         var downY = 0f
         var downInActionArea = false
         var downActionZoneStartX = 0f
         var downTargetPosition = RecyclerView.NO_POSITION
-        var intercepting = false
+        var downOpenPosition = RecyclerView.NO_POSITION
 
         recyclerView.addOnItemTouchListener(object : RecyclerView.OnItemTouchListener {
             override fun onInterceptTouchEvent(rv: RecyclerView, e: MotionEvent): Boolean {
-                val openPosition = adapter.getSwipeOpenPosition()
-                if (openPosition == RecyclerView.NO_POSITION) {
-                    intercepting = false
-                    return false
-                }
-
                 when (e.actionMasked) {
                     MotionEvent.ACTION_DOWN -> {
+                        val openPosition = adapter.getSwipeOpenPosition()
+                        downOpenPosition = openPosition
                         downX = e.x
                         downY = e.y
                         downInActionArea = false
                         downActionZoneStartX = 0f
                         downTargetPosition = RecyclerView.NO_POSITION
-                        intercepting = false
+
+                        if (openPosition == RecyclerView.NO_POSITION) {
+                            return false
+                        }
 
                         val touchedChild = rv.findChildViewUnder(e.x, e.y) ?: return false
                         val touchedPosition = rv.getChildAdapterPosition(touchedChild)
                         downTargetPosition = touchedPosition
 
                         if (touchedPosition != openPosition) {
-                            // 点击其他项，关闭展开项
+                            // 点击其他项，关闭展开项，不拦截
                             closeSwipeAt(rv, openPosition)
+                            downOpenPosition = RecyclerView.NO_POSITION
                             return false
                         }
 
@@ -269,19 +262,17 @@ class DiaryListFragment : Fragment() {
                         downActionZoneStartX = touchedChild.width - actionWidth
                         downInActionArea = localX >= downActionZoneStartX
 
-                        // 无论点击哪里都拦截，自己处理
-                        intercepting = true
+                        // 拦截展开项的所有触摸
                         return true
                     }
                 }
-                return intercepting
+                return false
             }
 
             override fun onTouchEvent(rv: RecyclerView, e: MotionEvent) {
                 when (e.actionMasked) {
                     MotionEvent.ACTION_UP -> {
-                        if (downTargetPosition == RecyclerView.NO_POSITION) {
-                            resetState()
+                        if (downOpenPosition == RecyclerView.NO_POSITION || downTargetPosition == RecyclerView.NO_POSITION) {
                             return
                         }
 
@@ -289,25 +280,28 @@ class DiaryListFragment : Fragment() {
                         val moveY = abs(e.y - downY)
                         val isTap = moveX <= tapSlop && moveY <= tapSlop
 
-                        if (isTap && downInActionArea) {
-                            // 点击操作区域
-                            val touchedChild = rv.findChildViewUnder(downX, downY)
-                            if (touchedChild != null) {
-                                val actionWidth = adapter.getSwipeActionTotalWidthPx().toFloat()
-                                val localX = downX - touchedChild.left
-                                val actionOffset = (localX - downActionZoneStartX).coerceIn(0f, actionWidth)
+                        if (isTap) {
+                            if (downInActionArea) {
+                                // 点击操作区域 - 先获取数据，再关闭，最后执行操作
                                 val target = adapter.getItem(downTargetPosition)
+                                val actionWidth = adapter.getSwipeActionTotalWidthPx().toFloat()
+                                val touchedChild = rv.findChildViewUnder(downX, downY)
+                                val localX = if (touchedChild != null) downX - touchedChild.left else downX
+                                val actionOffset = (localX - downActionZoneStartX).coerceIn(0f, actionWidth)
+
+                                // 关闭滑动
                                 closeSwipeAt(rv, downTargetPosition)
-                                // 左半边编辑，右半边删除
+
+                                // 执行操作
                                 if (actionOffset < actionWidth / 2f) {
                                     showEditDialog(target)
                                 } else {
                                     showDeleteConfirmDialog(target)
                                 }
+                            } else {
+                                // 点击卡片主体，关闭
+                                closeSwipeAt(rv, downTargetPosition)
                             }
-                        } else if (isTap && !downInActionArea) {
-                            // 点击卡片主体，关闭
-                            closeSwipeAt(rv, downTargetPosition)
                         } else {
                             // 滑动：右滑关闭
                             val dx = e.x - downX
@@ -315,19 +309,8 @@ class DiaryListFragment : Fragment() {
                                 closeSwipeAt(rv, downTargetPosition)
                             }
                         }
-                        resetState()
-                    }
-
-                    MotionEvent.ACTION_CANCEL -> {
-                        resetState()
                     }
                 }
-            }
-
-            private fun resetState() {
-                intercepting = false
-                downInActionArea = false
-                downTargetPosition = RecyclerView.NO_POSITION
             }
 
             override fun onRequestDisallowInterceptTouchEvent(disallowIntercept: Boolean) {}
