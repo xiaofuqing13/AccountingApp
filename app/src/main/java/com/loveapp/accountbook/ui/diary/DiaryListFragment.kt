@@ -234,87 +234,88 @@ class DiaryListFragment : Fragment() {
         var downActionZoneStartX = 0f
         var downTargetPosition = RecyclerView.NO_POSITION
 
-        recyclerView.addOnItemTouchListener(object : RecyclerView.SimpleOnItemTouchListener() {
+        recyclerView.addOnItemTouchListener(object : RecyclerView.OnItemTouchListener {
             override fun onInterceptTouchEvent(rv: RecyclerView, e: MotionEvent): Boolean {
                 val openPosition = adapter.getSwipeOpenPosition()
                 if (openPosition == RecyclerView.NO_POSITION) return false
 
-                when (e.actionMasked) {
-                    MotionEvent.ACTION_DOWN -> {
-                        downX = e.x
-                        downY = e.y
-                        downInActionArea = false
-                        downActionZoneStartX = 0f
-                        downTargetPosition = RecyclerView.NO_POSITION
+                if (e.actionMasked == MotionEvent.ACTION_DOWN) {
+                    downX = e.x
+                    downY = e.y
+                    downInActionArea = false
+                    downActionZoneStartX = 0f
+                    downTargetPosition = RecyclerView.NO_POSITION
 
-                        val touchedChild = rv.findChildViewUnder(e.x, e.y) ?: return false
-                        val touchedPosition = rv.getChildAdapterPosition(touchedChild)
-                        downTargetPosition = touchedPosition
+                    val touchedChild = rv.findChildViewUnder(e.x, e.y) ?: return false
+                    val touchedPosition = rv.getChildAdapterPosition(touchedChild)
+                    downTargetPosition = touchedPosition
 
-                        if (touchedPosition != openPosition) {
-                            closeSwipeAt(rv, openPosition)
-                            return false
-                        } else {
-                            val actionWidth = adapter.getSwipeActionTotalWidthPx().toFloat()
-                            val localX = e.x - touchedChild.left
-                            downActionZoneStartX = touchedChild.width - actionWidth
-                            downInActionArea = localX >= downActionZoneStartX
-
-                            if (downInActionArea) {
-                                // 点击操作区域，拦截事件以接收ACTION_UP
-                                return true
-                            } else {
-                                // 点击卡片主体，关闭滑动
-                                closeSwipeAt(rv, openPosition)
-                                return true
-                            }
-                        }
+                    if (touchedPosition != openPosition) {
+                        closeSwipeAt(rv, openPosition)
+                        return false
                     }
 
+                    val actionWidth = adapter.getSwipeActionTotalWidthPx().toFloat()
+                    val localX = e.x - touchedChild.left
+                    downActionZoneStartX = touchedChild.width - actionWidth
+                    downInActionArea = localX >= downActionZoneStartX
+
+                    // 拦截所有在展开项上的触摸
+                    return true
+                }
+                return false
+            }
+
+            override fun onTouchEvent(rv: RecyclerView, e: MotionEvent) {
+                val openPosition = adapter.getSwipeOpenPosition()
+
+                when (e.actionMasked) {
                     MotionEvent.ACTION_UP -> {
                         if (downInActionArea && downTargetPosition == openPosition) {
-                            val touchedChild = rv.findChildViewUnder(e.x, e.y)
-                            val touchedPosition = touchedChild?.let { rv.getChildAdapterPosition(it) }
                             val moveX = abs(e.x - downX)
                             val moveY = abs(e.y - downY)
-                            if (
-                                touchedChild != null &&
-                                touchedPosition == openPosition &&
-                                moveX <= closeTrigger &&
-                                moveY <= closeTrigger
-                            ) {
-                                val localXUp = e.x - touchedChild.left
-                                if (localXUp >= downActionZoneStartX) {
-                                    val actionWidth = adapter.getSwipeActionTotalWidthPx().toFloat()
-                                    val actionOffset = (localXUp - downActionZoneStartX).coerceIn(0f, actionWidth)
-                                    val target = adapter.getItem(openPosition)
-                                    closeSwipeAt(rv, openPosition)
-                                    if (actionOffset < actionWidth / 2f) {
-                                        showEditDialog(target)
-                                    } else {
-                                        showDeleteConfirmDialog(target)
+
+                            if (moveX <= closeTrigger && moveY <= closeTrigger) {
+                                val touchedChild = rv.findChildViewUnder(e.x, e.y)
+                                if (touchedChild != null) {
+                                    val localXUp = e.x - touchedChild.left
+                                    if (localXUp >= downActionZoneStartX) {
+                                        val actionWidth = adapter.getSwipeActionTotalWidthPx().toFloat()
+                                        val actionOffset = (localXUp - downActionZoneStartX).coerceIn(0f, actionWidth)
+                                        val target = adapter.getItem(openPosition)
+                                        closeSwipeAt(rv, openPosition)
+                                        if (actionOffset < actionWidth / 2f) {
+                                            showEditDialog(target)
+                                        } else {
+                                            showDeleteConfirmDialog(target)
+                                        }
+                                        return
                                     }
-                                    return true
                                 }
                             }
-                            // 移动超出阈值或位置不对，只关闭滑动
-                            closeSwipeAt(rv, openPosition)
                         }
+
+                        // 不是有效点击，检查是否右滑关闭
                         val dx = e.x - downX
-                        if (dx > closeTrigger) {
-                            closeSwipeAt(rv, openPosition)
+                        if (dx > closeTrigger || !downInActionArea) {
+                            if (openPosition != RecyclerView.NO_POSITION) {
+                                closeSwipeAt(rv, openPosition)
+                            }
                         }
-                        return true
+
+                        // 重置状态
+                        downInActionArea = false
+                        downTargetPosition = RecyclerView.NO_POSITION
                     }
 
                     MotionEvent.ACTION_CANCEL -> {
                         downInActionArea = false
                         downTargetPosition = RecyclerView.NO_POSITION
-                        return true
                     }
                 }
-                return false
             }
+
+            override fun onRequestDisallowInterceptTouchEvent(disallowIntercept: Boolean) {}
         })
     }
 
