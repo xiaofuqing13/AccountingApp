@@ -15,13 +15,18 @@ import androidx.navigation.fragment.findNavController
 import com.google.android.material.tabs.TabLayout
 import com.loveapp.accountbook.R
 import com.loveapp.accountbook.data.model.AccountEntry
+import com.loveapp.accountbook.data.model.Category
+import com.loveapp.accountbook.data.repository.ExcelRepository
 import com.loveapp.accountbook.util.DateUtils
 import com.loveapp.accountbook.util.DraftManager
 import com.loveapp.accountbook.util.EasterEggManager
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 
 class AccountAddFragment : Fragment() {
 
     private val viewModel: AccountViewModel by activityViewModels()
+    private lateinit var repo: ExcelRepository
     private var isExpense = true
     private var selectedCategory = "餐饮"
     private var amountStr = ""
@@ -32,6 +37,8 @@ class AccountAddFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        repo = ExcelRepository(requireContext())
 
         val tvAmount = view.findViewById<TextView>(R.id.tv_amount)
         val tvDate = view.findViewById<TextView>(R.id.tv_date)
@@ -140,36 +147,149 @@ class AccountAddFragment : Fragment() {
     }
 
     private fun updateCategoryGrid(rv: androidx.recyclerview.widget.RecyclerView) {
-        val categories = if (isExpense) AccountEntry.EXPENSE_CATEGORIES else AccountEntry.INCOME_CATEGORIES
-        selectedCategory = categories.first().name
-        rv.adapter = object : androidx.recyclerview.widget.RecyclerView.Adapter<androidx.recyclerview.widget.RecyclerView.ViewHolder>() {
-            private var selected = 0
-            override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): androidx.recyclerview.widget.RecyclerView.ViewHolder {
-                val tv = TextView(parent.context).apply {
-                    gravity = android.view.Gravity.CENTER
-                    setPadding(8, 16, 8, 16)
-                    textSize = 13f
-                    layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+        lifecycleScope.launch {
+            val type = if (isExpense) "支出" else "收入"
+            val builtIn = if (isExpense) AccountEntry.EXPENSE_CATEGORIES else AccountEntry.INCOME_CATEGORIES
+            // 内置分类去掉"更多"，末尾追加自定义分类 + "➕"添加按钮
+            val base = builtIn.filter { it.name != "更多" }
+            val custom = repo.getCustomCategories(type)
+            val categories = base + custom + Category("➕", "添加")
+            selectedCategory = base.first().name
+
+            rv.adapter = object : androidx.recyclerview.widget.RecyclerView.Adapter<androidx.recyclerview.widget.RecyclerView.ViewHolder>() {
+                private var selected = 0
+                override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): androidx.recyclerview.widget.RecyclerView.ViewHolder {
+                    val tv = TextView(parent.context).apply {
+                        gravity = android.view.Gravity.CENTER
+                        setPadding(8, 16, 8, 16)
+                        textSize = 13f
+                        layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+                    }
+                    return object : androidx.recyclerview.widget.RecyclerView.ViewHolder(tv) {}
                 }
-                return object : androidx.recyclerview.widget.RecyclerView.ViewHolder(tv) {}
-            }
-            override fun onBindViewHolder(holder: androidx.recyclerview.widget.RecyclerView.ViewHolder, position: Int) {
-                val cat = categories[position]
-                (holder.itemView as TextView).apply {
-                    text = "${cat.icon}\n${cat.name}"
-                    setTextColor(ContextCompat.getColor(requireContext(), if (position == selected) R.color.pink_primary else R.color.text_primary))
-                    setBackgroundResource(if (position == selected) R.drawable.bg_tag_pink else 0)
-                    setOnClickListener {
-                        val old = selected
-                        @Suppress("DEPRECATION")
-                        selected = holder.adapterPosition
-                        selectedCategory = cat.name
-                        notifyItemChanged(old)
-                        notifyItemChanged(selected)
+                override fun onBindViewHolder(holder: androidx.recyclerview.widget.RecyclerView.ViewHolder, position: Int) {
+                    val cat = categories[position]
+                    val isAddBtn = cat.name == "添加"
+                    (holder.itemView as TextView).apply {
+                        text = "${cat.icon}\n${cat.name}"
+                        setTextColor(ContextCompat.getColor(requireContext(),
+                            if (isAddBtn) R.color.text_hint
+                            else if (position == selected) R.color.pink_primary
+                            else R.color.text_primary))
+                        setBackgroundResource(if (!isAddBtn && position == selected) R.drawable.bg_tag_pink else 0)
+                        setOnClickListener {
+                            if (isAddBtn) {
+                                showAddCategoryDialog(rv)
+                            } else {
+                                val adapterPos = holder.bindingAdapterPosition
+                                if (adapterPos == androidx.recyclerview.widget.RecyclerView.NO_POSITION) return@setOnClickListener
+                                val old = selected
+                                @Suppress("DEPRECATION")
+                                selected = adapterPos
+                                selectedCategory = cat.name
+                                notifyItemChanged(old)
+                                notifyItemChanged(selected)
+                            }
+                        }
+                        // 长按删除自定义分类
+                        setOnLongClickListener {
+                            val adapterPos = holder.bindingAdapterPosition
+                            if (adapterPos == androidx.recyclerview.widget.RecyclerView.NO_POSITION) return@setOnLongClickListener true
+                            val currentCat = categories[adapterPos]
+                            val isCurrentAddBtn = currentCat.name == "添加"
+                            if (isCurrentAddBtn) {
+                                Toast.makeText(requireContext(), "请点击“添加”按钮新增分类", Toast.LENGTH_SHORT).show()
+                                return@setOnLongClickListener true
+                            }
+                            val isCustomCategory = adapterPos >= base.size && adapterPos < categories.size - 1
+                            if (!isCustomCategory) {
+                                Toast.makeText(requireContext(), "内置分类不支持删除，请长按自定义分类", Toast.LENGTH_SHORT).show()
+                                return@setOnLongClickListener true
+                            }
+                            android.app.AlertDialog.Builder(requireContext())
+                                .setTitle("删除分类")
+                                .setMessage("确定删除「${currentCat.name}」分类吗？")
+                                .setPositiveButton("删除") { _, _ ->
+                                    lifecycleScope.launch {
+                                        repo.deleteCustomCategory(currentCat.name, type)
+                                        updateCategoryGrid(rv)
+                                    }
+                                }
+                                .setNegativeButton("取消", null)
+                                .show()
+                            true
+                        }
                     }
                 }
+                override fun getItemCount() = categories.size
             }
-            override fun getItemCount() = categories.size
         }
+    }
+
+    private fun showAddCategoryDialog(rv: androidx.recyclerview.widget.RecyclerView) {
+        val type = if (isExpense) "支出" else "收入"
+
+        val layout = android.widget.LinearLayout(requireContext()).apply {
+            orientation = android.widget.LinearLayout.VERTICAL
+            setPadding(60, 40, 60, 20)
+        }
+        val etName = EditText(requireContext()).apply {
+            hint = "分类名称（如：零食）"
+            textSize = 15f
+        }
+        layout.addView(etName)
+
+        var selectedIcon = "😀"
+        val defaultEmojis = listOf("😀", "🍔", "🚗", "🏠", "📱", "🎮", "💊", "📚", "👔", "💰", "🎁", "💼", "🌸", "❤️", "⭐")
+
+        val tvIconLabel = TextView(requireContext()).apply {
+            text = "选择图标："
+            textSize = 14f
+            setPadding(0, 24, 0, 8)
+        }
+        layout.addView(tvIconLabel)
+
+        val emojiGrid = GridLayout(requireContext()).apply {
+            columnCount = 5
+            setPadding(0, 8, 0, 16)
+        }
+
+        defaultEmojis.forEach { emoji ->
+            val tv = TextView(requireContext()).apply {
+                text = emoji
+                textSize = 24f
+                setPadding(16, 8, 16, 8)
+                setOnClickListener {
+                    selectedIcon = emoji
+                    // 更新选中状态
+                    for (i in 0 until emojiGrid.childCount) {
+                        (emojiGrid.getChildAt(i) as? TextView)?.alpha = 0.5f
+                    }
+                    alpha = 1f
+                }
+                alpha = if (emoji == selectedIcon) 1f else 0.5f
+            }
+            emojiGrid.addView(tv)
+        }
+        layout.addView(emojiGrid)
+
+        val dialog = android.app.AlertDialog.Builder(requireContext())
+            .setTitle("添加${type}分类")
+            .setView(layout)
+            .setPositiveButton("添加") { _, _ ->
+                val name = etName.text.toString().trim()
+                if (name.isEmpty()) {
+                    Toast.makeText(requireContext(), "请输入分类名称", Toast.LENGTH_SHORT).show()
+                    return@setPositiveButton
+                }
+                lifecycleScope.launch {
+                    repo.addCustomCategory(name, type, selectedIcon)
+                    updateCategoryGrid(rv)
+                    Toast.makeText(requireContext(), "已添加分类「$name」", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton("取消", null)
+            .create()
+        dialog.show()
     }
 }
