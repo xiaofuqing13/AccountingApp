@@ -90,7 +90,8 @@ class HomeFragment : Fragment() {
             ).show()
         }
         view.findViewById<View>(R.id.btn_quick_settings).setOnClickListener {
-            findNavController().navigate(R.id.nav_settings)
+            requireActivity().findViewById<com.google.android.material.bottomnavigation.BottomNavigationView>(R.id.bottom_nav)
+                .selectedItemId = R.id.nav_settings
         }
 
         viewModel.loadStats()
