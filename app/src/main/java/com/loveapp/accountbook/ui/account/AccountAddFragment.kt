@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.GridLayout
+import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.core.content.ContextCompat
@@ -81,26 +82,44 @@ class AccountAddFragment : Fragment() {
         })
 
         // 数字键盘
-        val keys = listOf("1","2","3","📅","4","5","6","+","7","8","9","-","·","0","⌫","✓")
+        val keys = listOf("1","2","3","CAL","4","5","6","+","7","8","9","-","·","0","BS","OK")
+        val iconKeys = mapOf("CAL" to R.drawable.ic_calendar, "BS" to R.drawable.ic_key_backspace, "OK" to R.drawable.ic_key_confirm)
         for (key in keys) {
-            val btn = TextView(requireContext()).apply {
-                text = key
-                textSize = 20f
-                gravity = android.view.Gravity.CENTER
-                setPadding(0, 24, 0, 24)
-                layoutParams = GridLayout.LayoutParams().apply {
-                    columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f)
-                    rowSpec = GridLayout.spec(GridLayout.UNDEFINED)
-                    width = 0
-                    height = ViewGroup.LayoutParams.WRAP_CONTENT
-                }
-                when (key) {
-                    "+", "-" -> setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.pink_bg))
-                    "✓" -> { setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.pink_primary)); setTextColor(ContextCompat.getColor(requireContext(), R.color.text_white)) }
-                }
-                setOnClickListener { onKeyPress(key, tvAmount, etNote) }
+            val cellParams = GridLayout.LayoutParams().apply {
+                columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f)
+                rowSpec = GridLayout.spec(GridLayout.UNDEFINED)
+                width = 0
+                height = ViewGroup.LayoutParams.WRAP_CONTENT
             }
-            numpad.addView(btn)
+            val iconRes = iconKeys[key]
+            if (iconRes != null) {
+                // 图标按钮
+                val iv = ImageView(requireContext()).apply {
+                    setImageResource(iconRes)
+                    imageTintList = android.content.res.ColorStateList.valueOf(
+                        ContextCompat.getColor(requireContext(), if (key == "OK") R.color.text_white else R.color.text_primary)
+                    )
+                    scaleType = ImageView.ScaleType.CENTER
+                    setPadding(0, 28, 0, 28)
+                    layoutParams = cellParams
+                    if (key == "OK") setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.pink_primary))
+                    setOnClickListener { onKeyPress(key, tvAmount, etNote) }
+                }
+                numpad.addView(iv)
+            } else {
+                val btn = TextView(requireContext()).apply {
+                    text = key
+                    textSize = 20f
+                    gravity = android.view.Gravity.CENTER
+                    setPadding(0, 24, 0, 24)
+                    layoutParams = cellParams
+                    when (key) {
+                        "+", "-" -> setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.pink_bg))
+                    }
+                    setOnClickListener { onKeyPress(key, tvAmount, etNote) }
+                }
+                numpad.addView(btn)
+            }
         }
 
         view.findViewById<View>(R.id.btn_back).setOnClickListener { findNavController().popBackStack() }
@@ -108,10 +127,10 @@ class AccountAddFragment : Fragment() {
 
     private fun onKeyPress(key: String, tvAmount: TextView, etNote: EditText) {
         when (key) {
-            "⌫" -> { if (amountStr.isNotEmpty()) amountStr = amountStr.dropLast(1) }
+            "BS" -> { if (amountStr.isNotEmpty()) amountStr = amountStr.dropLast(1) }
             "·" -> { if (!amountStr.contains(".")) amountStr += "." }
-            "✓" -> { saveAccount(etNote); return }
-            "📅", "+", "-" -> return
+            "OK" -> { saveAccount(etNote); return }
+            "CAL", "+", "-" -> return
             else -> {
                 if (amountStr.contains(".") && amountStr.substringAfter(".").length >= 2) return
                 amountStr += key
@@ -239,8 +258,14 @@ class AccountAddFragment : Fragment() {
         }
         layout.addView(etName)
 
-        var selectedIcon = "😀"
-        val defaultEmojis = listOf("😀", "🍔", "🚗", "🏠", "📱", "🎮", "💊", "📚", "👔", "💰", "🎁", "💼", "🌸", "❤️", "⭐")
+        var selectedIcon = R.drawable.ic_cat_food.toString()
+        val defaultIcons = listOf(
+            R.drawable.ic_cat_food, R.drawable.ic_cat_transport, R.drawable.ic_cat_shopping,
+            R.drawable.ic_cat_house, R.drawable.ic_cat_phone, R.drawable.ic_cat_game,
+            R.drawable.ic_cat_medical, R.drawable.ic_cat_education, R.drawable.ic_cat_clothes,
+            R.drawable.ic_cat_salary, R.drawable.ic_cat_bonus, R.drawable.ic_cat_invest,
+            R.drawable.ic_cat_parttime, R.drawable.ic_cat_other, R.drawable.ic_cat_more
+        )
 
         val tvIconLabel = TextView(requireContext()).apply {
             text = "选择图标："
@@ -249,29 +274,32 @@ class AccountAddFragment : Fragment() {
         }
         layout.addView(tvIconLabel)
 
-        val emojiGrid = GridLayout(requireContext()).apply {
+        val iconGrid = GridLayout(requireContext()).apply {
             columnCount = 5
             setPadding(0, 8, 0, 16)
         }
 
-        defaultEmojis.forEach { emoji ->
-            val tv = TextView(requireContext()).apply {
-                text = emoji
-                textSize = 24f
-                setPadding(16, 8, 16, 8)
+        defaultIcons.forEach { iconRes ->
+            val iv = ImageView(requireContext()).apply {
+                setImageResource(iconRes)
+                imageTintList = android.content.res.ColorStateList.valueOf(
+                    ContextCompat.getColor(requireContext(), R.color.pink_primary)
+                )
+                setPadding(16, 12, 16, 12)
+                layoutParams = ViewGroup.LayoutParams(144, 120)
+                scaleType = ImageView.ScaleType.CENTER_INSIDE
                 setOnClickListener {
-                    selectedIcon = emoji
-                    // 更新选中状态
-                    for (i in 0 until emojiGrid.childCount) {
-                        (emojiGrid.getChildAt(i) as? TextView)?.alpha = 0.5f
+                    selectedIcon = iconRes.toString()
+                    for (i in 0 until iconGrid.childCount) {
+                        iconGrid.getChildAt(i).alpha = 0.5f
                     }
                     alpha = 1f
                 }
-                alpha = if (emoji == selectedIcon) 1f else 0.5f
+                alpha = if (iconRes.toString() == selectedIcon) 1f else 0.5f
             }
-            emojiGrid.addView(tv)
+            iconGrid.addView(iv)
         }
-        layout.addView(emojiGrid)
+        layout.addView(iconGrid)
 
         val dialog = android.app.AlertDialog.Builder(requireContext())
             .setTitle("添加${type}分类")
