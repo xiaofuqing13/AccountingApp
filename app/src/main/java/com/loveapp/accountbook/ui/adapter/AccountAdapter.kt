@@ -54,6 +54,10 @@ class AccountAdapter(
         val item = items[position]
         holder.tvIcon.setImageResource(categoryIcons[item.category] ?: R.drawable.ic_cat_other)
         holder.tvCategory.text = item.category
+        // 从日期字段提取时间 (格式: yyyy-MM-dd HH:mm)
+        val time = if (item.date.length > 10) item.date.substring(11) else ""
+        holder.tvTime.text = time
+        holder.tvTime.visibility = if (time.isNotEmpty()) View.VISIBLE else View.GONE
         holder.tvNote.text = item.note.ifEmpty { "暂无备注" }
 
         val prefix = if (item.isIncome) "+" else "-"
@@ -77,6 +81,7 @@ class AccountAdapter(
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val tvIcon: ImageView = view.findViewById(R.id.tv_icon)
         val tvCategory: TextView = view.findViewById(R.id.tv_category)
+        val tvTime: TextView = view.findViewById(R.id.tv_time)
         val tvNote: TextView = view.findViewById(R.id.tv_note)
         val tvAmount: TextView = view.findViewById(R.id.tv_amount)
     }
