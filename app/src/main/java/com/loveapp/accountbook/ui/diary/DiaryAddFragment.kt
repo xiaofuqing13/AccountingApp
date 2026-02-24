@@ -1186,12 +1186,12 @@ class DiaryAddFragment : Fragment() {
         val ctx = requireContext()
         val prefs = ctx.getSharedPreferences("diary_tags", Context.MODE_PRIVATE)
         val customTags = prefs.getStringSet("custom_tags", emptySet())!!.toList().sorted()
-        val hiddenTags = prefs.getStringSet("hidden_builtin_tags", emptySet())!!
+        val deletedBuiltin = prefs.getStringSet("deleted_builtin_tags", emptySet())!!
         val tempSelected = selectedTags.toMutableSet()
 
         // 收集所有可见标签名
         val allTagNames = mutableListOf<String>()
-        tagCategories.values.forEach { tags -> allTagNames.addAll(tags.filter { it !in hiddenTags }) }
+        tagCategories.values.forEach { tags -> allTagNames.addAll(tags.filter { it !in deletedBuiltin }) }
         if (customTags.isNotEmpty()) allTagNames.addAll(customTags)
         val distinctNames = allTagNames.distinct()
 
@@ -1271,9 +1271,9 @@ class DiaryAddFragment : Fragment() {
             container.addView(chipGroup)
         }
 
-        // 按分类添加内置标签（过滤已隐藏的）
+        // 按分类添加内置标签（过滤已删除的）
         for ((category, tags) in tagCategories) {
-            val visibleTags = tags.filter { it !in hiddenTags }
+            val visibleTags = tags.filter { it !in deletedBuiltin }
             if (visibleTags.isNotEmpty()) addCategorySection(category, visibleTags)
         }
 
@@ -1362,10 +1362,9 @@ class DiaryAddFragment : Fragment() {
         val ctx = requireContext()
         val prefs = ctx.getSharedPreferences("diary_tags", Context.MODE_PRIVATE)
         val customTags = prefs.getStringSet("custom_tags", emptySet())!!.toList().sorted()
-        val hiddenTags = prefs.getStringSet("hidden_builtin_tags", emptySet())!!.toMutableSet()
+        val deletedBuiltin = prefs.getStringSet("deleted_builtin_tags", emptySet())!!.toMutableSet()
         val allBuiltinTags = tagCategories.values.flatten()
-        val visibleBuiltin = allBuiltinTags.filter { it !in hiddenTags }
-        val hiddenBuiltin = allBuiltinTags.filter { it in hiddenTags }
+        val visibleBuiltin = allBuiltinTags.filter { it !in deletedBuiltin }
 
         val sheet = BottomSheetDialog(ctx, R.style.BottomSheetDialogTheme)
         val sheetView = layoutInflater.inflate(R.layout.dialog_tag_manage, null)
@@ -1415,17 +1414,17 @@ class DiaryAddFragment : Fragment() {
                 layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
             }
 
-            val btnAction = TextView(ctx).apply {
-                text = "隐藏"
+            val btnDel = TextView(ctx).apply {
+                text = "删除"
                 textSize = 13f
                 setTextColor(pinkSoft)
                 setPadding((12 * dp).toInt(), (6 * dp).toInt(), (12 * dp).toInt(), (6 * dp).toInt())
             }
 
-            btnAction.setOnClickListener {
+            btnDel.setOnClickListener {
                 if (isBuiltin) {
-                    hiddenTags.add(tagName)
-                    prefs.edit().putStringSet("hidden_builtin_tags", hiddenTags).apply()
+                    deletedBuiltin.add(tagName)
+                    prefs.edit().putStringSet("deleted_builtin_tags", deletedBuiltin).apply()
                 } else {
                     val existing = prefs.getStringSet("custom_tags", emptySet())!!.toMutableSet()
                     existing.remove(tagName)
@@ -1435,11 +1434,11 @@ class DiaryAddFragment : Fragment() {
                 row.animate().alpha(0f).translationX(row.width.toFloat()).setDuration(250).withEndAction {
                     container.removeView(row)
                 }.start()
-                Toast.makeText(ctx, "#$tagName 已${if (isBuiltin) "隐藏" else "删除"}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(ctx, "#$tagName 已删除", Toast.LENGTH_SHORT).show()
             }
 
             row.addView(tvTag)
-            row.addView(btnAction)
+            row.addView(btnDel)
             container.addView(row)
         }
 
@@ -1458,42 +1457,6 @@ class DiaryAddFragment : Fragment() {
             customTags.forEachIndexed { i, tag ->
                 addTagRow(tag, isBuiltin = false)
                 if (i < customTags.size - 1) addDivider()
-            }
-        }
-
-        // 已隐藏的内置标签（可恢复）
-        if (hiddenBuiltin.isNotEmpty()) {
-            addSectionHeader("已隐藏")
-            for (tagName in hiddenBuiltin) {
-                val row = LinearLayout(ctx).apply {
-                    orientation = LinearLayout.HORIZONTAL
-                    gravity = android.view.Gravity.CENTER_VERTICAL
-                    setPadding((4 * dp).toInt(), (10 * dp).toInt(), (4 * dp).toInt(), (10 * dp).toInt())
-                }
-                val tvTag = TextView(ctx).apply {
-                    text = "#$tagName"
-                    textSize = 15f
-                    setTextColor(hintColor)
-                    layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
-                }
-                val btnRestore = TextView(ctx).apply {
-                    text = "恢复"
-                    textSize = 13f
-                    setTextColor(pinkPrimary)
-                    setPadding((12 * dp).toInt(), (6 * dp).toInt(), (12 * dp).toInt(), (6 * dp).toInt())
-                }
-                btnRestore.setOnClickListener {
-                    hiddenTags.remove(tagName)
-                    prefs.edit().putStringSet("hidden_builtin_tags", hiddenTags).apply()
-                    row.animate().alpha(0f).setDuration(200).withEndAction {
-                        container.removeView(row)
-                    }.start()
-                    Toast.makeText(ctx, "#$tagName 已恢复", Toast.LENGTH_SHORT).show()
-                }
-                row.addView(tvTag)
-                row.addView(btnRestore)
-                container.addView(row)
-                if (tagName != hiddenBuiltin.last()) addDivider()
             }
         }
 

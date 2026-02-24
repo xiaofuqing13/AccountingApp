@@ -30,7 +30,7 @@
         android:layout_height="wrap_content"
         android:paddingHorizontal="20dp"
         android:paddingBottom="12dp"
-        android:text="点击删除标签，已隐藏的内置标签可恢复"
+        android:text="点击删除标签"
         android:textColor="@color/text_hint"
         android:textSize="12sp" />
 
