@@ -26,11 +26,11 @@ This is an Android Kotlin app ("我们的小账本") using MVVM with Jetpack Nav
 
 ### Data Layer — Excel as Database
 
-The app uses Apache POI to read/write a single `.xlsx` file (`我们的小账本.xlsx`) instead of Room/SQLite. `ExcelRepository` is the sole data access class, managing 3 sheets: 记账 (5 columns), 日记 (6 columns), 会议纪要 (9 columns). The file lives in `getExternalFilesDir()/DataManager/`. All IO runs on `Dispatchers.IO` via coroutines.
+The app uses Apache POI to read/write a single `.xlsx` file (`我们的小账本.xlsx`) instead of Room/SQLite. `ExcelRepository` is the sole data access class, managing 4 sheets: 记账 (5 columns), 日记 (6 columns), 会议纪要 (9 columns), 分类配置 (3 columns). The file lives in `Documents/我们的小账本/` (public directory, auto-migrates from legacy `getExternalFilesDir()/DataManager/`). All IO runs on `Dispatchers.IO` via coroutines.
 
-Each ViewModel instantiates its own `ExcelRepository(context)` — there is no dependency injection or singleton pattern. Every read operation opens the file, parses it, and closes it. Every write operation opens, appends a row, saves, and closes.
+Each ViewModel instantiates its own `ExcelRepository(context)` — there is no dependency injection or singleton pattern. Every read operation opens the file, parses it, and closes it. Every write operation opens, modifies, saves, and closes.
 
-**Limitation**: ExcelRepository has `add*`, `get*`, `exportToPath`, `importFromPath`, and `getExcelFilePath` methods — no update or delete operations exist. The SettingsFragment export/import UI is a placeholder (toast only, no file picker), though the Repository-level implementation is functional.
+ExcelRepository provides full CRUD: `add*`, `get*`, `update*`, `delete*` for all three data types, plus `exportShareable`/`importSmart` for data backup/restore with version detection and deduplication.
 
 ### Navigation
 
@@ -39,12 +39,16 @@ Each ViewModel instantiates its own `ExcelRepository(context)` — there is no d
 ### Module Pattern
 
 Each feature module (account, diary, meeting) follows the same pattern:
-- `*ListFragment` — displays RecyclerView list, FAB to add new entry
-- `*AddFragment` — form for creating new entries, uses `DraftManager` for auto-save
+- `*ListFragment` — displays RecyclerView list, FAB to add new entry, swipe-to-edit/delete
+- `*AddFragment` — form for creating/editing entries, uses `DraftManager` for auto-save
 - `*ViewModel` — extends `AndroidViewModel`, holds `LiveData`, calls `ExcelRepository`
 - `*Adapter` — RecyclerView adapter in `ui/adapter/`
 
 Account module fragments share a single ViewModel via `activityViewModels()`. Diary and Meeting modules use the same sharing pattern. HomeFragment uses fragment-scoped `viewModels()`.
+
+### Diary Media Support
+
+Diary entries can embed images and audio via special markers in content: `[IMG:filename.jpg]` and `[AUDIO:filename.m4a]`. `DiaryMediaManager` handles file storage in `diary_images/` and `diary_audio/` directories. `DiaryContentRenderer` parses these markers for display.
 
 ### Draft Auto-Save
 
@@ -56,7 +60,7 @@ Account module fragments share a single ViewModel via `activityViewModels()`. Di
 
 ## Key Conventions
 
-- Language: Kotlin 1.9.22, AGP 8.3.2, JVM target 11, compileSdk/targetSdk 34, minSdk 26
+- Language: Kotlin, AGP 9.0.1, JVM target 11, compileSdk/targetSdk 34, minSdk 26
 - View system: XML layouts with `findViewById` (no Compose, no ViewBinding)
 - UI label strings are in `res/values/strings.xml` (Chinese). Some data strings (category names, weather, mood) are hardcoded in Kotlin code
 - Color theme: pink (#E8729A primary), green (#66BB6A income), purple (#D4A0E8 accent)

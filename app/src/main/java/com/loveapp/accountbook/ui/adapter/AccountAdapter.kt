@@ -3,6 +3,7 @@ package com.loveapp.accountbook.ui.adapter
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
@@ -16,25 +17,27 @@ class AccountAdapter(
 ) : RecyclerView.Adapter<AccountAdapter.ViewHolder>() {
 
     private val categoryIcons = mutableMapOf(
-        "餐饮" to "🍜", "椁愰ギ" to "🍜",
-        "交通" to "🚗", "浜ら€?" to "🚗",
-        "购物" to "🛍️", "璐墿" to "🛍️",
-        "住房" to "🏠", "浣忔埧" to "🏠",
-        "通讯" to "📱", "閫氳" to "📱",
-        "娱乐" to "🎮", "濞变箰" to "🎮",
-        "医疗" to "💊", "鍖荤枟" to "💊",
-        "教育" to "📚", "鏁欒偛" to "📚",
-        "服饰" to "👗", "鏈嶉グ" to "👗",
-        "工资" to "💰", "宸ヨ祫" to "💰",
-        "奖金" to "🎖️", "濂栭噾" to "🎖️",
-        "理财" to "📈", "鐞嗚储" to "📈",
-        "兼职" to "👔", "鍏艰亴" to "👔",
-        "鲜花" to "🌸", "椴滆姳" to "🌸",
-        "礼物" to "🎁", "绀肩墿" to "🎁"
+        "餐饮" to R.drawable.ic_cat_food, "椁愰ギ" to R.drawable.ic_cat_food,
+        "交通" to R.drawable.ic_cat_transport, "浜ら€?" to R.drawable.ic_cat_transport,
+        "购物" to R.drawable.ic_cat_shopping, "璐墿" to R.drawable.ic_cat_shopping,
+        "住房" to R.drawable.ic_cat_house, "浣忔埧" to R.drawable.ic_cat_house,
+        "通讯" to R.drawable.ic_cat_phone, "閫氳" to R.drawable.ic_cat_phone,
+        "娱乐" to R.drawable.ic_cat_game, "濞变箰" to R.drawable.ic_cat_game,
+        "医疗" to R.drawable.ic_cat_medical, "鍖荤枟" to R.drawable.ic_cat_medical,
+        "教育" to R.drawable.ic_cat_education, "鏁欒偛" to R.drawable.ic_cat_education,
+        "服饰" to R.drawable.ic_cat_clothes, "鏈嶉グ" to R.drawable.ic_cat_clothes,
+        "工资" to R.drawable.ic_cat_salary, "宸ヨ祫" to R.drawable.ic_cat_salary,
+        "奖金" to R.drawable.ic_cat_bonus, "濂栭噾" to R.drawable.ic_cat_bonus,
+        "理财" to R.drawable.ic_cat_invest, "鐞嗚储" to R.drawable.ic_cat_invest,
+        "兼职" to R.drawable.ic_cat_parttime, "鍏艰亴" to R.drawable.ic_cat_parttime,
+        "鲜花" to R.drawable.ic_cat_bonus, "椴滆姳" to R.drawable.ic_cat_bonus,
+        "礼物" to R.drawable.ic_cat_bonus, "绀肩墿" to R.drawable.ic_cat_bonus
     )
 
     fun updateCustomIcons(icons: Map<String, String>) {
-        categoryIcons.putAll(icons)
+        icons.forEach { (name, icon) ->
+            icon.toIntOrNull()?.let { categoryIcons[name] = it }
+        }
     }
 
     fun updateData(newItems: List<AccountEntry>) {
@@ -49,7 +52,7 @@ class AccountAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val item = items[position]
-        holder.tvIcon.text = categoryIcons[item.category] ?: "🧾"
+        holder.tvIcon.setImageResource(categoryIcons[item.category] ?: R.drawable.ic_cat_other)
         holder.tvCategory.text = item.category
         holder.tvNote.text = item.note.ifEmpty { "暂无备注" }
 
@@ -72,7 +75,7 @@ class AccountAdapter(
     override fun getItemCount() = items.size
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        val tvIcon: TextView = view.findViewById(R.id.tv_icon)
+        val tvIcon: ImageView = view.findViewById(R.id.tv_icon)
         val tvCategory: TextView = view.findViewById(R.id.tv_category)
         val tvNote: TextView = view.findViewById(R.id.tv_note)
         val tvAmount: TextView = view.findViewById(R.id.tv_amount)

@@ -3,6 +3,7 @@ package com.loveapp.accountbook.util
 import android.app.AlertDialog
 import android.content.Context
 import android.view.LayoutInflater
+import android.widget.ImageView
 import android.widget.TextView
 import com.loveapp.accountbook.R
 
@@ -89,7 +90,7 @@ object EasterEggManager {
     fun showLovePopup(context: Context, loveWord: LoveWord) {
         val builder = AlertDialog.Builder(context)
         val view = LayoutInflater.from(context).inflate(R.layout.dialog_love_popup, null)
-        view.findViewById<TextView>(R.id.tv_emoji).text = loveWord.emoji
+        view.findViewById<ImageView>(R.id.iv_emoji).setImageResource(iconResForLoveWord(loveWord))
         view.findViewById<TextView>(R.id.tv_title).text = loveWord.title
         view.findViewById<TextView>(R.id.tv_text).text = loveWord.text
 
@@ -105,6 +106,24 @@ object EasterEggManager {
 
     fun showRandomLovePopup(context: Context) {
         showLovePopup(context, loveWords.random())
+    }
+
+    fun iconResForLoveWord(word: LoveWord): Int = iconResForEmoji(word.emoji)
+
+    fun iconResForEmoji(emoji: String): Int {
+        return when {
+            emoji.contains("☀") || emoji.contains("🌞") || emoji.contains("✨") || emoji.contains("🌟") || emoji.contains("⭐") -> R.drawable.ic_love_shine
+            emoji.contains("📝") || emoji.contains("📖") || emoji.contains("📄") -> R.drawable.ic_nav_diary
+            emoji.contains("🍰") || emoji.contains("🍦") || emoji.contains("☕") || emoji.contains("🍳") || emoji.contains("🍕") -> R.drawable.ic_export
+            else -> R.drawable.ic_love_heart
+        }
+    }
+
+    fun iconResForMood(mood: String): Int {
+        return when {
+            mood.contains("😢") || mood.contains("😭") || mood.contains("😞") || mood.contains("😔") -> R.drawable.ic_love_shine
+            else -> R.drawable.ic_mood
+        }
     }
 
     val moodEmojis = listOf(

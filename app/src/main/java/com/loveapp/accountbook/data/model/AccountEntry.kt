@@ -1,5 +1,7 @@
 package com.loveapp.accountbook.data.model
 
+import com.loveapp.accountbook.R
+
 data class AccountEntry(
     val date: String,
     val type: String,
@@ -13,16 +15,29 @@ data class AccountEntry(
 
     companion object {
         val EXPENSE_CATEGORIES = listOf(
-            Category("🍔", "餐饮"), Category("🚗", "交通"), Category("🛒", "购物"),
-            Category("🏠", "住房"), Category("📱", "通讯"), Category("🎮", "娱乐"),
-            Category("💊", "医疗"), Category("📚", "教育"), Category("👗", "服饰"),
-            Category("📌", "更多")
+            Category(R.drawable.ic_cat_food, "餐饮"),
+            Category(R.drawable.ic_cat_transport, "交通"),
+            Category(R.drawable.ic_cat_shopping, "购物"),
+            Category(R.drawable.ic_cat_house, "住房"),
+            Category(R.drawable.ic_cat_phone, "通讯"),
+            Category(R.drawable.ic_cat_game, "娱乐"),
+            Category(R.drawable.ic_cat_medical, "医疗"),
+            Category(R.drawable.ic_cat_education, "教育"),
+            Category(R.drawable.ic_cat_clothes, "服饰"),
+            Category(R.drawable.ic_cat_more, "更多")
         )
         val INCOME_CATEGORIES = listOf(
-            Category("💼", "工资"), Category("🎁", "奖金"), Category("💰", "理财"),
-            Category("🤝", "兼职"), Category("💵", "其他")
+            Category(R.drawable.ic_cat_salary, "工资"),
+            Category(R.drawable.ic_cat_bonus, "奖金"),
+            Category(R.drawable.ic_cat_invest, "理财"),
+            Category(R.drawable.ic_cat_parttime, "兼职"),
+            Category(R.drawable.ic_cat_other, "其他")
         )
     }
 }
 
-data class Category(val icon: String, val name: String)
+data class Category(val icon: String, val name: String) {
+    constructor(iconRes: Int, name: String) : this(iconRes.toString(), name)
+
+    val iconRes: Int? get() = icon.toIntOrNull()
+}
