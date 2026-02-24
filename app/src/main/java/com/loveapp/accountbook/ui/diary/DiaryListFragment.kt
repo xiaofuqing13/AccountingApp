@@ -143,7 +143,10 @@ class DiaryListFragment : Fragment() {
         val ctx = requireContext()
         val prefs = ctx.getSharedPreferences("diary_tags", Context.MODE_PRIVATE)
         val deletedBuiltin = prefs.getStringSet("deleted_builtin_tags", emptySet())!!
-        val customTags = prefs.getStringSet("custom_tags", emptySet())!!.toList().sorted()
+        val customTags = prefs.getStringSet("custom_tags", emptySet())!!.map { raw ->
+            val idx = raw.indexOf(':')
+            if (idx > 0) raw.substring(idx + 1) else raw
+        }.sorted()
 
         val builtinTags = listOf(
             "日常", "美食", "运动", "购物",

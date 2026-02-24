@@ -11,6 +11,7 @@ import android.location.Geocoder
 import android.location.LocationManager
 import android.media.AudioAttributes
 import android.media.MediaRecorder
+import android.media.audiofx.Visualizer
 import android.provider.Settings
 import android.os.Bundle
 import android.os.Handler
@@ -720,6 +721,7 @@ class DiaryAddFragment : Fragment() {
         val voiceWave = view.findViewById<VoiceWaveView>(R.id.voice_wave)
 
         var mediaPlayer: android.media.MediaPlayer? = null
+        var visualizer: Visualizer? = null
         var playing = false
         val handler = Handler(Looper.getMainLooper())
 
@@ -771,7 +773,8 @@ class DiaryAddFragment : Fragment() {
                         setOnCompletionListener {
                             playing = false
                             btnPlayPause.setImageResource(R.drawable.ic_play)
-                            voiceWave.stopPlayingAnimation()
+                            releaseVisualizer(visualizer); visualizer = null
+                            voiceWave.reset()
                             seekBar.progress = 0
                             tvDuration.text = formatAudioDuration(it.duration)
                             handler.removeCallbacks(updateRunnable)
@@ -781,7 +784,7 @@ class DiaryAddFragment : Fragment() {
                     }
                     playing = true
                     btnPlayPause.setImageResource(R.drawable.ic_pause)
-                    voiceWave.startPlayingAnimation()
+                    visualizer = attachVisualizer(mediaPlayer!!, voiceWave)
                     handler.post(updateRunnable)
                 } catch (_: Exception) {
                     Toast.makeText(ctx, "语音播放失败，请重新录音", Toast.LENGTH_SHORT).show()
@@ -792,11 +795,12 @@ class DiaryAddFragment : Fragment() {
                 }
             } else {
                 handler.removeCallbacks(updateRunnable)
+                releaseVisualizer(visualizer); visualizer = null
                 mediaPlayer?.release()
                 mediaPlayer = null
                 playing = false
                 btnPlayPause.setImageResource(R.drawable.ic_play)
-                voiceWave.stopPlayingAnimation()
+                voiceWave.reset()
             }
         }
         btnPlayPause.setOnClickListener { togglePlayPause() }
@@ -814,6 +818,7 @@ class DiaryAddFragment : Fragment() {
             override fun onViewAttachedToWindow(v: View) {}
             override fun onViewDetachedFromWindow(v: View) {
                 handler.removeCallbacks(updateRunnable)
+                releaseVisualizer(visualizer); visualizer = null
                 mediaPlayer?.release()
                 mediaPlayer = null
                 playing = false
@@ -821,6 +826,37 @@ class DiaryAddFragment : Fragment() {
         })
 
         return view
+    }
+
+    private fun attachVisualizer(mp: android.media.MediaPlayer, waveView: VoiceWaveView): Visualizer? {
+        return try {
+            Visualizer(mp.audioSessionId).apply {
+                captureSize = Visualizer.getCaptureSizeRange()[0]
+                setDataCaptureListener(object : Visualizer.OnDataCaptureListener {
+                    override fun onWaveFormDataCapture(vis: Visualizer?, waveform: ByteArray, samplingRate: Int) {
+                        var sum = 0.0
+                        for (b in waveform) {
+                            val sample = (b.toInt() - 128).toDouble()
+                            sum += sample * sample
+                        }
+                        val rms = (kotlin.math.sqrt(sum / waveform.size) / 128.0).toFloat()
+                        waveView.post { waveView.setAmplitude(rms * 3f) }
+                    }
+                    override fun onFftDataCapture(vis: Visualizer?, fft: ByteArray, samplingRate: Int) {}
+                }, Visualizer.getMaxCaptureRate() / 2, true, false)
+                enabled = true
+            }
+        } catch (_: Exception) {
+            waveView.startPlayingAnimation()
+            null
+        }
+    }
+
+    private fun releaseVisualizer(vis: Visualizer?) {
+        try {
+            vis?.enabled = false
+            vis?.release()
+        } catch (_: Exception) {}
     }
 
     private fun formatAudioDuration(ms: Int): String {
@@ -1182,17 +1218,41 @@ class DiaryAddFragment : Fragment() {
         "出行" to listOf("旅行", "探店", "户外")
     )
 
+    /** 解析自定义标签存储格式 "分类:标签名" 或 无前缀的旧标签 */
+    private fun parseCustomTag(raw: String): Pair<String, String> {
+        val idx = raw.indexOf(':')
+        return if (idx > 0) Pair(raw.substring(0, idx), raw.substring(idx + 1))
+        else Pair("自定义", raw)
+    }
+
+    /** 获取所有自定义标签，按分类分组 */
+    private fun getCustomTagsByCategory(prefs: android.content.SharedPreferences): Map<String, List<String>> {
+        val raw = prefs.getStringSet("custom_tags", emptySet())!!
+        val map = mutableMapOf<String, MutableList<String>>()
+        for (r in raw) {
+            val (cat, name) = parseCustomTag(r)
+            map.getOrPut(cat) { mutableListOf() }.add(name)
+        }
+        map.values.forEach { it.sort() }
+        return map
+    }
+
+    /** 获取所有自定义标签名（不含分类前缀） */
+    private fun getAllCustomTagNames(prefs: android.content.SharedPreferences): List<String> {
+        return prefs.getStringSet("custom_tags", emptySet())!!.map { parseCustomTag(it).second }.sorted()
+    }
+
     private fun showTagDialog() {
         val ctx = requireContext()
         val prefs = ctx.getSharedPreferences("diary_tags", Context.MODE_PRIVATE)
-        val customTags = prefs.getStringSet("custom_tags", emptySet())!!.toList().sorted()
+        val customByCategory = getCustomTagsByCategory(prefs)
         val deletedBuiltin = prefs.getStringSet("deleted_builtin_tags", emptySet())!!
         val tempSelected = selectedTags.toMutableSet()
 
         // 收集所有可见标签名
         val allTagNames = mutableListOf<String>()
         tagCategories.values.forEach { tags -> allTagNames.addAll(tags.filter { it !in deletedBuiltin }) }
-        if (customTags.isNotEmpty()) allTagNames.addAll(customTags)
+        customByCategory.values.forEach { allTagNames.addAll(it) }
         val distinctNames = allTagNames.distinct()
 
         val sheet = BottomSheetDialog(ctx, R.style.BottomSheetDialogTheme)
@@ -1271,16 +1331,16 @@ class DiaryAddFragment : Fragment() {
             container.addView(chipGroup)
         }
 
-        // 按分类添加内置标签（过滤已删除的）
-        for ((category, tags) in tagCategories) {
-            val visibleTags = tags.filter { it !in deletedBuiltin }
-            if (visibleTags.isNotEmpty()) addCategorySection(category, visibleTags)
+        // 按分类添加内置标签 + 归属该分类的自定义标签
+        for ((category, builtinTags) in tagCategories) {
+            val visible = builtinTags.filter { it !in deletedBuiltin }
+            val customInCat = customByCategory[category] ?: emptyList()
+            val merged = (visible + customInCat).distinct()
+            if (merged.isNotEmpty()) addCategorySection(category, merged)
         }
-
-        // 自定义标签分类
-        if (customTags.isNotEmpty()) {
-            addCategorySection("自定义", customTags)
-        }
+        // 未归类的自定义标签
+        val uncategorized = customByCategory["自定义"] ?: emptyList()
+        if (uncategorized.isNotEmpty()) addCategorySection("自定义", uncategorized)
 
         sheetView.findViewById<View>(R.id.btn_confirm).setOnClickListener {
             selectedTags.clear()
@@ -1316,23 +1376,84 @@ class DiaryAddFragment : Fragment() {
         sheetView.findViewById<View>(R.id.btn_manage).visibility = View.GONE
         sheetView.findViewById<View>(R.id.btn_add_tag).visibility = View.GONE
 
-        // 替换 chipGroup 区域为输入框
-        val chipGroup = sheetView.findViewById<ChipGroup>(R.id.chip_group_tags)
-        chipGroup.removeAllViews()
+        val container = sheetView.findViewById<LinearLayout>(R.id.tag_categories_container)
+        val chipGroupHidden = sheetView.findViewById<ChipGroup>(R.id.chip_group_tags)
+        chipGroupHidden.visibility = View.GONE
+        val dp = ctx.resources.displayMetrics.density
+        val pinkColor = ContextCompat.getColor(ctx, R.color.pink_primary)
+        val chipBgColor = ContextCompat.getColor(ctx, R.color.tag_chip_bg)
+        val strokeColor = ContextCompat.getColor(ctx, R.color.tag_chip_stroke)
+        val whiteColor = ContextCompat.getColor(ctx, R.color.text_white)
+        val textPrimary = ContextCompat.getColor(ctx, R.color.text_primary)
+        val hintColor = ContextCompat.getColor(ctx, R.color.text_hint)
+
+        // 分类选择标题
+        val catLabel = TextView(ctx).apply {
+            text = "选择分类"
+            textSize = 13f
+            setTextColor(hintColor)
+            setPadding(0, (8 * dp).toInt(), 0, (4 * dp).toInt())
+        }
+        container.addView(catLabel)
+
+        // 分类Chip组
+        var selectedCategory = tagCategories.keys.first()
+        val catChipGroup = ChipGroup(ctx).apply {
+            chipSpacingHorizontal = (8 * dp).toInt()
+        }
+        val catChips = mutableListOf<Chip>()
+        for (catName in tagCategories.keys) {
+            val chip = Chip(ctx).apply {
+                text = catName
+                isCheckable = false
+                textSize = 13f
+                chipMinHeight = 32f * dp
+                tag = catName
+            }
+            catChips.add(chip)
+            catChipGroup.addView(chip)
+        }
+
+        fun styleCatChip(chip: Chip, selected: Boolean) {
+            if (selected) {
+                chip.chipBackgroundColor = ColorStateList.valueOf(pinkColor)
+                chip.setTextColor(whiteColor)
+                chip.chipStrokeWidth = 0f
+            } else {
+                chip.chipBackgroundColor = ColorStateList.valueOf(chipBgColor)
+                chip.setTextColor(textPrimary)
+                chip.chipStrokeWidth = 1f * dp
+                chip.chipStrokeColor = ColorStateList.valueOf(strokeColor)
+            }
+        }
+        catChips.forEach { chip ->
+            styleCatChip(chip, chip.tag == selectedCategory)
+            chip.setOnClickListener {
+                selectedCategory = chip.tag as String
+                catChips.forEach { c -> styleCatChip(c, c == chip) }
+            }
+        }
+        container.addView(catChipGroup)
+
+        // 输入框
+        val inputLabel = TextView(ctx).apply {
+            text = "标签名称"
+            textSize = 13f
+            setTextColor(hintColor)
+            setPadding(0, (12 * dp).toInt(), 0, (4 * dp).toInt())
+        }
+        container.addView(inputLabel)
 
         val input = EditText(ctx).apply {
             hint = "输入标签名（不需要#号）"
             textSize = 15f
             setTextColor(ContextCompat.getColor(ctx, R.color.text_primary))
             setHintTextColor(ContextCompat.getColor(ctx, R.color.text_hint))
-            setPadding(0, 24, 0, 24)
+            setPadding(0, (8 * dp).toInt(), 0, (8 * dp).toInt())
             background = null
             requestFocus()
         }
-        // 将 EditText 加入 chipGroup 的父容器
-        val scrollView = chipGroup.parent as ViewGroup
-        scrollView.addView(input, 0)
-        chipGroup.visibility = View.GONE
+        container.addView(input)
 
         sheetView.findViewById<TextView>(R.id.btn_confirm).text = "添加"
         sheetView.findViewById<View>(R.id.btn_confirm).setOnClickListener {
@@ -1340,9 +1461,9 @@ class DiaryAddFragment : Fragment() {
             if (tag.isNotEmpty()) {
                 val prefs = ctx.getSharedPreferences("diary_tags", Context.MODE_PRIVATE)
                 val existing = prefs.getStringSet("custom_tags", emptySet())!!.toMutableSet()
-                existing.add(tag)
+                existing.add("$selectedCategory:$tag")
                 prefs.edit().putStringSet("custom_tags", existing).apply()
-                Toast.makeText(ctx, "标签 #$tag 已添加", Toast.LENGTH_SHORT).show()
+                Toast.makeText(ctx, "#$tag 已添加到「$selectedCategory」", Toast.LENGTH_SHORT).show()
             }
             sheet.dismiss()
             onAdded?.invoke()
@@ -1361,7 +1482,7 @@ class DiaryAddFragment : Fragment() {
     private fun showManageTagsDialog() {
         val ctx = requireContext()
         val prefs = ctx.getSharedPreferences("diary_tags", Context.MODE_PRIVATE)
-        val customTags = prefs.getStringSet("custom_tags", emptySet())!!.toList().sorted()
+        val customTagsRaw = prefs.getStringSet("custom_tags", emptySet())!!.toList().sorted()
         val deletedBuiltin = prefs.getStringSet("deleted_builtin_tags", emptySet())!!.toMutableSet()
         val allBuiltinTags = tagCategories.values.flatten()
         val visibleBuiltin = allBuiltinTags.filter { it !in deletedBuiltin }
@@ -1400,7 +1521,7 @@ class DiaryAddFragment : Fragment() {
             container.addView(divider)
         }
 
-        fun addTagRow(tagName: String, isBuiltin: Boolean) {
+        fun addTagRow(displayName: String, deleteKey: String, isBuiltin: Boolean) {
             val row = LinearLayout(ctx).apply {
                 orientation = LinearLayout.HORIZONTAL
                 gravity = android.view.Gravity.CENTER_VERTICAL
@@ -1408,7 +1529,7 @@ class DiaryAddFragment : Fragment() {
             }
 
             val tvTag = TextView(ctx).apply {
-                text = "#$tagName"
+                text = "#$displayName"
                 textSize = 15f
                 setTextColor(textPrimary)
                 layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
@@ -1423,18 +1544,18 @@ class DiaryAddFragment : Fragment() {
 
             btnDel.setOnClickListener {
                 if (isBuiltin) {
-                    deletedBuiltin.add(tagName)
+                    deletedBuiltin.add(deleteKey)
                     prefs.edit().putStringSet("deleted_builtin_tags", deletedBuiltin).apply()
                 } else {
                     val existing = prefs.getStringSet("custom_tags", emptySet())!!.toMutableSet()
-                    existing.remove(tagName)
+                    existing.remove(deleteKey)
                     prefs.edit().putStringSet("custom_tags", existing).apply()
                 }
-                selectedTags.remove(tagName)
+                selectedTags.remove(displayName.replace(" .*".toRegex(), ""))
                 row.animate().alpha(0f).translationX(row.width.toFloat()).setDuration(250).withEndAction {
                     container.removeView(row)
                 }.start()
-                Toast.makeText(ctx, "#$tagName 已删除", Toast.LENGTH_SHORT).show()
+                Toast.makeText(ctx, "#$displayName 已删除", Toast.LENGTH_SHORT).show()
             }
 
             row.addView(tvTag)
@@ -1442,21 +1563,22 @@ class DiaryAddFragment : Fragment() {
             container.addView(row)
         }
 
-        // 内置标签（可隐藏）
+        // 内置标签
         if (visibleBuiltin.isNotEmpty()) {
             addSectionHeader("内置标签")
             visibleBuiltin.forEachIndexed { i, tag ->
-                addTagRow(tag, isBuiltin = true)
+                addTagRow(tag, tag, isBuiltin = true)
                 if (i < visibleBuiltin.size - 1) addDivider()
             }
         }
 
-        // 自定义标签（可删除）
-        if (customTags.isNotEmpty()) {
+        // 自定义标签
+        if (customTagsRaw.isNotEmpty()) {
             addSectionHeader("自定义标签")
-            customTags.forEachIndexed { i, tag ->
-                addTagRow(tag, isBuiltin = false)
-                if (i < customTags.size - 1) addDivider()
+            customTagsRaw.forEachIndexed { i, rawTag ->
+                val (cat, name) = parseCustomTag(rawTag)
+                addTagRow("$name ($cat)", rawTag, isBuiltin = false)
+                if (i < customTagsRaw.size - 1) addDivider()
             }
         }
 
