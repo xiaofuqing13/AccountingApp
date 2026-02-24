@@ -137,14 +137,16 @@ class DiaryAddFragment : Fragment() {
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity())
 
-        tagDate.text = "\uD83D\uDCC5 ${DateUtils.today()} ${DateUtils.currentTime()}"
-        tagWeather.text = "\u2600\uFE0F 晴"
-        tagMood.text = "\uD83E\uDD70 开心"
+        tagDate.text = "${DateUtils.today()} ${DateUtils.currentTime()}"
+        tagWeather.text = "晴"
+        tagMood.text = "开心"
 
         // 天气/心情选项（编辑模式需要在检测之前声明）
-        val weatherOptions = arrayOf("\u2600\uFE0F 晴", "\u26C5 多云", "\uD83C\uDF27\uFE0F 雨", "\u2744\uFE0F 雪", "\uD83C\uDF2B\uFE0F 雾", "\uD83C\uDF08 彩虹")
+        val weatherOptions = arrayOf("晴", "多云", "雨", "雪", "雾", "彩虹")
+        val weatherIcons = intArrayOf(R.drawable.ic_weather_sunny, R.drawable.ic_weather_cloudy, R.drawable.ic_weather_rainy, R.drawable.ic_weather_snowy, R.drawable.ic_weather_foggy, R.drawable.ic_weather_rainbow)
         var selectedWeather = 0
-        val moodOptions = arrayOf("\uD83E\uDD70 开心", "\uD83D\uDE0A 愉快", "\uD83D\uDE0C 平静", "\uD83D\uDE22 难过", "\uD83D\uDE24 生气", "\uD83D\uDE34 疲惫", "\uD83E\uDD14 思考", "\uD83D\uDCAA 充实")
+        val moodOptions = arrayOf("开心", "愉快", "平静", "难过", "生气", "疲惫", "思考", "充实")
+        val moodIcons = intArrayOf(R.drawable.ic_mood_happy, R.drawable.ic_mood_pleasant, R.drawable.ic_mood_calm, R.drawable.ic_mood_sad, R.drawable.ic_mood_angry, R.drawable.ic_mood_tired, R.drawable.ic_mood_thinking, R.drawable.ic_mood_fulfilled)
         var selectedMood = 0
 
         // 检测编辑模式
@@ -211,7 +213,7 @@ class DiaryAddFragment : Fragment() {
 
             // 设置日期（编辑模式保留原日期）
             if (editDate.isNotEmpty()) {
-                tagDate.text = "\uD83D\uDCC5 $editDate"
+                tagDate.text = editDate
             }
         }
 
@@ -230,7 +232,7 @@ class DiaryAddFragment : Fragment() {
         // 心情选择器（内联横向滚动 Chip）
         val moodSelector = view.findViewById<HorizontalScrollView>(R.id.mood_selector)
         val moodChipGroup = view.findViewById<ChipGroup>(R.id.mood_chip_group)
-        setupMoodSelector(moodChipGroup, moodOptions, selectedMood, tagMood) { newIndex ->
+        setupMoodSelector(moodChipGroup, moodOptions, moodIcons, selectedMood, tagMood) { newIndex ->
             selectedMood = newIndex
         }
 
@@ -268,7 +270,7 @@ class DiaryAddFragment : Fragment() {
             if (titleClickCount >= 3) {
                 titleClickCount = 0
                 EasterEggManager.showLovePopup(requireContext(),
-                    LoveWord("\u270F\uFE0F", "写给你的日记", "以后我们的每一篇日记，\n都有两个人的温度。\n\n你写你的心情，\n我写我有多喜欢你。"))
+                    LoveWord("📝", "写给你的日记", "以后我们的每一篇日记，\n都有两个人的温度。\n\n你写你的心情，\n我写我有多喜欢你。"))
             }
         }
 
@@ -276,7 +278,7 @@ class DiaryAddFragment : Fragment() {
 
         // 📷 拍照/选图
         view.findViewById<View>(R.id.btn_photo).setOnClickListener {
-            val options = arrayOf("\uD83D\uDCF7 拍照", "\uD83D\uDDBC\uFE0F 从相册选择")
+            val options = arrayOf("拍照", "从相册选择")
             android.app.AlertDialog.Builder(requireContext())
                 .setTitle("添加图片")
                 .setItems(options) { _, which ->
@@ -365,15 +367,15 @@ class DiaryAddFragment : Fragment() {
             } else {
                 content
             }
-            val weatherText = tagWeather.text.toString().replace(Regex("^\\S+\\s"), "")
-            val moodEmoji = tagMood.text.toString().split(" ").firstOrNull() ?: "\uD83E\uDD70"
+            val weatherText = tagWeather.text.toString()
+            val moodText = tagMood.text.toString()
             if (isEditMode) {
                 viewModel.updateDiary(DiaryEntry(
                     date = arguments?.getString("entryDate", "") ?: DateUtils.todayWithTime(),
                     title = title,
                     content = finalContent,
                     weather = weatherText,
-                    mood = moodEmoji,
+                    mood = moodText,
                     location = currentLocation,
                     rowIndex = editRowIndex
                 ))
@@ -383,7 +385,7 @@ class DiaryAddFragment : Fragment() {
                     title = title,
                     content = finalContent,
                     weather = weatherText,
-                    mood = moodEmoji,
+                    mood = moodText,
                     location = currentLocation
                 ))
             }
@@ -408,6 +410,7 @@ class DiaryAddFragment : Fragment() {
     private fun setupMoodSelector(
         chipGroup: ChipGroup,
         moodOptions: Array<String>,
+        moodIcons: IntArray,
         initialSelected: Int,
         tagMood: TextView,
         onSelected: (Int) -> Unit
@@ -424,6 +427,18 @@ class DiaryAddFragment : Fragment() {
                 isCheckable = true
                 isCheckedIconVisible = false
                 textSize = 13f
+                chipIconSize = resources.getDimension(R.dimen.icon_size_small)
+                if (index < moodIcons.size) {
+                    chipIcon = ContextCompat.getDrawable(ctx, moodIcons[index])
+                    isChipIconVisible = true
+                    chipIconTint = android.content.res.ColorStateList(
+                        arrayOf(
+                            intArrayOf(android.R.attr.state_checked),
+                            intArrayOf()
+                        ),
+                        intArrayOf(whiteColor, pinkColor)
+                    )
+                }
                 @Suppress("DEPRECATION")
                 chipCornerRadius = resources.getDimension(R.dimen.radius_lg)
                 chipStrokeWidth = 0f
@@ -498,10 +513,10 @@ class DiaryAddFragment : Fragment() {
                             ).apply { setMargins(0, 8, 0, 8) }
                             background = ContextCompat.getDrawable(ctx, R.drawable.bg_tag_chip)
                             alpha = 0.5f
-                            addView(TextView(ctx).apply {
-                                text = "\uD83D\uDDBC\uFE0F"
-                                textSize = 20f
-                                setPadding(8, 8, 16, 8)
+                            addView(ImageView(ctx).apply {
+                                setImageResource(R.drawable.ic_camera)
+                                imageTintList = android.content.res.ColorStateList.valueOf(ContextCompat.getColor(ctx, R.color.text_secondary))
+                                layoutParams = LinearLayout.LayoutParams(48, 48).apply { setMargins(8, 8, 16, 8) }
                             })
                             addView(TextView(ctx).apply {
                                 text = "\u56FE\u7247\u6587\u4EF6"
@@ -581,10 +596,10 @@ class DiaryAddFragment : Fragment() {
             background = ContextCompat.getDrawable(ctx, R.drawable.bg_tag_chip)
             alpha = 0.75f
 
-            addView(TextView(ctx).apply {
-                text = "\u26A0\uFE0F"
-                textSize = 18f
-                setPadding(4, 4, 12, 4)
+            addView(ImageView(ctx).apply {
+                setImageResource(R.drawable.ic_love_shine)
+                imageTintList = android.content.res.ColorStateList.valueOf(ContextCompat.getColor(ctx, R.color.text_secondary))
+                layoutParams = LinearLayout.LayoutParams(44, 44).apply { setMargins(4, 4, 12, 4) }
             })
             addView(TextView(ctx).apply {
                 text = "语音文件不存在（$fileName）\n请重新录音后保存日记"
@@ -797,7 +812,7 @@ class DiaryAddFragment : Fragment() {
         }
 
         val dialog = android.app.AlertDialog.Builder(requireContext())
-            .setTitle("\uD83C\uDFA4 录音")
+            .setTitle("录音")
             .setView(dialogView)
             .setCancelable(false)
             .setNegativeButton("取消", null)
