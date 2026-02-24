@@ -110,6 +110,17 @@ class MeetingListFragment : Fragment() {
             0,
             ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT
         ) {
+            override fun getMovementFlags(
+                recyclerView: RecyclerView,
+                viewHolder: RecyclerView.ViewHolder
+            ): Int {
+                val openPos = adapter.getSwipeOpenPosition()
+                if (openPos != RecyclerView.NO_POSITION) {
+                    return makeMovementFlags(0, 0)
+                }
+                return super.getMovementFlags(recyclerView, viewHolder)
+            }
+
             override fun onMove(
                 recyclerView: RecyclerView,
                 viewHolder: RecyclerView.ViewHolder,
