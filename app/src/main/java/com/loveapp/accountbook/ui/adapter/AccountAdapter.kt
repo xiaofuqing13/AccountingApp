@@ -9,6 +9,7 @@ import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.loveapp.accountbook.R
 import com.loveapp.accountbook.data.model.AccountEntry
+import com.loveapp.accountbook.util.DateUtils
 
 class AccountAdapter(
     private var items: List<AccountEntry> = emptyList(),
@@ -54,10 +55,7 @@ class AccountAdapter(
         val item = items[position]
         holder.tvIcon.setImageResource(categoryIcons[item.category] ?: R.drawable.ic_cat_other)
         holder.tvCategory.text = item.category
-        // 从日期字段提取时间 (格式: yyyy-MM-dd HH:mm)
-        val time = if (item.date.length > 10) item.date.substring(11) else ""
-        holder.tvTime.text = time
-        holder.tvTime.visibility = if (time.isNotEmpty()) View.VISIBLE else View.GONE
+        holder.tvTime.text = DateUtils.formatDateDisplay(item.date)
         holder.tvNote.text = item.note.ifEmpty { "暂无备注" }
 
         val prefix = if (item.isIncome) "+" else "-"
