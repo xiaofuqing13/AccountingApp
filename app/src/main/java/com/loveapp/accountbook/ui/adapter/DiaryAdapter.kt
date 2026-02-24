@@ -7,6 +7,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import com.google.android.material.card.MaterialCardView
 import androidx.recyclerview.widget.RecyclerView
+import androidx.core.content.ContextCompat
 import com.loveapp.accountbook.R
 import com.loveapp.accountbook.data.model.DiaryEntry
 import com.loveapp.accountbook.util.DateUtils
@@ -67,13 +68,51 @@ class DiaryAdapter(
         return ViewHolder(view)
     }
 
+    companion object {
+        private val WEATHER_ICON_MAP = mapOf(
+            "晴" to R.drawable.ic_weather_sunny,
+            "多云" to R.drawable.ic_weather_cloudy,
+            "雨" to R.drawable.ic_weather_rainy,
+            "雪" to R.drawable.ic_weather_snowy,
+            "雾" to R.drawable.ic_weather_foggy,
+            "彩虹" to R.drawable.ic_weather_rainbow
+        )
+        private val MOOD_ICON_MAP = mapOf(
+            "开心" to R.drawable.ic_mood_happy,
+            "愉快" to R.drawable.ic_mood_pleasant,
+            "平静" to R.drawable.ic_mood_calm,
+            "难过" to R.drawable.ic_mood_sad,
+            "生气" to R.drawable.ic_mood_angry,
+            "疲惫" to R.drawable.ic_mood_tired,
+            "思考" to R.drawable.ic_mood_thinking,
+            "充实" to R.drawable.ic_mood_fulfilled
+        )
+    }
+
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val item = items[position]
+        val ctx = holder.itemView.context
         holder.tvDate.text = DateUtils.formatDateDisplay(item.date)
         holder.tvWeather.text = item.weather
         holder.tvTitle.text = item.title
         holder.tvPreview.text = DiaryContentRenderer.getPlainPreview(item.content)
-        holder.ivMood.setImageResource(R.drawable.ic_mood)
+
+        // 天气图标
+        val weatherIconRes = WEATHER_ICON_MAP[item.weather]
+        if (weatherIconRes != null) {
+            val drawable = ContextCompat.getDrawable(ctx, weatherIconRes)?.apply {
+                val size = (12 * ctx.resources.displayMetrics.density).toInt()
+                setBounds(0, 0, size, size)
+            }
+            holder.tvWeather.setCompoundDrawables(drawable, null, null, null)
+            holder.tvWeather.compoundDrawablePadding = (2 * ctx.resources.displayMetrics.density).toInt()
+        } else {
+            holder.tvWeather.setCompoundDrawables(null, null, null, null)
+        }
+
+        // 心情图标
+        val moodIconRes = MOOD_ICON_MAP[item.mood] ?: R.drawable.ic_mood
+        holder.ivMood.setImageResource(moodIconRes)
 
         if (item.location.isNotEmpty()) {
             holder.tvLocationTag.text = item.location

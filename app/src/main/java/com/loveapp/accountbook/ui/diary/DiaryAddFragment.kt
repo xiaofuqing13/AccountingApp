@@ -149,6 +149,10 @@ class DiaryAddFragment : Fragment() {
         val moodIcons = intArrayOf(R.drawable.ic_mood_happy, R.drawable.ic_mood_pleasant, R.drawable.ic_mood_calm, R.drawable.ic_mood_sad, R.drawable.ic_mood_angry, R.drawable.ic_mood_tired, R.drawable.ic_mood_thinking, R.drawable.ic_mood_fulfilled)
         var selectedMood = 0
 
+        // 初始化标签图标
+        updateTagIcon(tagWeather, weatherIcons[selectedWeather])
+        updateTagIcon(tagMood, moodIcons[selectedMood])
+
         // 检测编辑模式
         editRowIndex = arguments?.getInt("entryRowIndex", -1) ?: -1
         isEditMode = editRowIndex >= 0
@@ -195,6 +199,7 @@ class DiaryAddFragment : Fragment() {
                 if (weatherIdx >= 0) {
                     selectedWeather = weatherIdx
                     tagWeather.text = weatherOptions[weatherIdx]
+                    updateTagIcon(tagWeather, weatherIcons[weatherIdx])
                 } else {
                     tagWeather.text = editWeather
                 }
@@ -206,6 +211,7 @@ class DiaryAddFragment : Fragment() {
                 if (moodIdx >= 0) {
                     selectedMood = moodIdx
                     tagMood.text = moodOptions[moodIdx]
+                    updateTagIcon(tagMood, moodIcons[moodIdx])
                 } else {
                     tagMood.text = editMood
                 }
@@ -217,16 +223,12 @@ class DiaryAddFragment : Fragment() {
             }
         }
 
-        // 天气选择
-        tagWeather.setOnClickListener {
-            android.app.AlertDialog.Builder(requireContext())
-                .setTitle("选择天气")
-                .setSingleChoiceItems(weatherOptions, selectedWeather) { dialog, which ->
-                    selectedWeather = which
-                    tagWeather.text = weatherOptions[which]
-                    dialog.dismiss()
-                }
-                .show()
+        // 天气选择器（内联横向滚动 Chip）
+        val weatherSelector = view.findViewById<HorizontalScrollView>(R.id.weather_selector)
+        val weatherChipGroup = view.findViewById<ChipGroup>(R.id.weather_chip_group)
+        setupWeatherSelector(weatherChipGroup, weatherOptions, weatherIcons, selectedWeather, tagWeather) { newIndex ->
+            selectedWeather = newIndex
+            updateTagIcon(tagWeather, weatherIcons[newIndex])
         }
 
         // 心情选择器（内联横向滚动 Chip）
@@ -234,23 +236,17 @@ class DiaryAddFragment : Fragment() {
         val moodChipGroup = view.findViewById<ChipGroup>(R.id.mood_chip_group)
         setupMoodSelector(moodChipGroup, moodOptions, moodIcons, selectedMood, tagMood) { newIndex ->
             selectedMood = newIndex
+            updateTagIcon(tagMood, moodIcons[newIndex])
+        }
+
+        tagWeather.setOnClickListener {
+            moodSelector.visibility = View.GONE
+            toggleSelector(weatherSelector)
         }
 
         tagMood.setOnClickListener {
-            if (moodSelector.visibility == View.GONE) {
-                moodSelector.visibility = View.VISIBLE
-                moodSelector.startAnimation(AlphaAnimation(0f, 1f).apply { duration = 200 })
-            } else {
-                val fadeOut = AlphaAnimation(1f, 0f).apply { duration = 150 }
-                fadeOut.setAnimationListener(object : android.view.animation.Animation.AnimationListener {
-                    override fun onAnimationStart(a: android.view.animation.Animation?) {}
-                    override fun onAnimationRepeat(a: android.view.animation.Animation?) {}
-                    override fun onAnimationEnd(a: android.view.animation.Animation?) {
-                        moodSelector.visibility = View.GONE
-                    }
-                })
-                moodSelector.startAnimation(fadeOut)
-            }
+            weatherSelector.visibility = View.GONE
+            toggleSelector(moodSelector)
         }
 
         // 自动保存：恢复草稿（编辑模式不恢复）
@@ -403,6 +399,99 @@ class DiaryAddFragment : Fragment() {
         stopRecording(discard = true)
         timerHandler.removeCallbacksAndMessages(null)
         locationTimeoutHandler.removeCallbacksAndMessages(null)
+    }
+
+    // ===== 标签图标 + 选择器动画 =====
+
+    private fun updateTagIcon(tag: TextView, iconRes: Int) {
+        val drawable = ContextCompat.getDrawable(requireContext(), iconRes)?.mutate()?.apply {
+            val size = (14 * resources.displayMetrics.density).toInt()
+            setBounds(0, 0, size, size)
+        }
+        tag.setCompoundDrawables(drawable, null, null, null)
+        tag.compoundDrawablePadding = (4 * resources.displayMetrics.density).toInt()
+    }
+
+    private fun toggleSelector(selector: HorizontalScrollView) {
+        if (selector.visibility == View.GONE) {
+            selector.visibility = View.VISIBLE
+            selector.startAnimation(AlphaAnimation(0f, 1f).apply { duration = 200 })
+        } else {
+            val fadeOut = AlphaAnimation(1f, 0f).apply { duration = 150 }
+            fadeOut.setAnimationListener(object : android.view.animation.Animation.AnimationListener {
+                override fun onAnimationStart(a: android.view.animation.Animation?) {}
+                override fun onAnimationRepeat(a: android.view.animation.Animation?) {}
+                override fun onAnimationEnd(a: android.view.animation.Animation?) {
+                    selector.visibility = View.GONE
+                }
+            })
+            selector.startAnimation(fadeOut)
+        }
+    }
+
+    // ===== 天气选择器 =====
+
+    private fun setupWeatherSelector(
+        chipGroup: ChipGroup,
+        options: Array<String>,
+        icons: IntArray,
+        initialSelected: Int,
+        tag: TextView,
+        onSelected: (Int) -> Unit
+    ) {
+        chipGroup.removeAllViews()
+        val ctx = requireContext()
+        val pinkColor = ContextCompat.getColor(ctx, R.color.pink_primary)
+        val chipBgColor = ContextCompat.getColor(ctx, R.color.tag_chip_bg)
+        val whiteColor = ContextCompat.getColor(ctx, R.color.pink_card)
+
+        options.forEachIndexed { index, label ->
+            val chip = Chip(ctx).apply {
+                text = label
+                isCheckable = true
+                isCheckedIconVisible = false
+                textSize = 13f
+                chipIconSize = resources.getDimension(R.dimen.icon_size_small)
+                if (index < icons.size) {
+                    chipIcon = ContextCompat.getDrawable(ctx, icons[index])
+                    isChipIconVisible = true
+                    // 天气图标保留原色，选中时变白
+                    chipIconTint = android.content.res.ColorStateList(
+                        arrayOf(
+                            intArrayOf(android.R.attr.state_checked),
+                            intArrayOf()
+                        ),
+                        intArrayOf(whiteColor, 0) // 0 = 不着色，保留原始颜色
+                    )
+                }
+                @Suppress("DEPRECATION")
+                chipCornerRadius = resources.getDimension(R.dimen.radius_lg)
+                chipStrokeWidth = 0f
+                setEnsureMinTouchTargetSize(false)
+                chipBackgroundColor = android.content.res.ColorStateList(
+                    arrayOf(
+                        intArrayOf(android.R.attr.state_checked),
+                        intArrayOf()
+                    ),
+                    intArrayOf(pinkColor, chipBgColor)
+                )
+                setTextColor(android.content.res.ColorStateList(
+                    arrayOf(
+                        intArrayOf(android.R.attr.state_checked),
+                        intArrayOf()
+                    ),
+                    intArrayOf(whiteColor, pinkColor)
+                ))
+                isChecked = index == initialSelected
+            }
+            chip.setOnCheckedChangeListener { _, isChecked ->
+                if (isChecked) {
+                    tag.text = label
+                    onSelected(index)
+                }
+            }
+            chipGroup.addView(chip)
+        }
     }
 
     // ===== 心情选择器 =====
