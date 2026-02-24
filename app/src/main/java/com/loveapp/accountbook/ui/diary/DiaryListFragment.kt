@@ -221,25 +221,26 @@ class DiaryListFragment : Fragment() {
 
     private fun attachSwipeCloseFallback(recyclerView: RecyclerView) {
         // 点击判定阈值
-        val tapSlop = recyclerView.resources.displayMetrics.density * 20f
+        val tapSlop = recyclerView.resources.displayMetrics.density * 30f
         var downX = 0f
         var downY = 0f
         var downInActionArea = false
         var downActionZoneStartX = 0f
         var downTargetPosition = RecyclerView.NO_POSITION
-        var downOpenPosition = RecyclerView.NO_POSITION
+        var downTarget: DiaryEntry? = null
 
         recyclerView.addOnItemTouchListener(object : RecyclerView.OnItemTouchListener {
             override fun onInterceptTouchEvent(rv: RecyclerView, e: MotionEvent): Boolean {
+                val openPosition = adapter.getSwipeOpenPosition()
+
                 when (e.actionMasked) {
                     MotionEvent.ACTION_DOWN -> {
-                        val openPosition = adapter.getSwipeOpenPosition()
-                        downOpenPosition = openPosition
                         downX = e.x
                         downY = e.y
                         downInActionArea = false
                         downActionZoneStartX = 0f
                         downTargetPosition = RecyclerView.NO_POSITION
+                        downTarget = null
 
                         if (openPosition == RecyclerView.NO_POSITION) {
                             return false
@@ -250,11 +251,12 @@ class DiaryListFragment : Fragment() {
                         downTargetPosition = touchedPosition
 
                         if (touchedPosition != openPosition) {
-                            // 点击其他项，关闭展开项，不拦截
                             closeSwipeAt(rv, openPosition)
-                            downOpenPosition = RecyclerView.NO_POSITION
                             return false
                         }
+
+                        // 保存目标数据
+                        downTarget = adapter.getItem(touchedPosition)
 
                         // 计算操作区域
                         val actionWidth = adapter.getSwipeActionTotalWidthPx().toFloat()
@@ -262,7 +264,6 @@ class DiaryListFragment : Fragment() {
                         downActionZoneStartX = touchedChild.width - actionWidth
                         downInActionArea = localX >= downActionZoneStartX
 
-                        // 拦截展开项的所有触摸
                         return true
                     }
                 }
@@ -272,43 +273,44 @@ class DiaryListFragment : Fragment() {
             override fun onTouchEvent(rv: RecyclerView, e: MotionEvent) {
                 when (e.actionMasked) {
                     MotionEvent.ACTION_UP -> {
-                        if (downOpenPosition == RecyclerView.NO_POSITION || downTargetPosition == RecyclerView.NO_POSITION) {
-                            return
-                        }
+                        val target = downTarget ?: return
+                        val targetPosition = downTargetPosition
+                        if (targetPosition == RecyclerView.NO_POSITION) return
 
                         val moveX = abs(e.x - downX)
                         val moveY = abs(e.y - downY)
                         val isTap = moveX <= tapSlop && moveY <= tapSlop
 
-                        if (isTap) {
-                            if (downInActionArea) {
-                                // 点击操作区域 - 先获取数据，再关闭，最后执行操作
-                                val target = adapter.getItem(downTargetPosition)
-                                val actionWidth = adapter.getSwipeActionTotalWidthPx().toFloat()
-                                val touchedChild = rv.findChildViewUnder(downX, downY)
-                                val localX = if (touchedChild != null) downX - touchedChild.left else downX
-                                val actionOffset = (localX - downActionZoneStartX).coerceIn(0f, actionWidth)
+                        if (isTap && downInActionArea) {
+                            // 点击操作区域
+                            val actionWidth = adapter.getSwipeActionTotalWidthPx().toFloat()
+                            val childLeft = rv.findChildViewUnder(downX, downY)?.left?.toFloat() ?: 0f
+                            val actionOffset = (downX - childLeft - downActionZoneStartX).coerceIn(0f, actionWidth)
 
-                                // 关闭滑动
-                                closeSwipeAt(rv, downTargetPosition)
+                            closeSwipeAt(rv, targetPosition)
 
-                                // 执行操作
-                                if (actionOffset < actionWidth / 2f) {
-                                    showEditDialog(target)
-                                } else {
-                                    showDeleteConfirmDialog(target)
-                                }
+                            // 左半边编辑，右半边删除
+                            if (actionOffset < actionWidth / 2f) {
+                                showEditDialog(target)
                             } else {
-                                // 点击卡片主体，关闭
-                                closeSwipeAt(rv, downTargetPosition)
+                                showDeleteConfirmDialog(target)
                             }
-                        } else {
-                            // 滑动：右滑关闭
-                            val dx = e.x - downX
-                            if (dx > tapSlop / 2f) {
-                                closeSwipeAt(rv, downTargetPosition)
-                            }
+                        } else if (isTap) {
+                            // 点击卡片主体，关闭
+                            closeSwipeAt(rv, targetPosition)
+                        } else if (e.x - downX > tapSlop / 3f) {
+                            // 右滑关闭
+                            closeSwipeAt(rv, targetPosition)
                         }
+
+                        // 重置
+                        downTarget = null
+                        downTargetPosition = RecyclerView.NO_POSITION
+                    }
+
+                    MotionEvent.ACTION_CANCEL -> {
+                        downTarget = null
+                        downTargetPosition = RecyclerView.NO_POSITION
                     }
                 }
             }
