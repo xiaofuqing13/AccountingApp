@@ -354,7 +354,9 @@ class MeetingListFragment : Fragment() {
         AlertDialog.Builder(requireContext())
             .setCustomTitle(createHighlightedDialogTitle(entry.topic.ifBlank { "会议详情" }))
             .setMessage(details)
-            .setPositiveButton("确定", null)
+            .setPositiveButton("修改") { _, _ -> navigateToEdit(entry) }
+            .setNegativeButton("关闭", null)
+            .setNeutralButton("删除") { _, _ -> showDeleteConfirmDialog(entry) }
             .show()
     }
 
