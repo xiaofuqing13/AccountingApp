@@ -142,6 +142,17 @@ class ExcelRepository(private val context: Context) {
         }
     }
 
+    /** 通过表头关键字查找 sheet，所有关键字都匹配才返回 */
+    private fun findSheetByHeader(wb: XSSFWorkbook, vararg keywords: String): Sheet? {
+        for (i in 0 until wb.numberOfSheets) {
+            val sheet = wb.getSheetAt(i)
+            val header = sheet.getRow(0) ?: continue
+            val headerTexts = (0 until header.lastCellNum).map { getCellString(header.getCell(it.toInt())) }
+            if (keywords.all { kw -> headerTexts.any { it.contains(kw) } }) return sheet
+        }
+        return null
+    }
+
     private fun saveWorkbook(workbook: XSSFWorkbook) = synchronized(fileLock) {
         val file = getFile()
         val tmpFile = File(file.parentFile, "${file.name}.tmp")
@@ -151,18 +162,43 @@ class ExcelRepository(private val context: Context) {
         tmpFile.renameTo(file)
     }
 
+    private val sdfDate = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.CHINA)
+    private val sdfDateTime = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.CHINA)
+
     private fun getCellString(cell: Cell?): String {
-        return when (cell?.cellType) {
+        if (cell == null) return ""
+        return when (cell.cellType) {
             CellType.STRING -> cell.stringCellValue
-            CellType.NUMERIC -> cell.numericCellValue.toString()
+            CellType.NUMERIC -> {
+                if (org.apache.poi.ss.usermodel.DateUtil.isCellDateFormatted(cell)) {
+                    val date = cell.dateCellValue
+                    val cal = java.util.Calendar.getInstance().apply { time = date }
+                    if (cal.get(java.util.Calendar.HOUR_OF_DAY) == 0 && cal.get(java.util.Calendar.MINUTE) == 0) {
+                        sdfDate.format(date)
+                    } else {
+                        sdfDateTime.format(date)
+                    }
+                } else {
+                    val v = cell.numericCellValue
+                    if (v == Math.floor(v) && !v.isInfinite()) v.toLong().toString() else v.toString()
+                }
+            }
+            CellType.BOOLEAN -> cell.booleanCellValue.toString()
+            CellType.FORMULA -> try { cell.stringCellValue } catch (_: Exception) {
+                try { cell.numericCellValue.toString() } catch (_: Exception) { "" }
+            }
             else -> ""
         }
     }
 
     private fun getCellDouble(cell: Cell?): Double {
-        return when (cell?.cellType) {
+        if (cell == null) return 0.0
+        return when (cell.cellType) {
             CellType.NUMERIC -> cell.numericCellValue
-            CellType.STRING -> cell.stringCellValue.toDoubleOrNull() ?: 0.0
+            CellType.STRING -> {
+                val s = cell.stringCellValue.replace("[\u00a5￥,， ]".toRegex(), "")
+                s.toDoubleOrNull() ?: 0.0
+            }
             else -> 0.0
         }
     }
@@ -735,11 +771,15 @@ class ExcelRepository(private val context: Context) {
         var meetingCount = 0
         var categoryCount = 0
 
-        // 判断版本：有"元信息"sheet 或 sheet名为"记账" -> v2新版，否则旧版
-        val isV2 = importWb.getSheet("元信息") != null || importWb.getSheet(sheetAccount) != null
+        // 判断版本：有"元信息"sheet -> 确定是v2新版
+        val isV2 = importWb.getSheet("元信息") != null
 
         // ===== 记账 =====
-        val impAccount = if (isV2) importWb.getSheet(sheetAccount) else importWb.getSheet("记账明细")
+        val impAccount = importWb.getSheet(sheetAccount)
+            ?: importWb.getSheet("记账明细")
+            ?: importWb.getSheet("流水")
+            ?: importWb.getSheet("明细")
+            ?: findSheetByHeader(importWb, "日期", "金额")
         if (impAccount != null) {
             val targetSheet = targetWb.getSheet(sheetAccount)!!
             val existing = mutableSetOf<String>()
@@ -747,20 +787,27 @@ class ExcelRepository(private val context: Context) {
                 val r = targetSheet.getRow(i) ?: continue
                 existing.add("${getCellString(r.getCell(0))}_${getCellString(r.getCell(1))}_${getCellString(r.getCell(2))}_${getCellDouble(r.getCell(3))}_${getCellString(r.getCell(4))}")
             }
-            // 检测列数判断是否旧版6列（含账户列）
+            // 通过表头自动检测列位置
             val headerRow = impAccount.getRow(0)
-            val colCount = headerRow?.lastCellNum?.toInt() ?: 0
-            val isLegacy6Col = !isV2 || colCount >= 6 && getCellString(headerRow?.getCell(4)).let { it == "账户" || it == "帐户" }
+            val headers = if (headerRow != null) (0 until headerRow.lastCellNum).map { getCellString(headerRow.getCell(it.toInt())) } else emptyList()
+            val colDate = headers.indexOfFirst { it.contains("日期") || it.contains("时间") }.takeIf { it >= 0 } ?: 0
+            val colType = headers.indexOfFirst { it.contains("类型") || it == "收支" }.takeIf { it >= 0 } ?: 1
+            val colCategory = headers.indexOfFirst { it.contains("分类") || it.contains("类别") }.takeIf { it >= 0 } ?: 2
+            val colAmount = headers.indexOfFirst { it.contains("金额") }.takeIf { it >= 0 } ?: 3
+            val colNote = headers.indexOfFirst { it.contains("备注") || it.contains("说明") || it.contains("摘要") }.takeIf { it >= 0 } ?: run {
+                // 旧版可能有"账户"列在第5列，备注在第6列
+                val acctCol = headers.indexOfFirst { it == "账户" || it == "帐户" }
+                if (acctCol >= 0 && acctCol + 1 < headers.size) acctCol + 1 else 4
+            }
 
             for (i in 1..impAccount.lastRowNum) {
                 val row = impAccount.getRow(i) ?: continue
-                val rawDate = getCellString(row.getCell(0))
+                val rawDate = getCellString(row.getCell(colDate))
                 val date = if (rawDate.length > 10) rawDate.substring(0, 10) else rawDate
-                val type = getCellString(row.getCell(1))
-                val category = getCellString(row.getCell(2))
-                val amount = getCellDouble(row.getCell(3))
-                val note = if (isLegacy6Col) getCellString(row.getCell(5)) else getCellString(row.getCell(4))
-                val location = if (isLegacy6Col) "" else getCellString(row.getCell(5))
+                val type = getCellString(row.getCell(colType))
+                val category = getCellString(row.getCell(colCategory))
+                val amount = getCellDouble(row.getCell(colAmount))
+                val note = getCellString(row.getCell(colNote))
                 if (date.isBlank() || type.isBlank()) continue
                 val key = "${date}_${type}_${category}_${amount}_${note}"
                 if (key in existing) continue
@@ -770,14 +817,16 @@ class ExcelRepository(private val context: Context) {
                 newRow.createCell(2).setCellValue(category)
                 newRow.createCell(3).setCellValue(amount)
                 newRow.createCell(4).setCellValue(note)
-                newRow.createCell(5).setCellValue(location)
+                newRow.createCell(5).setCellValue("")
                 existing.add(key)
                 accountCount++
             }
         }
 
         // ===== 日记 =====
-        val impDiary = importWb.getSheet(sheetDiary) ?: importWb.getSheet("日记")
+        val impDiary = importWb.getSheet(sheetDiary)
+            ?: importWb.getSheet("日记")
+            ?: findSheetByHeader(importWb, "日期", "内容")
         if (impDiary != null) {
             val targetSheet = targetWb.getSheet(sheetDiary)!!
             val existing = mutableSetOf<String>()
@@ -832,7 +881,10 @@ class ExcelRepository(private val context: Context) {
         }
 
         // ===== 会议纪要 =====
-        val impMeeting = importWb.getSheet(sheetMeeting) ?: importWb.getSheet("会议纪要")
+        val impMeeting = importWb.getSheet(sheetMeeting)
+            ?: importWb.getSheet("会议纪要")
+            ?: importWb.getSheet("会议")
+            ?: findSheetByHeader(importWb, "主题")
         if (impMeeting != null) {
             val targetSheet = targetWb.getSheet(sheetMeeting)!!
             val existing = mutableSetOf<String>()
