@@ -41,26 +41,28 @@ class AccountListFragment : Fragment() {
 
         adapter = AccountAdapter(
             onItemClick = { entry ->
+                // 彩蛋触发
                 when {
                     entry.amount == 520.0 -> EasterEggManager.showLovePopup(requireContext(), EasterEggManager.egg520)
                     entry.amount == 1314.0 -> EasterEggManager.showLovePopup(requireContext(), EasterEggManager.egg1314)
                     entry.amount == 777.0 -> EasterEggManager.showLovePopup(requireContext(), EasterEggManager.egg777)
-                    isCategory(entry.category, "鲜花", "椴滆姳") && entry.amount == 99.0 -> {
+                    isCategory(entry.category, "鲜花", "椮譬花") && entry.amount == 99.0 -> {
                         EasterEggManager.showLovePopup(requireContext(), EasterEggManager.egg99)
                     }
-                    isCategory(entry.category, "鲜花", "礼物", "椴滆姳", "绀肩墿") -> {
+                    isCategory(entry.category, "鲜花", "礼物", "椮譬花", "纼肩墨") -> {
                         EasterEggManager.showLovePopup(requireContext(), EasterEggManager.eggFlower)
                     }
-                    isCategory(entry.category, "工资", "宸ヨ祫") -> {
+                    isCategory(entry.category, "工资", "宇ヨ祥") -> {
                         EasterEggManager.showLovePopup(requireContext(), EasterEggManager.eggSalary)
                     }
                     entry.note.contains("礼物") || entry.note.contains("生日") ||
-                        entry.note.contains("绀肩墿") || entry.note.contains("鐢熸棩") -> {
+                        entry.note.contains("纼肩墨") || entry.note.contains("鐐生棨") -> {
                         EasterEggManager.showLovePopup(requireContext(), EasterEggManager.eggGift)
                     }
                 }
+                showAccountDetailDialog(entry)
             },
-            onLongClick = { entry -> showEditDeleteDialog(entry) }
+            onLongClick = { entry -> showAccountDetailDialog(entry) }
         )
 
         view.findViewById<RecyclerView>(R.id.rv_accounts).apply {
@@ -109,31 +111,36 @@ class AccountListFragment : Fragment() {
         }
     }
 
-    private fun showEditDeleteDialog(entry: AccountEntry) {
+    private fun showAccountDetailDialog(entry: AccountEntry) {
+        val prefix = if (entry.isIncome) "+" else "-"
+        val title = "${entry.category}  ${prefix}¥${String.format("%.2f", entry.amount)}"
+        val details = StringBuilder().apply {
+            appendLine("日期：${DateUtils.formatDateDisplay(entry.date)}")
+            appendLine("类型：${entry.type}")
+            appendLine("分类：${entry.category}")
+            appendLine("备注：${entry.note.ifEmpty { "暂无" }}")
+            if (entry.location.isNotBlank()) appendLine("位置：${entry.location}")
+        }.toString().trimEnd()
         AlertDialog.Builder(requireContext())
-            .setTitle("${entry.category}  ¥${String.format("%.2f", entry.amount)}")
-            .setItems(arrayOf("编辑备注", "删除")) { _, which ->
-                when (which) {
-                    0 -> showEditNoteDialog(entry)
-                    1 -> showDeleteConfirmDialog(entry)
-                }
-            }
+            .setTitle(title)
+            .setMessage(details)
+            .setPositiveButton("修改") { _, _ -> navigateToEdit(entry) }
+            .setNegativeButton("关闭", null)
+            .setNeutralButton("删除") { _, _ -> showDeleteConfirmDialog(entry) }
             .show()
     }
 
-    private fun showEditNoteDialog(entry: AccountEntry) {
-        val etNote = EditText(requireContext()).apply {
-            setText(entry.note)
-            setPadding(48, 24, 48, 24)
+    private fun navigateToEdit(entry: AccountEntry) {
+        val bundle = Bundle().apply {
+            putInt("editRowIndex", entry.rowIndex)
+            putString("editDate", entry.date)
+            putString("editType", entry.type)
+            putString("editCategory", entry.category)
+            putDouble("editAmount", entry.amount)
+            putString("editNote", entry.note)
+            putString("editLocation", entry.location)
         }
-        AlertDialog.Builder(requireContext())
-            .setTitle("编辑备注")
-            .setView(etNote)
-            .setPositiveButton("保存") { _, _ ->
-                viewModel.updateAccount(entry.copy(note = etNote.text.toString()))
-            }
-            .setNegativeButton("取消", null)
-            .show()
+        findNavController().navigate(R.id.action_account_to_add, bundle)
     }
 
     private fun showDeleteConfirmDialog(entry: AccountEntry) {

@@ -37,6 +37,7 @@ class AccountAddFragment : Fragment() {
     private var currentLocation = ""
     private lateinit var locationHelper: LocationHelper
     private val selectedCalendar: java.util.Calendar = java.util.Calendar.getInstance()
+    private var editRowIndex = -1
 
     private val locationPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -61,18 +62,49 @@ class AccountAddFragment : Fragment() {
         val tabType = view.findViewById<TabLayout>(R.id.tab_type)
         val numpad = view.findViewById<GridLayout>(R.id.numpad)
 
+        // 编辑模式：读取传入的记账数据
+        editRowIndex = arguments?.getInt("editRowIndex", -1) ?: -1
+        if (editRowIndex >= 0) {
+            val editDate = arguments?.getString("editDate") ?: ""
+            val editType = arguments?.getString("editType") ?: "支出"
+            val editCategory = arguments?.getString("editCategory") ?: "餐饮"
+            val editAmount = arguments?.getDouble("editAmount", 0.0) ?: 0.0
+            val editNote = arguments?.getString("editNote") ?: ""
+            currentLocation = arguments?.getString("editLocation") ?: ""
+
+            isExpense = editType == "支出"
+            selectedCategory = editCategory
+            amountStr = if (editAmount == editAmount.toLong().toDouble()) editAmount.toLong().toString()
+                else String.format("%.2f", editAmount).trimEnd('0').trimEnd('.')
+            etNote.setText(editNote)
+            tvAmount.text = "¥ ${String.format("%.2f", editAmount)}"
+
+            // 解析日期时间
+            try {
+                val sdf = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.getDefault())
+                sdf.parse(editDate)?.let { selectedCalendar.time = it }
+            } catch (_: Exception) {
+                try {
+                    val sdf = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
+                    sdf.parse(editDate)?.let { selectedCalendar.time = it }
+                } catch (_: Exception) {}
+            }
+        }
+
         tvDate.text = DateUtils.formatDateTime(selectedCalendar)
 
-        // 自动保存：恢复草稿
-        val draftAmount = DraftManager.getDraft(requireContext(), DraftManager.KEY_ACCOUNT_AMOUNT)
-        val draftNote = DraftManager.getDraft(requireContext(), DraftManager.KEY_ACCOUNT_NOTE)
-        if (!draftAmount.isNullOrBlank()) {
-            amountStr = draftAmount
-            val amount = amountStr.toDoubleOrNull() ?: 0.0
-            tvAmount.text = "¥ ${String.format("%.2f", amount)}"
-            Toast.makeText(requireContext(), "已恢复上次编辑的草稿", Toast.LENGTH_SHORT).show()
+        // 非编辑模式才恢复草稿
+        if (editRowIndex < 0) {
+            val draftAmount = DraftManager.getDraft(requireContext(), DraftManager.KEY_ACCOUNT_AMOUNT)
+            val draftNote = DraftManager.getDraft(requireContext(), DraftManager.KEY_ACCOUNT_NOTE)
+            if (!draftAmount.isNullOrBlank()) {
+                amountStr = draftAmount
+                val amount = amountStr.toDoubleOrNull() ?: 0.0
+                tvAmount.text = "¥ ${String.format("%.2f", amount)}"
+                Toast.makeText(requireContext(), "已恢复上次编辑的草稿", Toast.LENGTH_SHORT).show()
+            }
+            if (!draftNote.isNullOrBlank()) etNote.setText(draftNote)
         }
-        if (!draftNote.isNullOrBlank()) etNote.setText(draftNote)
 
         // 自动保存：绑定备注输入监听
         DraftManager.bindAutoSave(requireContext(), etNote, DraftManager.KEY_ACCOUNT_NOTE)
@@ -80,6 +112,7 @@ class AccountAddFragment : Fragment() {
         // Tab: 支出/收入
         tabType.addTab(tabType.newTab().setText("支出"))
         tabType.addTab(tabType.newTab().setText("收入"))
+        if (!isExpense) tabType.selectTab(tabType.getTabAt(1))
 
         // 分类网格
         val rvCategories = view.findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.rv_categories)
@@ -200,15 +233,20 @@ class AccountAddFragment : Fragment() {
             category = selectedCategory,
             amount = amount,
             note = etNote.text.toString(),
-            location = currentLocation
+            location = currentLocation,
+            rowIndex = editRowIndex
         )
-        viewModel.addAccount(entry)
-        DraftManager.clearDrafts(requireContext(), "draft_account_")
-        Toast.makeText(requireContext(), "保存成功", Toast.LENGTH_SHORT).show()
-        // 随机概率弹出保存惊喜
-        if ((0..2).random() == 0) {
-            EasterEggManager.showLovePopup(requireContext(), EasterEggManager.eggSaveSuccess)
+        if (editRowIndex >= 0) {
+            viewModel.updateAccount(entry)
+            Toast.makeText(requireContext(), "修改成功", Toast.LENGTH_SHORT).show()
+        } else {
+            viewModel.addAccount(entry)
+            Toast.makeText(requireContext(), "保存成功", Toast.LENGTH_SHORT).show()
+            if ((0..2).random() == 0) {
+                EasterEggManager.showLovePopup(requireContext(), EasterEggManager.eggSaveSuccess)
+            }
         }
+        DraftManager.clearDrafts(requireContext(), "draft_account_")
         findNavController().popBackStack()
     }
 
@@ -232,10 +270,14 @@ class AccountAddFragment : Fragment() {
             val base = builtIn.filter { it.name != "更多" && it.name !in hidden }
             val custom = repo.getCustomCategories(type)
             val categories = base + custom + Category(R.drawable.ic_add, "添加")
-            selectedCategory = if (base.isNotEmpty()) base.first().name else if (custom.isNotEmpty()) custom.first().name else ""
+            // 编辑模式下保留已选分类，新增模式才重置为第一个
+            val existingIndex = categories.indexOfFirst { it.name == selectedCategory }
+            if (existingIndex < 0) {
+                selectedCategory = if (base.isNotEmpty()) base.first().name else if (custom.isNotEmpty()) custom.first().name else ""
+            }
 
             rv.adapter = object : androidx.recyclerview.widget.RecyclerView.Adapter<androidx.recyclerview.widget.RecyclerView.ViewHolder>() {
-                private var selected = 0
+                private var selected = if (existingIndex >= 0) existingIndex else 0
                 override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): androidx.recyclerview.widget.RecyclerView.ViewHolder {
                     val itemView = LayoutInflater.from(parent.context).inflate(R.layout.item_category, parent, false)
                     return object : androidx.recyclerview.widget.RecyclerView.ViewHolder(itemView) {}
