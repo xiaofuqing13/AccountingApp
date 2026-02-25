@@ -134,32 +134,6 @@ class SettingsFragment : Fragment() {
             legacyImportLauncher.launch("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
         }
 
-        view.findViewById<View>(R.id.btn_import_sample).setOnClickListener {
-            android.app.AlertDialog.Builder(requireContext())
-                .setTitle("导入示例数据")
-                .setMessage("将写入一批示例记录，已存在数据不会被清空。是否继续？")
-                .setPositiveButton("继续") { _, _ ->
-                    lifecycleScope.launch {
-                        try {
-                            val (accounts, diaries, meetings) = repo.importSampleData()
-                            Toast.makeText(
-                                requireContext(),
-                                "导入完成：记账 $accounts 条，日记 $diaries 条，会议 $meetings 条",
-                                Toast.LENGTH_LONG
-                            ).show()
-                        } catch (e: Exception) {
-                            Toast.makeText(
-                                requireContext(),
-                                "导入失败：${e.message}",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }
-                    }
-                }
-                .setNegativeButton("取消", null)
-                .show()
-        }
-
         view.findViewById<View>(R.id.btn_storage_path).setOnClickListener {
             copyToClipboard("账本路径", repo.getExcelFilePath())
             Toast.makeText(requireContext(), "路径已复制", Toast.LENGTH_SHORT).show()
