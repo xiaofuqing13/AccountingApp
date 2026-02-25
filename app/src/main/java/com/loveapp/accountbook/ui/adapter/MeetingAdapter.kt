@@ -67,7 +67,8 @@ class MeetingAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val item = items[position]
-        val dateParts = item.date.split("-")
+        val dateOnly = item.date.split(" ")[0]
+        val dateParts = dateOnly.split("-")
         holder.tvDay.text = if (dateParts.size >= 3) dateParts[2].trimStart('0') else ""
         holder.tvMonth.text = if (dateParts.size >= 2) "${dateParts[1].trimStart('0')}月" else ""
         holder.tvTitle.text = item.topic
