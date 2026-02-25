@@ -48,7 +48,15 @@
     <fragment
         android:id="@+id/nav_diary_add"
         android:name="com.loveapp.accountbook.ui.diary.DiaryAddFragment"
-        android:label="@string/diary_add" />
+        android:label="@string/diary_add">
+        <argument android:name="entryRowIndex" app:argType="integer" android:defaultValue="-1" />
+        <argument android:name="entryTitle" app:argType="string" android:defaultValue="" />
+        <argument android:name="entryContent" app:argType="string" android:defaultValue="" />
+        <argument android:name="entryWeather" app:argType="string" android:defaultValue="" />
+        <argument android:name="entryMood" app:argType="string" android:defaultValue="" />
+        <argument android:name="entryLocation" app:argType="string" android:defaultValue="" />
+        <argument android:name="entryDate" app:argType="string" android:defaultValue="" />
+    </fragment>
 
     <fragment
         android:id="@+id/nav_meeting"
@@ -62,7 +70,18 @@
     <fragment
         android:id="@+id/nav_meeting_add"
         android:name="com.loveapp.accountbook.ui.meeting.MeetingAddFragment"
-        android:label="@string/meeting_add" />
+        android:label="@string/meeting_add">
+        <argument android:name="entryRowIndex" app:argType="integer" android:defaultValue="-1" />
+        <argument android:name="entryTopic" app:argType="string" android:defaultValue="" />
+        <argument android:name="entryDate" app:argType="string" android:defaultValue="" />
+        <argument android:name="entryStartTime" app:argType="string" android:defaultValue="" />
+        <argument android:name="entryEndTime" app:argType="string" android:defaultValue="" />
+        <argument android:name="entryLocation" app:argType="string" android:defaultValue="" />
+        <argument android:name="entryAttendees" app:argType="string" android:defaultValue="" />
+        <argument android:name="entryContent" app:argType="string" android:defaultValue="" />
+        <argument android:name="entryTodoItems" app:argType="string" android:defaultValue="" />
+        <argument android:name="entryTags" app:argType="string" android:defaultValue="" />
+    </fragment>
 
     <fragment
         android:id="@+id/nav_settings"

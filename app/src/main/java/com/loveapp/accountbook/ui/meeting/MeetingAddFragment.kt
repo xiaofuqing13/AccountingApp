@@ -51,34 +51,50 @@ class MeetingAddFragment : Fragment() {
         val etContent = view.findViewById<EditText>(R.id.et_content)
         val etTodo = view.findViewById<EditText>(R.id.et_todo)
 
-        tvDate.text = DateUtils.today()
-        tvStartTime.text = DateUtils.currentTime()
-        tvEndTime.text = DateUtils.currentTime()
+        // 判断是编辑模式还是新增模式
+        val editRowIndex = arguments?.getInt("entryRowIndex", -1) ?: -1
+        val isEditMode = editRowIndex >= 0
 
-        // 自动保存：恢复草稿
-        val hasDraft = DraftManager.restoreDraft(requireContext(), etTopic, DraftManager.KEY_MEETING_TOPIC)
-        DraftManager.restoreDraft(requireContext(), etLocation, DraftManager.KEY_MEETING_LOCATION)
-        DraftManager.restoreDraft(requireContext(), etAttendees, DraftManager.KEY_MEETING_ATTENDEES)
-        DraftManager.restoreDraft(requireContext(), etContent, DraftManager.KEY_MEETING_CONTENT)
-        DraftManager.restoreDraft(requireContext(), etTodo, DraftManager.KEY_MEETING_TODO)
-        if (hasDraft) Toast.makeText(requireContext(), "已恢复上次编辑的草稿", Toast.LENGTH_SHORT).show()
-
-        // 自动保存：绑定输入监听
-        DraftManager.bindAutoSave(requireContext(), etTopic, DraftManager.KEY_MEETING_TOPIC)
-        DraftManager.bindAutoSave(requireContext(), etLocation, DraftManager.KEY_MEETING_LOCATION)
-        DraftManager.bindAutoSave(requireContext(), etAttendees, DraftManager.KEY_MEETING_ATTENDEES)
-        DraftManager.bindAutoSave(requireContext(), etContent, DraftManager.KEY_MEETING_CONTENT)
-        DraftManager.bindAutoSave(requireContext(), etTodo, DraftManager.KEY_MEETING_TODO)
-
-        // 自动获取定位
-        locationHelper = LocationHelper(requireContext())
-        if (locationHelper.hasPermission()) {
-            locationHelper.fetchLocation { address -> autoFillLocation(address) }
+        if (isEditMode) {
+            // 编辑模式：填充已有数据
+            etTopic.setText(arguments?.getString("entryTopic", ""))
+            tvDate.text = arguments?.getString("entryDate", "").takeIf { !it.isNullOrBlank() } ?: DateUtils.today()
+            tvStartTime.text = arguments?.getString("entryStartTime", "").takeIf { !it.isNullOrBlank() } ?: DateUtils.currentTime()
+            tvEndTime.text = arguments?.getString("entryEndTime", "").takeIf { !it.isNullOrBlank() } ?: DateUtils.currentTime()
+            etLocation.setText(arguments?.getString("entryLocation", ""))
+            etAttendees.setText(arguments?.getString("entryAttendees", ""))
+            etContent.setText(arguments?.getString("entryContent", ""))
+            etTodo.setText(arguments?.getString("entryTodoItems", ""))
         } else {
-            locationPermissionLauncher.launch(arrayOf(
-                Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            ))
+            // 新增模式：默认日期时间 + 恢复草稿
+            tvDate.text = DateUtils.today()
+            tvStartTime.text = DateUtils.currentTime()
+            tvEndTime.text = DateUtils.currentTime()
+
+            val hasDraft = DraftManager.restoreDraft(requireContext(), etTopic, DraftManager.KEY_MEETING_TOPIC)
+            DraftManager.restoreDraft(requireContext(), etLocation, DraftManager.KEY_MEETING_LOCATION)
+            DraftManager.restoreDraft(requireContext(), etAttendees, DraftManager.KEY_MEETING_ATTENDEES)
+            DraftManager.restoreDraft(requireContext(), etContent, DraftManager.KEY_MEETING_CONTENT)
+            DraftManager.restoreDraft(requireContext(), etTodo, DraftManager.KEY_MEETING_TODO)
+            if (hasDraft) Toast.makeText(requireContext(), "已恢复上次编辑的草稿", Toast.LENGTH_SHORT).show()
+
+            // 自动保存：绑定输入监听
+            DraftManager.bindAutoSave(requireContext(), etTopic, DraftManager.KEY_MEETING_TOPIC)
+            DraftManager.bindAutoSave(requireContext(), etLocation, DraftManager.KEY_MEETING_LOCATION)
+            DraftManager.bindAutoSave(requireContext(), etAttendees, DraftManager.KEY_MEETING_ATTENDEES)
+            DraftManager.bindAutoSave(requireContext(), etContent, DraftManager.KEY_MEETING_CONTENT)
+            DraftManager.bindAutoSave(requireContext(), etTodo, DraftManager.KEY_MEETING_TODO)
+
+            // 自动获取定位
+            locationHelper = LocationHelper(requireContext())
+            if (locationHelper.hasPermission()) {
+                locationHelper.fetchLocation { address -> autoFillLocation(address) }
+            } else {
+                locationPermissionLauncher.launch(arrayOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                ))
+            }
         }
 
         view.findViewById<View>(R.id.btn_back).setOnClickListener { findNavController().popBackStack() }
@@ -88,7 +104,7 @@ class MeetingAddFragment : Fragment() {
                 Toast.makeText(requireContext(), "请输入会议主题", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-            viewModel.addMeeting(MeetingEntry(
+            val entry = MeetingEntry(
                 date = tvDate.text.toString(),
                 topic = topic,
                 startTime = tvStartTime.text.toString(),
@@ -96,13 +112,19 @@ class MeetingAddFragment : Fragment() {
                 location = etLocation.text.toString(),
                 attendees = etAttendees.text.toString(),
                 content = etContent.text.toString(),
-                todoItems = etTodo.text.toString()
-            ))
-            DraftManager.clearDrafts(requireContext(), "draft_meeting_")
-            Toast.makeText(requireContext(), "会议纪要保存成功", Toast.LENGTH_SHORT).show()
-            // 随机概率弹出保存惊喜
-            if ((0..2).random() == 0) {
-                EasterEggManager.showLovePopup(requireContext(), EasterEggManager.eggMeetingSave)
+                todoItems = etTodo.text.toString(),
+                rowIndex = editRowIndex
+            )
+            if (isEditMode) {
+                viewModel.updateMeeting(entry)
+                Toast.makeText(requireContext(), "会议纪要已更新", Toast.LENGTH_SHORT).show()
+            } else {
+                viewModel.addMeeting(entry)
+                DraftManager.clearDrafts(requireContext(), "draft_meeting_")
+                Toast.makeText(requireContext(), "会议纪要保存成功", Toast.LENGTH_SHORT).show()
+                if ((0..2).random() == 0) {
+                    EasterEggManager.showLovePopup(requireContext(), EasterEggManager.eggMeetingSave)
+                }
             }
             findNavController().popBackStack()
         }

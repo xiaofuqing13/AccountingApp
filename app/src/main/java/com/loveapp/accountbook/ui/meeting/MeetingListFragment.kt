@@ -65,7 +65,7 @@ class MeetingListFragment : Fragment() {
             onEditClick = { meeting ->
                 val openPosition = adapter.getSwipeOpenPosition()
                 closeSwipeAt(rvMeetings, openPosition)
-                showEditTopicDialog(meeting)
+                navigateToEdit(meeting)
             },
             onDeleteClick = { meeting ->
                 val openPosition = adapter.getSwipeOpenPosition()
@@ -275,7 +275,7 @@ class MeetingListFragment : Fragment() {
             val target = adapter.getItem(position)
             closeSwipeAt(rv, position)
             if (offset < maxSwipe / 2f) {
-                showEditTopicDialog(target)
+                navigateToEdit(target)
             } else {
                 showDeleteConfirmDialog(target)
             }
@@ -400,19 +400,20 @@ class MeetingListFragment : Fragment() {
         }
     }
 
-    private fun showEditTopicDialog(entry: MeetingEntry) {
-        val etTopic = EditText(requireContext()).apply {
-            setText(entry.topic)
-            setPadding(48, 24, 48, 24)
+    private fun navigateToEdit(entry: MeetingEntry) {
+        val bundle = Bundle().apply {
+            putInt("entryRowIndex", entry.rowIndex)
+            putString("entryTopic", entry.topic)
+            putString("entryDate", entry.date)
+            putString("entryStartTime", entry.startTime)
+            putString("entryEndTime", entry.endTime)
+            putString("entryLocation", entry.location)
+            putString("entryAttendees", entry.attendees)
+            putString("entryContent", entry.content)
+            putString("entryTodoItems", entry.todoItems)
+            putString("entryTags", entry.tags)
         }
-        AlertDialog.Builder(requireContext())
-            .setTitle("编辑会议主题")
-            .setView(etTopic)
-            .setPositiveButton("保存") { _, _ ->
-                viewModel.updateMeeting(entry.copy(topic = etTopic.text.toString()))
-            }
-            .setNegativeButton("取消", null)
-            .show()
+        findNavController().navigate(R.id.action_meeting_to_add, bundle)
     }
 
     private fun showDeleteConfirmDialog(entry: MeetingEntry) {
