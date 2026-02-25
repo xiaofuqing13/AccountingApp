@@ -811,8 +811,7 @@ class ExcelRepository(private val context: Context) {
 
             for (i in 1..impAccount.lastRowNum) {
                 val row = impAccount.getRow(i) ?: continue
-                val rawDate = getCellString(row.getCell(colDate))
-                val date = if (rawDate.length > 10) rawDate.substring(0, 10) else rawDate
+                val date = getCellString(row.getCell(colDate)).trim()
                 val type = getCellString(row.getCell(colType))
                 val category = getCellString(row.getCell(colCategory))
                 val amount = getCellDouble(row.getCell(colAmount))
@@ -918,8 +917,7 @@ class ExcelRepository(private val context: Context) {
                 val todoItems: String
                 val tags: String
                 if (isLegacyMeeting) {
-                    val rawDate = getCellString(row.getCell(0))
-                    date = if (rawDate.length > 10) rawDate.substring(0, 10) else rawDate
+                    date = getCellString(row.getCell(0)).trim()
                     topic = getCellString(row.getCell(1))
                     startTime = ""
                     endTime = ""
