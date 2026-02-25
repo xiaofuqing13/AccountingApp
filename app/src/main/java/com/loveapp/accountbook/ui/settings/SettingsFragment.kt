@@ -194,11 +194,21 @@ class SettingsFragment : Fragment() {
                 } ?: return@launch
 
                 val prefix = if (legacyHint) "旧版导入完成" else "导入完成"
-                Toast.makeText(
-                    requireContext(),
-                    "$prefix：记账 ${result.accounts} 条，日记 ${result.diaries} 条，会议 ${result.meetings} 条，分类 ${result.categories} 条",
-                    Toast.LENGTH_LONG
-                ).show()
+                val total = result.accounts + result.diaries + result.meetings + result.categories
+                if (total == 0 && result.debugInfo.isNotBlank()) {
+                    // 0条时显示详细诊断信息
+                    android.app.AlertDialog.Builder(requireContext())
+                        .setTitle("导入结果：0 条")
+                        .setMessage("未识别到数据。\n\n文件中的表：\n${result.debugInfo}")
+                        .setPositiveButton("确定", null)
+                        .show()
+                } else {
+                    Toast.makeText(
+                        requireContext(),
+                        "$prefix：记账 ${result.accounts} 条，日记 ${result.diaries} 条，会议 ${result.meetings} 条，分类 ${result.categories} 条",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
             } catch (e: Exception) {
                 Toast.makeText(requireContext(), "导入失败：${e.message}", Toast.LENGTH_SHORT).show()
             }

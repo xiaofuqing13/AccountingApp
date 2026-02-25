@@ -760,7 +760,7 @@ class ExcelRepository(private val context: Context) {
      * 智能导入：自动识别新版(v2)和旧版格式，合并追加去重
      * 返回四元组描述：(记账数, 日记数, 会议数, 分类数)
      */
-    data class ImportResult(val accounts: Int, val diaries: Int, val meetings: Int, val categories: Int)
+    data class ImportResult(val accounts: Int, val diaries: Int, val meetings: Int, val categories: Int, val debugInfo: String = "")
 
     suspend fun importSmart(inputStream: java.io.InputStream): ImportResult = withContext(Dispatchers.IO) {
         val importWb = XSSFWorkbook(inputStream)
@@ -770,6 +770,15 @@ class ExcelRepository(private val context: Context) {
         var diaryCount = 0
         var meetingCount = 0
         var categoryCount = 0
+
+        // 诊断信息：列出所有sheet名和表头
+        val debugSb = StringBuilder()
+        for (i in 0 until importWb.numberOfSheets) {
+            val s = importWb.getSheetAt(i)
+            val h = s.getRow(0)
+            val headerStr = if (h != null) (0 until h.lastCellNum).map { getCellString(h.getCell(it.toInt())) }.joinToString("/") else "空"
+            debugSb.append("[${s.sheetName}] $headerStr (行:${s.lastRowNum})\n")
+        }
 
         // 判断版本：有"元信息"sheet -> 确定是v2新版
         val isV2 = importWb.getSheet("元信息") != null
@@ -977,7 +986,7 @@ class ExcelRepository(private val context: Context) {
         importWb.close()
         saveWorkbook(targetWb)
         targetWb.close()
-        ImportResult(accountCount, diaryCount, meetingCount, categoryCount)
+        ImportResult(accountCount, diaryCount, meetingCount, categoryCount, debugSb.toString().trim())
     }
 
     // 保留旧接口兼容
