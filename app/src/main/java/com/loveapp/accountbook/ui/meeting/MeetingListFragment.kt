@@ -7,6 +7,8 @@ import android.text.SpannableStringBuilder
 import android.text.Spanned
 import android.text.TextWatcher
 import android.view.MotionEvent
+import android.view.VelocityTracker
+import android.view.ViewConfiguration
 import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
@@ -19,7 +21,6 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
-import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.SimpleItemAnimator
@@ -36,8 +37,6 @@ class MeetingListFragment : Fragment() {
     private val viewModel: MeetingViewModel by activityViewModels()
     private lateinit var adapter: MeetingAdapter
     private lateinit var rvMeetings: RecyclerView
-    private var lastSwipeDx = 0f
-    private val swipeOpenScale = 0.96f
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -81,8 +80,7 @@ class MeetingListFragment : Fragment() {
             adapter = this@MeetingListFragment.adapter
             (itemAnimator as? SimpleItemAnimator)?.supportsChangeAnimations = false
         }
-        attachSwipeActions(rvMeetings)
-        attachSwipeCloseFallback(rvMeetings)
+        attachSwipeHandler(rvMeetings)
 
         viewModel.meetings.observe(viewLifecycleOwner) {
             adapter.updateData(it)
@@ -105,233 +103,236 @@ class MeetingListFragment : Fragment() {
         viewModel.loadMeetings()
     }
 
-    private fun attachSwipeActions(recyclerView: RecyclerView) {
-        val swipeCallback = object : ItemTouchHelper.SimpleCallback(
-            0,
-            ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT
-        ) {
-            override fun getMovementFlags(
-                recyclerView: RecyclerView,
-                viewHolder: RecyclerView.ViewHolder
-            ): Int {
-                val openPos = adapter.getSwipeOpenPosition()
-                if (openPos != RecyclerView.NO_POSITION) {
-                    return makeMovementFlags(0, 0)
-                }
-                return super.getMovementFlags(recyclerView, viewHolder)
-            }
+    // ========== Apple 备忘录风格滑动（与日记模块一致） ==========
 
-            override fun onMove(
-                recyclerView: RecyclerView,
-                viewHolder: RecyclerView.ViewHolder,
-                target: RecyclerView.ViewHolder
-            ): Boolean = false
+    private fun attachSwipeHandler(recyclerView: RecyclerView) {
+        val viewConfig = ViewConfiguration.get(requireContext())
+        val touchSlop = viewConfig.scaledTouchSlop
+        val minFlingVelocity = viewConfig.scaledMinimumFlingVelocity.toFloat()
 
-            override fun getSwipeThreshold(viewHolder: RecyclerView.ViewHolder): Float {
-                val itemWidth = viewHolder.itemView.width.takeIf { it > 0 } ?: return 0.2f
-                val actionWidth = adapter.getSwipeActionTotalWidthPx().toFloat()
-                return ((actionWidth / itemWidth.toFloat()) + 0.03f).coerceIn(0.22f, 0.45f)
-            }
-
-            override fun getSwipeEscapeVelocity(defaultValue: Float): Float = defaultValue * 1.6f
-
-            override fun getSwipeVelocityThreshold(defaultValue: Float): Float = defaultValue * 1.4f
-
-            override fun onSelectedChanged(viewHolder: RecyclerView.ViewHolder?, actionState: Int) {
-                if (viewHolder is MeetingAdapter.ViewHolder) {
-                    getDefaultUIUtil().onSelected(viewHolder.cardForeground)
-                }
-            }
-
-            override fun clearView(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder) {
-                if (viewHolder is MeetingAdapter.ViewHolder) {
-                    getDefaultUIUtil().clearView(viewHolder.cardForeground)
-                    val position = viewHolder.bindingAdapterPosition
-                    val closeThreshold = recyclerView.resources.displayMetrics.density * 12f
-                    if (
-                        position != RecyclerView.NO_POSITION &&
-                        adapter.isSwipeOpenAt(position) &&
-                        lastSwipeDx > closeThreshold
-                    ) {
-                        closeSwipeAt(recyclerView, position)
-                    }
-                } else {
-                    super.clearView(recyclerView, viewHolder)
-                }
-                lastSwipeDx = 0f
-            }
-
-            override fun onChildDraw(
-                c: android.graphics.Canvas,
-                recyclerView: RecyclerView,
-                viewHolder: RecyclerView.ViewHolder,
-                dX: Float,
-                dY: Float,
-                actionState: Int,
-                isCurrentlyActive: Boolean
-            ) {
-                if (viewHolder !is MeetingAdapter.ViewHolder) {
-                    super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive)
-                    return
-                }
-                lastSwipeDx = dX
-                val maxSwipe = adapter.getSwipeActionTotalWidthPx().toFloat()
-                val position = viewHolder.bindingAdapterPosition
-                val isOpen = position != RecyclerView.NO_POSITION && adapter.isSwipeOpenAt(position)
-                val clampedDx = when {
-                    dX < 0f -> dX.coerceAtLeast(-maxSwipe)
-                    isOpen -> (-maxSwipe + dX).coerceIn(-maxSwipe, 0f)
-                    else -> 0f
-                }
-                val progress = (kotlin.math.abs(clampedDx) / maxSwipe).coerceIn(0f, 1f)
-                val scale = 1f - (1f - swipeOpenScale) * progress
-                viewHolder.cardForeground.scaleX = scale
-                viewHolder.cardForeground.scaleY = scale
-                getDefaultUIUtil().onDraw(
-                    c,
-                    recyclerView,
-                    viewHolder.cardForeground,
-                    clampedDx,
-                    dY,
-                    actionState,
-                    isCurrentlyActive
-                )
-            }
-
-            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
-                val position = viewHolder.bindingAdapterPosition
-                if (position == RecyclerView.NO_POSITION) return
-                if (direction == ItemTouchHelper.RIGHT) {
-                    closeSwipeAt(recyclerView, position)
-                } else {
-                    openSwipeAt(recyclerView, position)
-                }
-            }
-        }
-        ItemTouchHelper(swipeCallback).attachToRecyclerView(recyclerView)
-    }
-
-    private fun attachSwipeCloseFallback(recyclerView: RecyclerView) {
-        val closeTrigger = recyclerView.resources.displayMetrics.density * 8f
         var downX = 0f
         var downY = 0f
-        var downInActionArea = false
-        var downActionZoneStartX = 0f
-        var downTargetPosition = RecyclerView.NO_POSITION
-        recyclerView.addOnItemTouchListener(object : RecyclerView.SimpleOnItemTouchListener() {
+        var dragging = false
+        var dragPosition = RecyclerView.NO_POSITION
+        var dragHolder: MeetingAdapter.ViewHolder? = null
+        var dragStartTx = 0f
+        var velocityTracker: VelocityTracker? = null
+
+        fun maxSwipe() = adapter.getSwipeActionTotalWidthPx().toFloat()
+
+        fun resetState() {
+            dragging = false
+            dragPosition = RecyclerView.NO_POSITION
+            dragHolder = null
+            velocityTracker?.recycle()
+            velocityTracker = null
+        }
+
+        // 滚动时自动关闭
+        recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrollStateChanged(rv: RecyclerView, newState: Int) {
+                if (newState == RecyclerView.SCROLL_STATE_DRAGGING) {
+                    val p = adapter.getSwipeOpenPosition()
+                    if (p != RecyclerView.NO_POSITION) closeSwipeAt(rv, p)
+                }
+            }
+        })
+
+        recyclerView.addOnItemTouchListener(object : RecyclerView.OnItemTouchListener {
+
+            private var intercepted = false
+
             override fun onInterceptTouchEvent(rv: RecyclerView, e: MotionEvent): Boolean {
-                val openPosition = adapter.getSwipeOpenPosition()
-                if (openPosition == RecyclerView.NO_POSITION) return false
                 when (e.actionMasked) {
                     MotionEvent.ACTION_DOWN -> {
-                        downX = e.x
-                        downY = e.y
-                        downInActionArea = false
-                        downActionZoneStartX = 0f
-                        downTargetPosition = RecyclerView.NO_POSITION
-                        val touchedChild = rv.findChildViewUnder(e.x, e.y) ?: return false
-                        val touchedPosition = rv.getChildAdapterPosition(touchedChild)
-                        downTargetPosition = touchedPosition
-                        if (touchedPosition != openPosition) {
-                            closeSwipeAt(rv, openPosition)
-                        } else {
-                            val actionWidth = adapter.getSwipeActionTotalWidthPx().toFloat()
-                            val localX = e.x - touchedChild.left
-                            downActionZoneStartX = touchedChild.width - actionWidth
-                            downInActionArea = localX >= downActionZoneStartX
-                            val isCardBodyArea = !downInActionArea
-                            if (isCardBodyArea) {
-                                closeSwipeAt(rv, openPosition)
+                        downX = e.x; downY = e.y
+                        dragging = false; intercepted = false
+                        dragPosition = RecyclerView.NO_POSITION; dragHolder = null
+                        velocityTracker?.recycle()
+                        velocityTracker = VelocityTracker.obtain()
+                        velocityTracker?.addMovement(e)
+
+                        val openPos = adapter.getSwipeOpenPosition()
+                        if (openPos != RecyclerView.NO_POSITION) {
+                            val child = rv.findChildViewUnder(e.x, e.y)
+                            val touchedPos = child?.let { rv.getChildAdapterPosition(it) }
+                                ?: RecyclerView.NO_POSITION
+                            if (touchedPos != openPos) {
+                                closeSwipeAt(rv, openPos)
+                                intercepted = true
                                 return true
                             }
+                            dragPosition = openPos
+                            dragHolder = rv.findViewHolderForAdapterPosition(openPos)
+                                    as? MeetingAdapter.ViewHolder
+                            dragHolder?.cardForeground?.animate()?.cancel()
+                            dragStartTx = dragHolder?.cardForeground?.translationX ?: 0f
+                            intercepted = true
+                            return true
                         }
+
+                        val child = rv.findChildViewUnder(e.x, e.y)
+                        if (child != null) {
+                            dragPosition = rv.getChildAdapterPosition(child)
+                            dragHolder = rv.findViewHolderForAdapterPosition(dragPosition)
+                                    as? MeetingAdapter.ViewHolder
+                        }
+                        dragStartTx = 0f
+                        return false
+                    }
+
+                    MotionEvent.ACTION_MOVE -> {
+                        if (intercepted) return true
+                        if (dragHolder == null) return false
+                        velocityTracker?.addMovement(e)
+                        val dx = e.x - downX
+                        val dy = e.y - downY
+                        if (!dragging && abs(dx) > touchSlop
+                            && abs(dx) > abs(dy) * 1.5f && dx < 0
+                        ) {
+                            dragging = true
+                            rv.parent?.requestDisallowInterceptTouchEvent(true)
+                            intercepted = true
+                            return true
+                        }
+                        return false
                     }
 
                     MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                        if (downInActionArea && downTargetPosition == openPosition && e.actionMasked == MotionEvent.ACTION_UP) {
-                            val touchedChild = rv.findChildViewUnder(e.x, e.y)
-                            val touchedPosition = touchedChild?.let { rv.getChildAdapterPosition(it) }
-                            val moveX = abs(e.x - downX)
-                            val moveY = abs(e.y - downY)
-                            if (
-                                touchedChild != null &&
-                                touchedPosition == openPosition &&
-                                moveX <= closeTrigger &&
-                                moveY <= closeTrigger
-                            ) {
-                                val localXUp = e.x - touchedChild.left
-                                if (localXUp >= downActionZoneStartX) {
-                                    val actionWidth = adapter.getSwipeActionTotalWidthPx().toFloat()
-                                    val actionOffset = (localXUp - downActionZoneStartX).coerceIn(0f, actionWidth)
-                                    val target = adapter.getItem(openPosition)
-                                    closeSwipeAt(rv, openPosition)
-                                    if (actionOffset < actionWidth / 2f) {
-                                        showEditTopicDialog(target)
-                                    } else {
-                                        showDeleteConfirmDialog(target)
-                                    }
-                                    return true
-                                }
-                            }
-                        }
-                        val dx = e.x - downX
-                        val dy = e.y - downY
-                        if (dx > closeTrigger && abs(dx) >= abs(dy) * 0.6f) {
-                            closeSwipeAt(rv, openPosition)
-                            return true
-                        }
+                        if (!intercepted) resetState()
+                        return false
                     }
                 }
                 return false
             }
+
+            override fun onTouchEvent(rv: RecyclerView, e: MotionEvent) {
+                velocityTracker?.addMovement(e)
+                when (e.actionMasked) {
+                    MotionEvent.ACTION_MOVE -> {
+                        val holder = dragHolder ?: return
+                        val dx = e.x - downX
+                        val dy = e.y - downY
+                        if (!dragging && (abs(dx) > touchSlop || abs(dy) > touchSlop)) {
+                            if (abs(dx) > abs(dy)) {
+                                dragging = true
+                                holder.cardForeground.animate().cancel()
+                                rv.parent?.requestDisallowInterceptTouchEvent(true)
+                            }
+                        }
+                        if (dragging) {
+                            val newTx = (dragStartTx + dx).coerceIn(-maxSwipe(), 0f)
+                            holder.cardForeground.translationX = newTx
+                        }
+                    }
+
+                    MotionEvent.ACTION_UP -> {
+                        val holder = dragHolder
+                        val pos = dragPosition
+                        if (holder != null && pos != RecyclerView.NO_POSITION
+                            && pos in 0 until adapter.itemCount
+                        ) {
+                            if (!dragging) {
+                                handleTap(rv, holder, pos, maxSwipe(), downX)
+                            } else {
+                                handleSwipeEnd(rv, holder, pos, maxSwipe(), minFlingVelocity, velocityTracker)
+                            }
+                        }
+                        intercepted = false
+                        resetState()
+                    }
+
+                    MotionEvent.ACTION_CANCEL -> {
+                        val holder = dragHolder
+                        val pos = dragPosition
+                        if (holder != null && pos != RecyclerView.NO_POSITION) {
+                            if (adapter.isSwipeOpenAt(pos)) {
+                                animateTo(holder, -maxSwipe())
+                            } else {
+                                animateTo(holder, 0f)
+                            }
+                        }
+                        intercepted = false
+                        resetState()
+                    }
+                }
+            }
+
+            override fun onRequestDisallowInterceptTouchEvent(disallowIntercept: Boolean) {}
         })
+    }
+
+    private fun handleTap(
+        rv: RecyclerView, holder: MeetingAdapter.ViewHolder,
+        position: Int, maxSwipe: Float, downX: Float
+    ) {
+        if (!adapter.isSwipeOpenAt(position)) return
+        val touchLocalX = downX - holder.itemView.left
+        val cardEndX = holder.itemView.width + holder.cardForeground.translationX
+
+        if (touchLocalX > cardEndX) {
+            val offset = touchLocalX - cardEndX
+            val target = adapter.getItem(position)
+            closeSwipeAt(rv, position)
+            if (offset < maxSwipe / 2f) {
+                showEditTopicDialog(target)
+            } else {
+                showDeleteConfirmDialog(target)
+            }
+        } else {
+            closeSwipeAt(rv, position)
+        }
+    }
+
+    private fun handleSwipeEnd(
+        rv: RecyclerView, holder: MeetingAdapter.ViewHolder,
+        position: Int, maxSwipe: Float, minFlingVelocity: Float,
+        velocityTracker: VelocityTracker?
+    ) {
+        velocityTracker?.computeCurrentVelocity(1000)
+        val vx = velocityTracker?.xVelocity ?: 0f
+        val tx = holder.cardForeground.translationX
+        val isOpen = adapter.isSwipeOpenAt(position)
+
+        if (isOpen) {
+            if (tx > -maxSwipe * 0.5f || vx > minFlingVelocity) {
+                closeSwipeAt(rv, position)
+            } else {
+                animateTo(holder, -maxSwipe)
+            }
+        } else {
+            if (tx < -maxSwipe * 0.4f || vx < -minFlingVelocity) {
+                openSwipeAt(rv, position)
+            } else {
+                animateTo(holder, 0f)
+            }
+        }
+    }
+
+    private fun animateTo(holder: MeetingAdapter.ViewHolder, targetTx: Float) {
+        holder.cardForeground.animate()
+            .translationX(targetTx)
+            .setDuration(250L)
+            .setInterpolator(DecelerateInterpolator())
+            .start()
     }
 
     private fun openSwipeAt(recyclerView: RecyclerView, position: Int) {
         val maxSwipe = adapter.getSwipeActionTotalWidthPx().toFloat()
         val previous = adapter.getSwipeOpenPosition()
         if (previous != RecyclerView.NO_POSITION && previous != position) {
-            val previousHolder =
-                recyclerView.findViewHolderForAdapterPosition(previous) as? MeetingAdapter.ViewHolder
-            if (previousHolder != null) {
-                previousHolder.cardForeground.animate()
-                    .translationX(0f)
-                    .scaleX(1f)
-                    .scaleY(1f)
-                    .setDuration(150L)
-                    .setInterpolator(DecelerateInterpolator())
-                    .start()
-                adapter.clearSwipeOpenPosition(previous, notify = false)
-            } else {
-                adapter.clearSwipeOpenPosition(previous)
-            }
+            closeSwipeAt(recyclerView, previous)
         }
+        adapter.setSwipeOpenPosition(position, notify = false)
         val holder = recyclerView.findViewHolderForAdapterPosition(position) as? MeetingAdapter.ViewHolder
-        if (holder != null) {
-            holder.cardForeground.animate()
-                .translationX(-maxSwipe)
-                .scaleX(swipeOpenScale)
-                .scaleY(swipeOpenScale)
-                .setDuration(150L)
-                .setInterpolator(DecelerateInterpolator())
-                .start()
-            adapter.setSwipeOpenPosition(position, notify = false)
-        } else {
-            adapter.setSwipeOpenPosition(position)
-        }
+        if (holder != null) animateTo(holder, -maxSwipe)
     }
 
     private fun closeSwipeAt(recyclerView: RecyclerView, position: Int) {
         if (position == RecyclerView.NO_POSITION) return
         val holder = recyclerView.findViewHolderForAdapterPosition(position) as? MeetingAdapter.ViewHolder
         if (holder != null) {
-            holder.cardForeground.animate()
-                .translationX(0f)
-                .scaleX(1f)
-                .scaleY(1f)
-                .setDuration(120L)
-                .setInterpolator(DecelerateInterpolator())
-                .start()
+            animateTo(holder, 0f)
             adapter.clearSwipeOpenPosition(position, notify = false)
         } else {
             adapter.clearSwipeOpenPosition(position)
