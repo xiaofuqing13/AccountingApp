@@ -44,7 +44,14 @@ class AccountAddFragment : Fragment() {
     ) { permissions ->
         val granted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true
                 || permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
-        if (granted) locationHelper.fetchLocation { address -> currentLocation = address }
+        if (granted) locationHelper.fetchLocation { address ->
+            currentLocation = address
+            view?.findViewById<TextView>(R.id.tv_location)?.let { tv ->
+                tv.text = address.ifBlank { "定位失败" }
+                tv.setTextColor(ContextCompat.getColor(requireContext(),
+                    if (address.isNotBlank()) R.color.text_primary else R.color.text_hint))
+            }
+        }
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
@@ -169,15 +176,43 @@ class AccountAddFragment : Fragment() {
             }
         }
 
-        // 自动获取定位
+        // 定位显示
+        val tvLocation = view.findViewById<TextView>(R.id.tv_location)
         locationHelper = LocationHelper(requireContext())
-        if (locationHelper.hasPermission()) {
-            locationHelper.fetchLocation { address -> currentLocation = address }
+
+        fun updateLocationText(address: String) {
+            currentLocation = address
+            tvLocation.text = address.ifBlank { "定位失败" }
+            tvLocation.setTextColor(ContextCompat.getColor(requireContext(),
+                if (address.isNotBlank()) R.color.text_primary else R.color.text_hint))
+        }
+
+        // 编辑模式且已有位置时直接显示
+        if (currentLocation.isNotBlank()) {
+            updateLocationText(currentLocation)
         } else {
-            locationPermissionLauncher.launch(arrayOf(
-                Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            ))
+            if (locationHelper.hasPermission()) {
+                locationHelper.fetchLocation { address -> updateLocationText(address) }
+            } else {
+                locationPermissionLauncher.launch(arrayOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                ))
+            }
+        }
+
+        // 点击定位行刷新定位
+        view.findViewById<View>(R.id.row_location).setOnClickListener {
+            tvLocation.text = "定位中…"
+            tvLocation.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_hint))
+            if (locationHelper.hasPermission()) {
+                locationHelper.fetchLocation { address -> updateLocationText(address) }
+            } else {
+                locationPermissionLauncher.launch(arrayOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                ))
+            }
         }
 
         // 点击日期行弹出日期时间选择器

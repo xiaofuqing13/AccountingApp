@@ -58,6 +58,13 @@ class AccountAdapter(
         holder.tvTime.text = DateUtils.formatDateDisplay(item.date)
         holder.tvNote.text = item.note.ifEmpty { "暂无备注" }
 
+        if (item.location.isNotBlank()) {
+            holder.layoutLocation.visibility = View.VISIBLE
+            holder.tvLocation.text = item.location
+        } else {
+            holder.layoutLocation.visibility = View.GONE
+        }
+
         val prefix = if (item.isIncome) "+" else "-"
         holder.tvAmount.text = "$prefix¥${String.format("%.2f", item.amount)}"
         holder.tvAmount.setTextColor(
@@ -82,5 +89,7 @@ class AccountAdapter(
         val tvTime: TextView = view.findViewById(R.id.tv_time)
         val tvNote: TextView = view.findViewById(R.id.tv_note)
         val tvAmount: TextView = view.findViewById(R.id.tv_amount)
+        val layoutLocation: View = view.findViewById(R.id.layout_location)
+        val tvLocation: TextView = view.findViewById(R.id.tv_location)
     }
 }
