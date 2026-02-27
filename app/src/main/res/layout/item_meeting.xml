@@ -13,7 +13,8 @@
         android:gravity="center_vertical"
         android:orientation="horizontal"
         android:background="@drawable/bg_meeting_swipe_actions_surface"
-        android:paddingVertical="8dp">
+        android:paddingVertical="8dp"
+        android:visibility="invisible">
 
         <LinearLayout
             android:id="@+id/btn_swipe_edit"

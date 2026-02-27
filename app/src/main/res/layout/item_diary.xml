@@ -13,11 +13,11 @@
         android:layout_height="match_parent"
         android:layout_gravity="end"
         android:background="@drawable/bg_diary_swipe_actions"
-        android:clipToOutline="true"
         android:gravity="center_vertical"
         android:orientation="horizontal"
         android:paddingTop="8dp"
-        android:paddingBottom="8dp">
+        android:paddingBottom="8dp"
+        android:visibility="invisible">
 
         <LinearLayout
             android:id="@+id/btn_swipe_edit"

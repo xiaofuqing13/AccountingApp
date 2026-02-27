@@ -89,8 +89,13 @@ class MeetingAdapter(
                 holder.chipTags.addView(chip)
             }
 
-        holder.cardForeground.translationX = if (position == swipeOpenPosition)
-            -getSwipeActionTotalWidthPx().toFloat() else 0f
+        val maxPx = getSwipeActionTotalWidthPx().toFloat()
+        val isSwipe = (position == swipeOpenPosition)
+        holder.cardForeground.translationX = if (isSwipe) -maxPx else 0f
+        
+        holder.swipeActionsContainer.alpha = if (isSwipe) 1f else 0f
+        holder.swipeActionsContainer.visibility = if (isSwipe) View.VISIBLE else View.INVISIBLE
+
         holder.cardForeground.scaleX = 1f
         holder.cardForeground.scaleY = 1f
         holder.cardForeground.setOnClickListener { onItemClick?.invoke(item, position) }
@@ -105,6 +110,7 @@ class MeetingAdapter(
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val cardForeground: MaterialCardView = view.findViewById(R.id.card_foreground)
+        val swipeActionsContainer: View = view.findViewById(R.id.swipe_actions_container)
         val btnSwipeEdit: View = view.findViewById(R.id.btn_swipe_edit)
         val btnSwipeDelete: View = view.findViewById(R.id.btn_swipe_delete)
         val tvDay: TextView = view.findViewById(R.id.tv_day)

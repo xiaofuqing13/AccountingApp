@@ -130,8 +130,14 @@ class DiaryAdapter(
         }
 
         // 滑动状态视觉同步
-        holder.cardForeground.translationX = if (position == swipeOpenPosition)
-            -getSwipeActionTotalWidthPx().toFloat() else 0f
+        val maxPx = getSwipeActionTotalWidthPx().toFloat()
+        val isSwipe = (position == swipeOpenPosition)
+        holder.cardForeground.translationX = if (isSwipe) -maxPx else 0f
+        
+        // 动态控制底部动作栏的透明度，避免透底穿帮
+        holder.diaryActions.alpha = if (isSwipe) 1f else 0f
+        holder.diaryActions.visibility = if (isSwipe) View.VISIBLE else View.INVISIBLE
+
         holder.cardForeground.scaleX = 1f
         holder.cardForeground.scaleY = 1f
 
@@ -148,6 +154,7 @@ class DiaryAdapter(
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val cardForeground: MaterialCardView = view.findViewById(R.id.card_foreground)
+        val diaryActions: View = view.findViewById(R.id.diary_actions)
         val btnSwipeEdit: View = view.findViewById(R.id.btn_swipe_edit)
         val btnSwipeDelete: View = view.findViewById(R.id.btn_swipe_delete)
         val tvDate: TextView = view.findViewById(R.id.tv_date)

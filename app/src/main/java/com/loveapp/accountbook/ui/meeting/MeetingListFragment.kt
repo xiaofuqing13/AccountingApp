@@ -223,6 +223,9 @@ class MeetingListFragment : Fragment() {
                         if (dragging) {
                             val newTx = (dragStartTx + dx).coerceIn(-maxSwipe(), 0f)
                             holder.cardForeground.translationX = newTx
+                            
+                            holder.swipeActionsContainer.visibility = View.VISIBLE
+                            holder.swipeActionsContainer.alpha = abs(newTx) / maxSwipe()
                         }
                     }
 
@@ -310,10 +313,28 @@ class MeetingListFragment : Fragment() {
     }
 
     private fun animateTo(holder: MeetingAdapter.ViewHolder, targetTx: Float) {
+        val maxPx = adapter.getSwipeActionTotalWidthPx().toFloat()
+        val isOpening = targetTx < 0f
+        
+        if (isOpening) {
+            holder.swipeActionsContainer.visibility = View.VISIBLE
+        }
+        
         holder.cardForeground.animate()
             .translationX(targetTx)
             .setDuration(250L)
             .setInterpolator(DecelerateInterpolator())
+            .start()
+            
+        holder.swipeActionsContainer.animate()
+            .alpha(if (isOpening) 1f else 0f)
+            .setDuration(250L)
+            .setInterpolator(DecelerateInterpolator())
+            .withEndAction {
+                if (!isOpening) {
+                    holder.swipeActionsContainer.visibility = View.INVISIBLE
+                }
+            }
             .start()
     }
 

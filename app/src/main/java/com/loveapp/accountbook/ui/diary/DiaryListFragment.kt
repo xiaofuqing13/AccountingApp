@@ -337,6 +337,9 @@ class DiaryListFragment : Fragment() {
                         if (dragging) {
                             val newTx = (dragStartTx + dx).coerceIn(-maxSwipe(), 0f)
                             holder.cardForeground.translationX = newTx
+                            // 拖动时动态改变透明度
+                            holder.diaryActions.visibility = View.VISIBLE
+                            holder.diaryActions.alpha = abs(newTx) / maxSwipe()
                         }
                     }
 
@@ -431,10 +434,29 @@ class DiaryListFragment : Fragment() {
 
     /** 平滑动画到目标 translationX */
     private fun animateTo(holder: DiaryAdapter.ViewHolder, targetTx: Float) {
+        val maxPx = adapter.getSwipeActionTotalWidthPx().toFloat()
+        val isOpening = targetTx < 0f
+        
+        // 确保动作菜单的显示层级
+        if (isOpening) {
+            holder.diaryActions.visibility = View.VISIBLE
+        }
+        
         holder.cardForeground.animate()
             .translationX(targetTx)
             .setDuration(250L)
             .setInterpolator(DecelerateInterpolator())
+            .start()
+            
+        holder.diaryActions.animate()
+            .alpha(if (isOpening) 1f else 0f)
+            .setDuration(250L)
+            .setInterpolator(DecelerateInterpolator())
+            .withEndAction {
+                if (!isOpening) {
+                    holder.diaryActions.visibility = View.INVISIBLE
+                }
+            }
             .start()
     }
 

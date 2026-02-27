@@ -1,19 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="108dp"
-    android:height="108dp"
-    android:viewportWidth="108"
-    android:viewportHeight="108">
-    <!-- 外圈渐变圆 -->
-    <path
-        android:fillColor="#FFB6C1"
-        android:pathData="M54,10 C78.3,10 98,29.7 98,54 C98,78.3 78.3,98 54,98 C29.7,98 10,78.3 10,54 C10,29.7 29.7,10 54,10Z" />
-    <!-- 内圈高光 -->
-    <path
-        android:fillColor="#FFC4D4"
-        android:pathData="M54,16 C74.9,16 92,33.1 92,54 C92,74.9 74.9,92 54,92 C33.1,92 16,74.9 16,54 C16,33.1 33.1,16 54,16Z" />
-    <!-- 爱心图标 -->
+    android:width="96dp"
+    android:height="96dp"
+    android:viewportWidth="96"
+    android:viewportHeight="96">
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M54,76L48.2,70.6C30.4,54.6 18,43.4 18,30C18,19 26.6,11 37,11C43.2,11 49.2,14 54,19.2C58.8,14 64.8,11 71,11C81.4,11 90,19 90,30C90,43.4 77.6,54.6 59.8,70.6L54,76Z" />
+        android:pathData="M48,78L41.2,71.8C20.4,53.2 6,40 6,24C6,11.2 16.2,2 28,2C35.4,2 42.4,5.6 48,11.6C53.6,5.6 60.6,2 68,2C79.8,2 90,11.2 90,24C90,40 75.6,53.2 54.8,71.8L48,78Z" />
 </vector>
