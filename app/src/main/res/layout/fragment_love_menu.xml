@@ -3,15 +3,16 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/pink_bg"
+    android:background="@drawable/bg_gradient_pink"
     android:orientation="vertical">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@drawable/bg_love_menu_header"
         android:gravity="center_vertical"
-        android:padding="@dimen/page_margin">
+        android:paddingTop="36dp"
+        android:paddingHorizontal="@dimen/page_margin"
+        android:paddingBottom="12dp">
         <ImageButton
             android:id="@+id/btn_back"
             android:layout_width="wrap_content"
@@ -19,13 +20,14 @@
             android:background="?android:attr/selectableItemBackgroundBorderless"
             android:padding="4dp"
             android:src="@drawable/ic_arrow_back"
-            app:tint="@color/text_white" />
+            app:tint="@color/text_primary" />
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
             android:text="情话小屋"
-            android:textColor="@color/text_white"
-            android:textSize="@dimen/title_size"
+            android:textColor="@color/text_primary"
+            android:textSize="22sp"
             android:textStyle="bold" />
     </LinearLayout>
 
@@ -43,13 +45,13 @@
                 android:id="@+id/card_daily"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardCornerRadius="@dimen/radius_lg"
-                app:cardElevation="@dimen/card_elevation_love">
+                app:cardBackgroundColor="@color/white_alpha_ee"
+                app:cardCornerRadius="@dimen/card_radius_unified"
+                app:cardElevation="0dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:background="@drawable/bg_love_daily_card"
                     android:gravity="center"
                     android:orientation="vertical"
                     android:paddingHorizontal="24dp"
@@ -59,7 +61,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="今日情话"
-                        android:textColor="@color/text_white"
+                        android:textColor="@color/pink_primary"
                         android:textSize="13sp"
                         android:textStyle="bold" />
 
@@ -69,14 +71,14 @@
                         android:layout_height="40dp"
                         android:layout_marginTop="10dp"
                         android:src="@drawable/ic_love_heart"
-                        app:tint="@color/text_white" />
+                        app:tint="@color/pink_soft" />
 
                     <TextView
                         android:id="@+id/tv_daily_title"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:textColor="@color/text_white"
+                        android:textColor="@color/text_primary"
                         android:textSize="18sp"
                         android:textStyle="bold" />
 
@@ -87,7 +89,7 @@
                         android:layout_marginTop="10dp"
                         android:gravity="center"
                         android:lineSpacingMultiplier="1.6"
-                        android:textColor="@color/white_alpha_ee"
+                        android:textColor="@color/text_secondary"
                         android:textSize="14sp" />
 
                     <TextView
@@ -95,7 +97,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="16dp"
-                        android:background="@drawable/bg_button_love"
+                        android:background="@drawable/bg_tag_chip"
                         android:paddingHorizontal="32dp"
                         android:paddingVertical="10dp"
                         android:text="换一句"

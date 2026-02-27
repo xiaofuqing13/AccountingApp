@@ -3,16 +3,17 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/pink_bg">
+    android:background="@drawable/bg_gradient_pink">
 
     <!-- 顶部标题栏 -->
     <LinearLayout
         android:id="@+id/header"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:background="@drawable/bg_page_header"
         android:gravity="center_vertical"
-        android:padding="@dimen/page_margin"
+        android:paddingTop="36dp"
+        android:paddingHorizontal="@dimen/page_margin"
+        android:paddingBottom="12dp"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
@@ -21,8 +22,8 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="@string/diary_title"
-            android:textColor="@color/text_white"
-            android:textSize="@dimen/title_size"
+            android:textColor="@color/text_primary"
+            android:textSize="28sp"
             android:textStyle="bold" />
     </LinearLayout>
 
@@ -113,11 +114,13 @@
         android:id="@+id/fab_add"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_margin="@dimen/page_margin"
+        android:layout_marginEnd="@dimen/page_margin"
+        android:layout_marginBottom="32dp"
         android:src="@drawable/ic_add"
         android:backgroundTint="@color/pink_primary"
         app:tint="@color/text_white"
-        app:elevation="6dp"
+        app:elevation="8dp"
+        app:borderWidth="0dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 

@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/pink_bg"
+    android:background="@drawable/bg_gradient_pink"
     android:fillViewport="true">
 
     <LinearLayout
@@ -15,15 +15,16 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@drawable/bg_gradient_pink"
-            android:padding="@dimen/page_margin">
+            android:paddingTop="36dp"
+            android:paddingHorizontal="@dimen/page_margin"
+            android:paddingBottom="12dp">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="功能设置"
-                android:textColor="@color/text_white"
-                android:textSize="@dimen/title_size"
+                android:textColor="@color/text_primary"
+                android:textSize="22sp"
                 android:textStyle="bold" />
         </LinearLayout>
 

@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/pink_bg"
+    android:background="@drawable/bg_gradient_pink"
     android:fillViewport="true">
 
     <LinearLayout
@@ -14,28 +14,30 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@color/pink_primary"
             android:gravity="center_vertical"
-            android:padding="@dimen/page_margin">
-            <ImageButton android:id="@+id/btn_back" android:layout_width="wrap_content" android:layout_height="wrap_content" android:src="@drawable/ic_arrow_back" android:background="?android:attr/selectableItemBackgroundBorderless" app:tint="@color/text_white" android:padding="4dp" />
-            <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/meeting_add" android:textColor="@color/text_white" android:textSize="@dimen/title_size" android:textStyle="bold" android:layout_marginStart="16dp" />
+            android:paddingTop="36dp"
+            android:paddingHorizontal="@dimen/page_margin"
+            android:paddingBottom="12dp">
+            <ImageButton android:id="@+id/btn_back" android:layout_width="wrap_content" android:layout_height="wrap_content" android:src="@drawable/ic_arrow_back" android:background="?android:attr/selectableItemBackgroundBorderless" app:tint="@color/text_primary" android:padding="4dp" />
+            <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/meeting_add" android:textColor="@color/text_primary" android:textSize="22sp" android:textStyle="bold" android:layout_marginStart="16dp" />
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_save"
                 style="@style/Widget.Material3.Button.TextButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/meeting_save"
-                android:textColor="@color/text_white" />
+                android:textColor="@color/pink_primary" />
         </LinearLayout>
 
-        <androidx.cardview.widget.CardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="12dp"
-            android:layout_marginTop="12dp"
-            app:cardCornerRadius="@dimen/card_radius_unified"
-            app:cardElevation="@dimen/card_elevation_unified"
-            app:cardBackgroundColor="@color/pink_card">
+            <!-- 卡片 1 -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="12dp"
+                android:layout_marginTop="12dp"
+                app:cardCornerRadius="@dimen/card_radius_unified"
+                app:cardElevation="0dp"
+                app:cardBackgroundColor="@color/white_alpha_ee">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -97,15 +99,16 @@
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
-        <androidx.cardview.widget.CardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="12dp"
-            android:layout_marginTop="12dp"
-            android:layout_marginBottom="24dp"
-            app:cardCornerRadius="@dimen/card_radius_unified"
-            app:cardElevation="@dimen/card_elevation_unified"
-            app:cardBackgroundColor="@color/pink_card">
+            <!-- 卡片 2 -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="12dp"
+                android:layout_marginTop="12dp"
+                android:layout_marginBottom="24dp"
+                app:cardCornerRadius="@dimen/card_radius_unified"
+                app:cardElevation="0dp"
+                app:cardBackgroundColor="@color/white_alpha_ee">
 
             <LinearLayout
                 android:layout_width="match_parent"
