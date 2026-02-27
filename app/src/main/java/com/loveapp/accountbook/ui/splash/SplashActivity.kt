@@ -32,18 +32,18 @@ class SplashActivity : AppCompatActivity() {
     }
 
     private fun startIntroAnimation() {
-        // 主体发光爱心 缩放弹入
-        val mainIcon = findViewById<View>(R.id.iv_main_icon)
-        mainIcon.scaleX = 0f
-        mainIcon.scaleY = 0f
-        mainIcon.alpha = 0f
-        mainIcon.animate()
+        // Logo holder 缩放弹入
+        val logoHolder = findViewById<View>(R.id.logo_holder)
+        logoHolder.scaleX = 0f
+        logoHolder.scaleY = 0f
+        logoHolder.alpha = 0f
+        logoHolder.animate()
             .alpha(1f)
             .scaleX(1f)
             .scaleY(1f)
-            .setDuration(600L)
-            .setInterpolator(OvershootInterpolator(1.2f))
-            .withEndAction { startHeartbeatAnimation(mainIcon) }
+            .setDuration(500L)
+            .setInterpolator(OvershootInterpolator(1.5f))
+            .withEndAction { startHeartbeatAnimation(logoHolder) }
             .start()
 
         // 应用名称滑入
