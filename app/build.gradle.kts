@@ -10,8 +10,8 @@ android {
         applicationId = "com.loveapp.accountbook"
         minSdk = 26
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 2
+        versionName = "1.0.1"
     }
 
     buildTypes {
@@ -48,6 +48,7 @@ kotlin {
 dependencies {
     // AndroidX Core
     implementation("androidx.core:core-ktx:1.12.0")
+    implementation("androidx.core:core-splashscreen:1.0.1")
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation("androidx.recyclerview:recyclerview:1.3.2")
@@ -78,12 +79,6 @@ dependencies {
     // Google Play Services Location
     implementation("com.google.android.gms:play-services-location:21.0.1")
 
-    // Emoji2 Bundled
-    implementation("androidx.emoji2:emoji2:1.4.0")
-    implementation("androidx.emoji2:emoji2-views:1.4.0")
-    implementation("androidx.emoji2:emoji2-views-helper:1.4.0")
-    implementation("androidx.emoji2:emoji2-bundled:1.4.0")
-    implementation("com.vanniktech:emoji-google:0.23.0")
 }
 
 

@@ -30,19 +30,32 @@ class LoveLetterFragment : Fragment() {
             "${DateUtils.todayDisplay()} · 我们在一起的第${days}天"
 
         // 承诺卡片
+        data class Promise(val text: String, val iconRes: Int)
         val promises = listOf(
-            "每天说晚安 🌙", "永远站你这边 🛡️", "记得每个纪念日 📅",
-            "不让你一个人淋雨 🌂", "做你最温暖的依靠 🤗", "生气了先道歉 🙇",
-            "存钱带你去旅行 ✈️", "给你做一辈子的饭 🍳",
-            "永远觉得你最好看 👸", "你的快乐我来守护 💪",
-            "陪你看遍世界的日落 🌅", "每天至少说三次我爱你 💕",
-            "你冷的时候把外套给你 🧥", "永远记得你爱吃什么 🍰",
-            "吵架了绝不冷战 🤝", "把最后一口留给你 🍦"
+            Promise("每天说晚安", R.drawable.ic_love_moon),
+            Promise("永远站你这边", R.drawable.ic_promise),
+            Promise("记得每个纪念日", R.drawable.ic_love_ring),
+            Promise("不让你一个人淋雨", R.drawable.ic_love_rain),
+            Promise("做你最温暖的依靠", R.drawable.ic_love_hands),
+            Promise("生气了先道歉", R.drawable.ic_love_heart),
+            Promise("存钱带你去旅行", R.drawable.ic_love_wave),
+            Promise("给你做一辈子的饭", R.drawable.ic_love_cooking),
+            Promise("永远觉得你最好看", R.drawable.ic_love_star),
+            Promise("你的快乐我来守护", R.drawable.ic_love_sparkle),
+            Promise("陪你看遍世界的日落", R.drawable.ic_love_sun),
+            Promise("每天至少说三次我爱你", R.drawable.ic_love_heart),
+            Promise("你冷的时候把外套给你", R.drawable.ic_love_scarf),
+            Promise("永远记得你爱吃什么", R.drawable.ic_love_cake),
+            Promise("吵架了绝不冷战", R.drawable.ic_love_rainbow),
+            Promise("把最后一口留给你", R.drawable.ic_love_icecream)
         )
         val chipGroup = view.findViewById<ChipGroup>(R.id.chip_promises)
         promises.forEach { promise ->
             val chip = Chip(requireContext()).apply {
-                text = promise
+                text = promise.text
+                chipIcon = ContextCompat.getDrawable(requireContext(), promise.iconRes)
+                isChipIconVisible = true
+                chipIconTint = android.content.res.ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.pink_primary))
                 isClickable = true
                 setChipBackgroundColorResource(R.color.pink_card)
                 setChipStrokeColorResource(R.color.pink_soft)

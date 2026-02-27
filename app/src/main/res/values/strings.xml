@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">我们的小账本</string>
+    <string name="app_name">顾爱丁</string>
     <string name="app_desc">记录和你在一起的每一天</string>
 
     <!-- 底部导航 -->
@@ -29,6 +29,7 @@
     <string name="diary_title_hint">输入标题…</string>
     <string name="diary_content_hint">开始写日记…</string>
     <string name="diary_save">保存</string>
+    <string name="diary_edit">编辑日记</string>
 
     <!-- 会议 -->
     <string name="meeting_title">会议纪要</string>
@@ -55,7 +56,7 @@
     <string name="settings_theme_pink">默认粉</string>
 
     <!-- 情书 -->
-    <string name="love_letter_title">💌 给你的一封信</string>
+    <string name="love_letter_title">给你的一封信</string>
     <string name="love_letter_body">\n\t\t写这封信的时候，我坐在电脑前，屏幕上满是粉色的代码，每一行都在说\"我喜欢你\"。\n\n\t\t你知道吗，喜欢一个人的感觉就是：看到好笑的事情想跟你分享，吃到好吃的东西想带你去，听到好听的歌觉得歌词写的就是我们。\n\n\t\t谢谢你愿意出现在我的生命里，让平淡的日子都变得有期待。每天最开心的事，就是知道这个世界上有你在想着我。\n\n\t\t我不太会说漂亮话，所以我把想对你说的都写进了这个APP里。你看到的每一个粉色，都是我心里你的颜色。你发现的每一个小彩蛋，都是我偷偷藏给你的小惊喜。\n\n\t\t未来的日子里，我想和你一起记每一笔账（你花的都算我的），写每一篇日记（主角永远是你），开每一场\"两个人的会议\"（议题只有一个：今天去哪吃）。\n\n\t\t余生很长，我想一直牵着你的手走下去。</string>
 
     <!-- 通用 -->
@@ -63,9 +64,9 @@
     <string name="btn_start">开始使用</string>
     <string name="btn_back">返回</string>
     <!-- 情话菜单 -->
-    <string name="love_menu_title">💕 情话小屋</string>
+    <string name="love_menu_title">情话小屋</string>
     <string name="love_menu_daily">今日情话</string>
-    <string name="love_menu_random">换一句 💫</string>
+    <string name="love_menu_random">换一句</string>
     <string name="love_menu_all">全部情话</string>
     <string name="love_menu_category_daily">日常甜蜜</string>
     <string name="love_menu_category_season">四季情话</string>
@@ -73,16 +74,16 @@
     <string name="love_menu_category_travel">浪漫时刻</string>
     <string name="love_menu_category_future">未来畅想</string>
     <string name="love_menu_category_all">全部情话</string>
-    <string name="love_menu_copy_success">已复制到剪贴板 💕</string>
+    <string name="love_menu_copy_success">已复制到剪贴板</string>
 
     <!-- 空状态 -->
-    <string name="empty_account">还没有记账记录哦~\n点击 + 开始记录吧 💰</string>
-    <string name="empty_diary">还没有日记哦~\n记录今天的心情吧 📝</string>
-    <string name="empty_meeting">还没有会议记录哦~\n开始记录吧 🗓️</string>
+    <string name="empty_account">还没有记账记录哦~\n点击 + 开始记录吧</string>
+    <string name="empty_diary">还没有日记哦~\n记录今天的心情吧</string>
+    <string name="empty_meeting">还没有会议记录哦~\n开始记录吧</string>
 
     <!-- 设置页新增 -->
     <string name="settings_love_menu">情话小屋</string>
-    <string name="footer_text">用爱编写 ❤️</string>
+    <string name="footer_text">用爱编写</string>
     <string name="love_share">分享</string>
     <string name="love_copy">复制</string>
 </resources>

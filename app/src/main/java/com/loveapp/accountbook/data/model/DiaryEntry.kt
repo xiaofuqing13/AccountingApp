@@ -7,5 +7,6 @@ data class DiaryEntry(
     val weather: String = "",
     val mood: String = "",
     val location: String = "",
+    val tags: String = "",
     val rowIndex: Int = -1
 )

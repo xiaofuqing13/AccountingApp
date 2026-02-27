@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/pink_bg"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_gradient_pink"
+        android:gravity="center_vertical"
+        android:padding="@dimen/page_margin">
+        <ImageButton android:id="@+id/btn_back" android:layout_width="wrap_content" android:layout_height="wrap_content" android:src="@drawable/ic_arrow_back" android:background="?android:attr/selectableItemBackgroundBorderless" app:tint="@color/text_white" android:padding="4dp" />
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/account_stats" android:textColor="@color/text_white" android:textSize="@dimen/title_size" android:textStyle="bold" />
+    </LinearLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="@dimen/page_margin">
+
+            <!-- 日期筛选 -->
+            <HorizontalScrollView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:scrollbars="none"
+                android:layout_marginBottom="4dp">
+                <com.google.android.material.chip.ChipGroup
+                    android:id="@+id/chip_group_date_filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:chipSpacingHorizontal="8dp" />
+            </HorizontalScrollView>
+
+            <TextView
+                android:id="@+id/tv_date_range"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/text_hint"
+                android:textSize="12sp"
+                android:layout_marginBottom="12dp" />
+
+            <!-- 总览卡片 -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="@dimen/card_radius_featured"
+                app:cardElevation="@dimen/card_elevation_featured">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:padding="20dp">
+
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:orientation="vertical">
+                        <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/ic_expense" app:tint="@color/pink_primary" />
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="总支出" android:textColor="@color/text_hint" android:textSize="@dimen/caption_size" android:layout_marginTop="4dp" />
+                        <TextView android:id="@+id/tv_total_expense" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="¥0" android:textColor="@color/expense_pink" android:textSize="22sp" android:textStyle="bold" android:layout_marginTop="2dp" />
+                    </LinearLayout>
+
+                    <View android:layout_width="1dp" android:layout_height="match_parent" android:background="@color/divider" android:layout_marginVertical="8dp" />
+
+                    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:orientation="vertical">
+                        <ImageView android:layout_width="24dp" android:layout_height="24dp" android:src="@drawable/ic_stats" app:tint="@color/pink_primary" />
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="日均" android:textColor="@color/text_hint" android:textSize="@dimen/caption_size" android:layout_marginTop="4dp" />
+                        <TextView android:id="@+id/tv_daily_avg" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="¥0" android:textColor="@color/text_primary" android:textSize="22sp" android:textStyle="bold" android:layout_marginTop="2dp" />
+                    </LinearLayout>
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- 分类排行标题 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:paddingTop="20dp"
+                android:paddingBottom="8dp">
+                <View android:layout_width="3dp" android:layout_height="16dp" android:background="@color/pink_primary" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="支出分类排行"
+                    android:textColor="@color/text_primary"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rv_category_stats"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nestedScrollingEnabled="false" />
+
+            <View android:layout_width="1dp" android:layout_height="20dp" />
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

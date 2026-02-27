@@ -1,0 +1,51 @@
+<svg width="108" height="108" viewBox="0 0 108 108" fill="none" xmlns="http://www.w3.org/2000/svg">
+<defs>
+    <linearGradient id="tiaraBg" x1="0" y1="0" x2="108" y2="108">
+        <stop offset="0%" stop-color="#FFF0F5"/>
+        <stop offset="50%" stop-color="#FFD1DC"/>
+        <stop offset="100%" stop-color="#DDA0DD"/>
+    </linearGradient>
+    <filter id="tiaraShadow">
+        <feDropShadow dx="0" dy="6" stdDeviation="5" flood-color="#8B008B" flood-opacity="0.3"/>
+    </filter>
+    <linearGradient id="gold" x1="24" y1="30" x2="84" y2="80">
+        <stop offset="0%" stop-color="#FFDF73"/>
+        <stop offset="30%" stop-color="#FFF3B0"/>
+        <stop offset="70%" stop-color="#FFC04C"/>
+        <stop offset="100%" stop-color="#FFA500"/>
+    </linearGradient>
+</defs>
+
+<rect width="108" height="108" fill="url(#tiaraBg)"/>
+
+<g filter="url(#tiaraShadow)">
+    <path d="M22 68 Q54 82 86 68 L82 58 Q54 70 26 58 Z" fill="url(#gold)"/>
+    
+    <path d="M54 24 L66 52 Q54 62 42 52 Z" fill="url(#gold)"/>
+    <path d="M30 34 L44 54 Q36 60 26 56 Z" fill="url(#gold)"/>
+    <path d="M78 34 L64 54 Q72 60 82 56 Z" fill="url(#gold)"/>
+    <path d="M16 48 L28 60 Q20 64 14 62 Z" fill="url(#gold)"/>
+    <path d="M92 48 L80 60 Q88 64 94 62 Z" fill="url(#gold)"/>
+</g>
+
+<!-- Gems Base Set -->
+<path d="M54 42 C 54 42 46 34 38 42 C 38 52 54 62 54 62 C 54 62 70 52 70 42 C 62 34 54 42 54 42 Z" fill="#FF1493"/>
+<path d="M48 42 C 50 40 54 42 54 42 C 54 42 48 40 48 42 Z" fill="#FFFFFF"/>
+
+<polygon points="36,46 40,50 36,54 32,50" fill="#00FFFF"/>
+<polygon points="72,46 76,50 72,54 68,50" fill="#00FFFF"/>
+
+<circle cx="34" cy="63" r="3" fill="#FFFFFF"/>
+<circle cx="44" cy="66" r="3.5" fill="#FFFFFF"/>
+<circle cx="54" cy="67" r="4" fill="#FFFFFF"/>
+<circle cx="64" cy="66" r="3.5" fill="#FFFFFF"/>
+<circle cx="74" cy="63" r="3" fill="#FFFFFF"/>
+
+<!-- Tips -->
+<circle cx="54" cy="20" r="5" fill="#FFFFFF"/>
+<circle cx="54" cy="20" r="2.5" fill="#FFB6C1"/>
+<circle cx="28" cy="30" r="4" fill="#FFFFFF"/>
+<circle cx="80" cy="30" r="4" fill="#FFFFFF"/>
+<circle cx="14" cy="44" r="3" fill="#FFFFFF"/>
+<circle cx="94" cy="44" r="3" fill="#FFFFFF"/>
+</svg>

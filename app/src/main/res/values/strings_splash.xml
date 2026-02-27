@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="splash_title">我们的小账本</string>
+    <string name="splash_desc">记录和你在一起的每一天</string>
+    <string name="splash_enter">进入小账本</string>
+    <string name="splash_footer">记录日常 · 收藏心动 · 一起成长</string>
+</resources>

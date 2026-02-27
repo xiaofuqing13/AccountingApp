@@ -2,23 +2,57 @@
 <resources>
     <style name="Theme.AccountBook" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="colorPrimary">@color/pink_primary</item>
-        <item name="colorPrimaryContainer">@color/pink_soft</item>
         <item name="colorOnPrimary">@color/text_white</item>
+        <item name="colorPrimaryContainer">@color/pink_light</item>
+        <item name="colorOnPrimaryContainer">@color/text_primary</item>
         <item name="colorSecondary">@color/lavender</item>
-        <item name="colorSecondaryContainer">@color/pink_bg</item>
+        <item name="colorOnSecondary">@color/text_white</item>
+        <item name="colorSecondaryContainer">@color/pink_soft</item>
         <item name="colorSurface">@color/pink_surface</item>
         <item name="colorSurfaceVariant">@color/pink_bg</item>
+        <item name="colorOnSurface">@color/text_primary</item>
+        <item name="colorOnSurfaceVariant">@color/text_secondary</item>
         <item name="android:colorBackground">@color/pink_bg</item>
         <item name="colorOnBackground">@color/text_primary</item>
-        <item name="colorOnSurface">@color/text_primary</item>
+        
+        <!-- Shape appearance for cards and dialogs -->
+        <item name="shapeAppearanceMediumComponent">@style/ShapeAppearance.App.MediumComponent</item>
+        <item name="shapeAppearanceLargeComponent">@style/ShapeAppearance.App.LargeComponent</item>
+
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@color/pink_bg</item>
-        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
+
+    <style name="ShapeAppearance.App.MediumComponent" parent="ShapeAppearance.Material3.MediumComponent">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">24dp</item>
+    </style>
+
+    <style name="ShapeAppearance.App.LargeComponent" parent="ShapeAppearance.Material3.LargeComponent">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">32dp</item>
+    </style>
+
+    <style name="BottomSheetDialogTheme" parent="ThemeOverlay.Material3.BottomSheetDialog">
+        <item name="bottomSheetStyle">@style/BottomSheetStyle</item>
+        <item name="android:windowIsFloating">false</item>
+        <item name="android:windowSoftInputMode">adjustResize</item>
+    </style>
+
+    <style name="BottomSheetStyle" parent="Widget.Material3.BottomSheet">
+        <item name="shapeAppearanceOverlay">@style/BottomSheetShapeAppearance</item>
+        <item name="backgroundTint">@android:color/transparent</item>
+    </style>
+
+    <style name="BottomSheetShapeAppearance" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSizeTopLeft">32dp</item>
+        <item name="cornerSizeTopRight">32dp</item>
     </style>
 
     <style name="Theme.AccountBook.Splash" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="android:windowBackground">@drawable/bg_gradient_pink</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
-        <item name="android:windowTranslucentStatus">true</item>
-        <item name="android:windowTranslucentNavigation">true</item>
+        <item name="android:navigationBarColor">@color/pink_bg</item>
     </style>
 </resources>

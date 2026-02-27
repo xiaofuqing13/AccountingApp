@@ -1,0 +1,27 @@
+<svg width="108" height="108" viewBox="0 0 108 108" fill="none" xmlns="http://www.w3.org/2000/svg">
+<defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="108" y2="108" gradientUnits="userSpaceOnUse">
+        <stop offset="0%" stop-color="#FFDAE3"/>
+        <stop offset="50%" stop-color="#FFA6C0"/>
+        <stop offset="100%" stop-color="#D4BBE6"/>
+    </linearGradient>
+    <linearGradient id="glass" x1="20" y1="20" x2="88" y2="88" gradientUnits="userSpaceOnUse">
+        <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.8"/>
+        <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0.2"/>
+    </linearGradient>
+    <filter id="shadow" x="15" y="15" width="80" height="80" filterUnits="userSpaceOnUse">
+        <feGaussianBlur stdDeviation="3" result="blur"/>
+        <feOffset dy="4"/>
+        <feColorMatrix type="matrix" values="0 0 0 0 0.8  0 0 0 0 0.6  0 0 0 0 0.7  0 0 0 0.4 0"/>
+        <feBlend in="SourceGraphic" in2="blurOut" mode="normal"/>
+    </filter>
+</defs>
+<rect width="108" height="108" fill="url(#bg)"/>
+
+<rect x="24" y="24" width="60" height="60" rx="16" fill="url(#glass)" stroke="#FFFFFF" stroke-width="2" filter="url(#shadow)"/>
+<path d="M54 44 C54 44 46 36 38 44 C30 52 38 64 54 74 C70 64 78 52 70 44 C62 36 54 44 54 44 Z" fill="#FFA6C0" stroke="#FFFFFF" stroke-width="2"/>
+<path d="M72 32 L74 38 L80 40 L74 42 L72 48 L70 42 L64 40 L70 38 Z" fill="#FFFFFF"/>
+<path d="M36 68 L37 72 L41 73 L37 74 L36 78 L35 74 L31 73 L35 72 Z" fill="#FFFFFF"/>
+<circle cx="28" cy="30" r="2" fill="#FFFFFF"/>
+<circle cx="80" cy="74" r="1.5" fill="#FFFFFF"/>
+</svg>

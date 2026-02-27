@@ -1,5 +1,6 @@
 package com.loveapp.accountbook.ui.home
 
+import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -8,13 +9,19 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.Toast
+import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.loveapp.accountbook.R
+import com.loveapp.accountbook.data.repository.ExcelRepository
 import com.loveapp.accountbook.util.DateUtils
 import com.loveapp.accountbook.util.EasterEggManager
 import com.loveapp.accountbook.util.LoveWord
+import kotlinx.coroutines.launch
+import java.io.File
 
 class HomeFragment : Fragment() {
 
@@ -82,12 +89,26 @@ class HomeFragment : Fragment() {
             findNavController().navigate(R.id.action_home_to_account_stats)
         }
         view.findViewById<View>(R.id.btn_quick_export).setOnClickListener {
-            val repo = com.loveapp.accountbook.data.repository.ExcelRepository(requireContext())
-            android.widget.Toast.makeText(
-                requireContext(),
-                "文件位置: ${repo.getExcelFilePath()}",
-                android.widget.Toast.LENGTH_LONG
-            ).show()
+            lifecycleScope.launch {
+                try {
+                    val repo = ExcelRepository(requireContext())
+                    val cacheFile = File(requireContext().cacheDir, "分享_我们的小账本.xlsx")
+                    cacheFile.outputStream().use { repo.exportShareable(it) }
+                    val uri = FileProvider.getUriForFile(
+                        requireContext(),
+                        "${requireContext().packageName}.fileprovider",
+                        cacheFile
+                    )
+                    val intent = Intent(Intent.ACTION_SEND).apply {
+                        type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                        putExtra(Intent.EXTRA_STREAM, uri)
+                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    }
+                    startActivity(Intent.createChooser(intent, "分享数据"))
+                } catch (e: Exception) {
+                    Toast.makeText(requireContext(), "分享失败", Toast.LENGTH_SHORT).show()
+                }
+            }
         }
         view.findViewById<View>(R.id.btn_quick_settings).setOnClickListener {
             requireActivity().findViewById<com.google.android.material.bottomnavigation.BottomNavigationView>(R.id.bottom_nav)

@@ -3,6 +3,7 @@ package com.loveapp.accountbook.util
 import android.content.Context
 import android.media.AudioAttributes
 import android.media.MediaPlayer
+import android.media.audiofx.Visualizer
 import android.view.Gravity
 import android.view.View
 import android.widget.ImageView
@@ -12,6 +13,7 @@ import android.widget.Toast
 import androidx.core.content.ContextCompat
 import coil.load
 import com.loveapp.accountbook.R
+import com.loveapp.accountbook.ui.widget.VoiceWaveView
 import java.util.Locale
 
 object DiaryContentRenderer {
@@ -142,8 +144,10 @@ object DiaryContentRenderer {
         val btnPlayPause = view.findViewById<ImageView>(R.id.btn_play_pause)
         val seekBar = view.findViewById<android.widget.SeekBar>(R.id.seek_bar)
         val tvDuration = view.findViewById<TextView>(R.id.tv_duration)
+        val voiceWave = view.findViewById<VoiceWaveView>(R.id.voice_wave)
 
         var mediaPlayer: MediaPlayer? = null
+        var visualizer: Visualizer? = null
         var playing = false
         val handler = android.os.Handler(android.os.Looper.getMainLooper())
 
@@ -196,6 +200,8 @@ object DiaryContentRenderer {
                         setOnCompletionListener {
                             playing = false
                             btnPlayPause.setImageResource(R.drawable.ic_play)
+                            releaseVisualizer(visualizer); visualizer = null
+                            voiceWave.reset()
                             seekBar.progress = 0
                             tvDuration.text = formatDuration(it.duration)
                             handler.removeCallbacks(updateRunnable)
@@ -205,6 +211,8 @@ object DiaryContentRenderer {
                     }
                     playing = true
                     btnPlayPause.setImageResource(R.drawable.ic_pause)
+                    // 真实音频波形
+                    visualizer = attachVisualizer(mediaPlayer!!, voiceWave)
                     handler.post(updateRunnable)
                 } catch (_: Exception) {
                     Toast.makeText(context, "语音播放失败，请重新录音", Toast.LENGTH_SHORT).show()
@@ -215,10 +223,12 @@ object DiaryContentRenderer {
                 }
             } else {
                 handler.removeCallbacks(updateRunnable)
+                releaseVisualizer(visualizer); visualizer = null
                 mediaPlayer?.release()
                 mediaPlayer = null
                 playing = false
                 btnPlayPause.setImageResource(R.drawable.ic_play)
+                voiceWave.reset()
             }
         }
         btnPlayPause.setOnClickListener { togglePlayPause() }
@@ -236,6 +246,7 @@ object DiaryContentRenderer {
             override fun onViewAttachedToWindow(v: View) {}
             override fun onViewDetachedFromWindow(v: View) {
                 handler.removeCallbacks(updateRunnable)
+                releaseVisualizer(visualizer); visualizer = null
                 mediaPlayer?.release()
                 mediaPlayer = null
                 playing = false
@@ -243,6 +254,37 @@ object DiaryContentRenderer {
         })
 
         return view
+    }
+
+    private fun attachVisualizer(mp: MediaPlayer, waveView: VoiceWaveView): Visualizer? {
+        return try {
+            Visualizer(mp.audioSessionId).apply {
+                captureSize = Visualizer.getCaptureSizeRange()[0]
+                setDataCaptureListener(object : Visualizer.OnDataCaptureListener {
+                    override fun onWaveFormDataCapture(vis: Visualizer?, waveform: ByteArray, samplingRate: Int) {
+                        var sum = 0.0
+                        for (b in waveform) {
+                            val sample = ((b.toInt() and 0xFF) - 128).toDouble()
+                            sum += sample * sample
+                        }
+                        val rms = (kotlin.math.sqrt(sum / waveform.size) / 128.0).toFloat()
+                        waveView.post { waveView.setAmplitude(rms * 3f) }
+                    }
+                    override fun onFftDataCapture(vis: Visualizer?, fft: ByteArray, samplingRate: Int) {}
+                }, Visualizer.getMaxCaptureRate() / 2, true, false)
+                enabled = true
+            }
+        } catch (_: Exception) {
+            waveView.startPlayingAnimation()
+            null
+        }
+    }
+
+    private fun releaseVisualizer(vis: Visualizer?) {
+        try {
+            vis?.enabled = false
+            vis?.release()
+        } catch (_: Exception) {}
     }
 
     private fun formatDuration(ms: Int): String {

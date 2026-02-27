@@ -121,16 +121,19 @@ class DiaryAdapter(
             holder.tvLocationTag.visibility = View.GONE
         }
 
-        // 滑动状态视觉同步 - 与会议模块完全一致
-        if (position == swipeOpenPosition) {
-            holder.cardForeground.translationX = -getSwipeActionTotalWidthPx().toFloat()
-            holder.cardForeground.scaleX = 0.96f
-            holder.cardForeground.scaleY = 0.96f
+        // 标签
+        if (item.tags.isNotEmpty()) {
+            holder.tvTags.text = item.tags.split(",").joinToString(" ") { "#$it" }
+            holder.tvTags.visibility = View.VISIBLE
         } else {
-            holder.cardForeground.translationX = 0f
-            holder.cardForeground.scaleX = 1f
-            holder.cardForeground.scaleY = 1f
+            holder.tvTags.visibility = View.GONE
         }
+
+        // 滑动状态视觉同步
+        holder.cardForeground.translationX = if (position == swipeOpenPosition)
+            -getSwipeActionTotalWidthPx().toFloat() else 0f
+        holder.cardForeground.scaleX = 1f
+        holder.cardForeground.scaleY = 1f
 
         // 点击监听器 - 与会议模块完全一致
         holder.cardForeground.setOnClickListener { onItemClick?.invoke(item, position) }
@@ -153,5 +156,6 @@ class DiaryAdapter(
         val tvPreview: TextView = view.findViewById(R.id.tv_preview)
         val ivMood: ImageView = view.findViewById(R.id.iv_mood)
         val tvLocationTag: TextView = view.findViewById(R.id.tv_location_tag)
+        val tvTags: TextView = view.findViewById(R.id.tv_tags)
     }
 }
