@@ -32,8 +32,8 @@ class ExcelRepository(private val context: Context) {
                 if (!dir.exists()) dir.mkdirs()
                 dir
             } catch (_: SecurityException) {
-                // 没有 MANAGE_EXTERNAL_STORAGE 权限时可能抛出异常
-                // 返回一个不可写的目录，调用方会检测 canWrite() 后走 fallback
+                // 无 MANAGE_EXTERNAL_STORAGE 权限时 mkdirs() 可能抛异常
+                // 返回一个无法写入的目录对象，让 getFile() 的 canWrite() 检查自然 fallback
                 File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS), "我们的小账本")
             }
         }

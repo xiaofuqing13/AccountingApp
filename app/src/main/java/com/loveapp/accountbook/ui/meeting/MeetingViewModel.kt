@@ -28,30 +28,40 @@ class MeetingViewModel(application: Application) : AndroidViewModel(application)
 
     fun addMeeting(entry: MeetingEntry) {
         viewModelScope.launch {
-            repo.addMeeting(entry)
-            loadMeetings()
+            try {
+                repo.addMeeting(entry)
+                loadMeetings()
+            } catch (_: Exception) { }
         }
     }
 
     fun deleteMeeting(entry: MeetingEntry) {
         viewModelScope.launch {
-            repo.deleteMeeting(entry)
-            loadMeetings()
+            try {
+                repo.deleteMeeting(entry)
+                loadMeetings()
+            } catch (_: Exception) { }
         }
     }
 
     fun updateMeeting(entry: MeetingEntry) {
         viewModelScope.launch {
-            repo.updateMeeting(entry)
-            loadMeetings()
+            try {
+                repo.updateMeeting(entry)
+                loadMeetings()
+            } catch (_: Exception) { }
         }
     }
 
     fun searchMeetings(keyword: String) {
         viewModelScope.launch {
-            val all = repo.getMeetings()
-            _meetings.value = if (keyword.isBlank()) all
-            else all.filter { it.topic.contains(keyword) || it.content.contains(keyword) || it.attendees.contains(keyword) }
+            try {
+                val all = repo.getMeetings()
+                _meetings.value = if (keyword.isBlank()) all
+                else all.filter { it.topic.contains(keyword) || it.content.contains(keyword) || it.attendees.contains(keyword) }
+            } catch (_: Exception) {
+                _meetings.value = emptyList()
+            }
         }
     }
 }

@@ -40,9 +40,6 @@ class AccountViewModel(application: Application) : AndroidViewModel(application)
                 _balance.value = (_totalIncome.value ?: 0.0) - (_totalExpense.value ?: 0.0)
             } catch (_: Exception) {
                 _accounts.value = emptyList()
-                _totalIncome.value = 0.0
-                _totalExpense.value = 0.0
-                _balance.value = 0.0
             }
         }
     }
@@ -59,42 +56,56 @@ class AccountViewModel(application: Application) : AndroidViewModel(application)
 
     fun addAccount(entry: AccountEntry) {
         viewModelScope.launch {
-            repo.addAccount(entry)
-            loadAccounts()
+            try {
+                repo.addAccount(entry)
+                loadAccounts()
+            } catch (_: Exception) { }
         }
     }
 
     fun deleteAccount(entry: AccountEntry) {
         viewModelScope.launch {
-            repo.deleteAccount(entry)
-            loadAccounts()
+            try {
+                repo.deleteAccount(entry)
+                loadAccounts()
+            } catch (_: Exception) { }
         }
     }
 
     fun updateAccount(entry: AccountEntry) {
         viewModelScope.launch {
-            repo.updateAccount(entry)
-            loadAccounts()
+            try {
+                repo.updateAccount(entry)
+                loadAccounts()
+            } catch (_: Exception) { }
         }
     }
 
     fun searchAccounts(keyword: String) {
         viewModelScope.launch {
-            val month = _currentMonth.value ?: return@launch
-            val list = repo.getAccountsByMonth(month)
-            _accounts.value = if (keyword.isBlank()) list
-            else list.filter { it.category.contains(keyword) || it.note.contains(keyword) }
+            try {
+                val month = _currentMonth.value ?: return@launch
+                val list = repo.getAccountsByMonth(month)
+                _accounts.value = if (keyword.isBlank()) list
+                else list.filter { it.category.contains(keyword) || it.note.contains(keyword) }
+            } catch (_: Exception) {
+                _accounts.value = emptyList()
+            }
         }
     }
 
     fun loadAccountsByRange(startDate: String, endDate: String) {
         viewModelScope.launch {
-            val all = repo.getAccounts()
-            val filtered = all.filter { it.date >= startDate && it.date <= endDate }
-            _accounts.value = filtered
-            _totalExpense.value = filtered.filter { it.isExpense }.sumOf { it.amount }
-            _totalIncome.value = filtered.filter { it.isIncome }.sumOf { it.amount }
-            _balance.value = (_totalIncome.value ?: 0.0) - (_totalExpense.value ?: 0.0)
+            try {
+                val all = repo.getAccounts()
+                val filtered = all.filter { it.date >= startDate && it.date <= endDate }
+                _accounts.value = filtered
+                _totalExpense.value = filtered.filter { it.isExpense }.sumOf { it.amount }
+                _totalIncome.value = filtered.filter { it.isIncome }.sumOf { it.amount }
+                _balance.value = (_totalIncome.value ?: 0.0) - (_totalExpense.value ?: 0.0)
+            } catch (_: Exception) {
+                _accounts.value = emptyList()
+            }
         }
     }
 

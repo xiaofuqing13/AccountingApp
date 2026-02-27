@@ -37,37 +37,25 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun checkStoragePermission() {
-        try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                if (!Environment.isExternalStorageManager()) {
-                    android.app.AlertDialog.Builder(this)
-                        .setTitle("需要存储权限")
-                        .setMessage("授权后数据将保存在公共目录，更新或重装APP数据不会丢失。\n\n如果拒绝，数据仍可正常使用，但卸载APP后数据会被清除。")
-                        .setPositiveButton("去授权") { _, _ ->
-                            try {
-                                val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION).apply {
-                                    data = Uri.parse("package:$packageName")
-                                }
-                                startActivity(intent)
-                            } catch (_: Exception) {
-                                val intent = Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
-                                startActivity(intent)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            if (!Environment.isExternalStorageManager()) {
+                android.app.AlertDialog.Builder(this)
+                    .setTitle("需要存储权限")
+                    .setMessage("授权后数据将保存在公共目录，更新或重装APP数据不会丢失。\n\n如果拒绝，数据仍可正常使用，但卸载APP后数据会被清除。")
+                    .setPositiveButton("去授权") { _, _ ->
+                        try {
+                            val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION).apply {
+                                data = Uri.parse("package:$packageName")
                             }
+                            startActivity(intent)
+                        } catch (_: Exception) {
+                            val intent = Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
+                            startActivity(intent)
                         }
-                        .setNegativeButton("暂不授权", null)
-                        .show()
-                }
-            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                if (checkSelfPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE)
-                    != android.content.pm.PackageManager.PERMISSION_GRANTED) {
-                    requestPermissions(arrayOf(
-                        android.Manifest.permission.READ_EXTERNAL_STORAGE,
-                        android.Manifest.permission.WRITE_EXTERNAL_STORAGE
-                    ), 1001)
-                }
+                    }
+                    .setNegativeButton("暂不授权", null)
+                    .show()
             }
-        } catch (_: Exception) {
-            // 权限检查本身不应导致崩溃
         }
     }
 }
