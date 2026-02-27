@@ -3,7 +3,7 @@
     <style name="Theme.AccountBook.Splash" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">@color/pink_bg</item>
         <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_brand</item>
-        <item name="windowSplashScreenIconBackgroundColor">@color/pink_soft</item>
+        <item name="windowSplashScreenIconBackgroundColor">@color/pink_bg</item>
         <item name="postSplashScreenTheme">@style/Theme.AccountBook</item>
     </style>
 </resources>
