@@ -1,39 +1,39 @@
 [
     {
-        "merged": "C:\\Users\\Administrator\\.gradle\\daemon\\9.1.0\\com.loveapp.accountbook.app-debug-52:\\drawable_bg_meeting_swipe_actions_surface.xml.flat",
-        "source": "C:\\Users\\Administrator\\.gradle\\daemon\\9.1.0\\com.loveapp.accountbook.app-main-54:\\drawable\\bg_meeting_swipe_actions_surface.xml"
-    },
-    {
         "merged": "C:\\Users\\Administrator\\.gradle\\daemon\\9.1.0\\com.loveapp.accountbook.app-debug-52:\\drawable_ic_love_home.xml.flat",
         "source": "C:\\Users\\Administrator\\.gradle\\daemon\\9.1.0\\com.loveapp.accountbook.app-main-54:\\drawable\\ic_love_home.xml"
     },
     {
-        "merged": "C:\\Users\\Administrator\\.gradle\\daemon\\9.1.0\\com.loveapp.accountbook.app-debug-52:\\drawable_bg_love_daily_card.xml.flat",
-        "source": "C:\\Users\\Administrator\\.gradle\\daemon\\9.1.0\\com.loveapp.accountbook.app-main-54:\\drawable\\bg_love_daily_card.xml"
-    },
-    {
-        "merged": "C:\\Users\\Administrator\\.gradle\\daemon\\9.1.0\\com.loveapp.accountbook.app-debug-52:\\drawable_ic_weather_cloudy.xml.flat",
-        "source": "C:\\Users\\Administrator\\.gradle\\daemon\\9.1.0\\com.loveapp.accountbook.app-main-54:\\drawable\\ic_weather_cloudy.xml"
-    },
-    {
-        "merged": "C:\\Users\\Administrator\\.gradle\\daemon\\9.1.0\\com.loveapp.accountbook.app-debug-52:\\drawable_ic_love_ring.xml.flat",
-        "source": "C:\\Users\\Administrator\\.gradle\\daemon\\9.1.0\\com.loveapp.accountbook.app-main-54:\\drawable\\ic_love_ring.xml"
+        "merged": "C:\\Users\\Administrator\\.gradle\\daemon\\9.1.0\\com.loveapp.accountbook.app-debug-52:\\drawable_bg_meeting_swipe_actions_surface.xml.flat",
+        "source": "C:\\Users\\Administrator\\.gradle\\daemon\\9.1.0\\com.loveapp.accountbook.app-main-54:\\drawable\\bg_meeting_swipe_actions_surface.xml"
     },
     {
         "merged": "C:\\Users\\Administrator\\.gradle\\daemon\\9.1.0\\com.loveapp.accountbook.app-debug-52:\\drawable_ic_cat_clothes.xml.flat",
         "source": "C:\\Users\\Administrator\\.gradle\\daemon\\9.1.0\\com.loveapp.accountbook.app-main-54:\\drawable\\ic_cat_clothes.xml"
     },
     {
+        "merged": "C:\\Users\\Administrator\\.gradle\\daemon\\9.1.0\\com.loveapp.accountbook.app-debug-52:\\drawable_ic_love_ring.xml.flat",
+        "source": "C:\\Users\\Administrator\\.gradle\\daemon\\9.1.0\\com.loveapp.accountbook.app-main-54:\\drawable\\ic_love_ring.xml"
+    },
+    {
+        "merged": "C:\\Users\\Administrator\\.gradle\\daemon\\9.1.0\\com.loveapp.accountbook.app-debug-52:\\drawable_ic_weather_cloudy.xml.flat",
+        "source": "C:\\Users\\Administrator\\.gradle\\daemon\\9.1.0\\com.loveapp.accountbook.app-main-54:\\drawable\\ic_weather_cloudy.xml"
+    },
+    {
+        "merged": "C:\\Users\\Administrator\\.gradle\\daemon\\9.1.0\\com.loveapp.accountbook.app-debug-52:\\drawable_bg_love_daily_card.xml.flat",
+        "source": "C:\\Users\\Administrator\\.gradle\\daemon\\9.1.0\\com.loveapp.accountbook.app-main-54:\\drawable\\bg_love_daily_card.xml"
+    },
+    {
         "merged": "C:\\Users\\Administrator\\.gradle\\daemon\\9.1.0\\com.loveapp.accountbook.app-debug-52:\\mipmap-xxhdpi_ic_launcher_round.png.flat",
         "source": "C:\\Users\\Administrator\\.gradle\\daemon\\9.1.0\\com.loveapp.accountbook.app-main-54:\\mipmap-xxhdpi\\ic_launcher_round.png"
     },
     {
-        "merged": "C:\\Users\\Administrator\\.gradle\\daemon\\9.1.0\\com.loveapp.accountbook.app-debug-52:\\drawable_ic_action_delete.xml.flat",
-        "source": "C:\\Users\\Administrator\\.gradle\\daemon\\9.1.0\\com.loveapp.accountbook.app-main-54:\\drawable\\ic_action_delete.xml"
-    },
-    {
         "merged": "C:\\Users\\Administrator\\.gradle\\daemon\\9.1.0\\com.loveapp.accountbook.app-debug-52:\\layout_view_audio_player.xml.flat",
         "source": "C:\\Users\\Administrator\\.gradle\\daemon\\9.1.0\\com.loveapp.accountbook.app-main-54:\\layout\\view_audio_player.xml"
+    },
+    {
+        "merged": "C:\\Users\\Administrator\\.gradle\\daemon\\9.1.0\\com.loveapp.accountbook.app-debug-52:\\drawable_ic_action_delete.xml.flat",
+        "source": "C:\\Users\\Administrator\\.gradle\\daemon\\9.1.0\\com.loveapp.accountbook.app-main-54:\\drawable\\ic_action_delete.xml"
     },
     {
         "merged": "C:\\Users\\Administrator\\.gradle\\daemon\\9.1.0\\com.loveapp.accountbook.app-debug-52:\\layout_dialog_voice_record.xml.flat",
@@ -452,6 +452,10 @@
         "source": "C:\\Users\\Administrator\\.gradle\\daemon\\9.1.0\\com.loveapp.accountbook.app-main-54:\\layout\\fragment_love_menu.xml"
     },
     {
+        "merged": "com.loveapp.accountbook.app-debug-52:/layout_activity_splash.xml.flat",
+        "source": "com.loveapp.accountbook.app-main-54:/layout/activity_splash.xml"
+    },
+    {
         "merged": "C:\\Users\\Administrator\\.gradle\\daemon\\9.1.0\\com.loveapp.accountbook.app-debug-52:\\layout_fragment_account_list.xml.flat",
         "source": "C:\\Users\\Administrator\\.gradle\\daemon\\9.1.0\\com.loveapp.accountbook.app-main-54:\\layout\\fragment_account_list.xml"
     },
@@ -470,10 +474,6 @@
     {
         "merged": "C:\\Users\\Administrator\\.gradle\\daemon\\9.1.0\\com.loveapp.accountbook.app-debug-52:\\drawable_ic_love_rainbow.xml.flat",
         "source": "C:\\Users\\Administrator\\.gradle\\daemon\\9.1.0\\com.loveapp.accountbook.app-main-54:\\drawable\\ic_love_rainbow.xml"
-    },
-    {
-        "merged": "com.loveapp.accountbook.app-debug-52:/drawable_ic_splash_full_hack.png.flat",
-        "source": "com.loveapp.accountbook.app-main-54:/drawable/ic_splash_full_hack.png"
     },
     {
         "merged": "C:\\Users\\Administrator\\.gradle\\daemon\\9.1.0\\com.loveapp.accountbook.app-debug-52:\\drawable_ic_nav_home.xml.flat",
@@ -606,6 +606,10 @@
     {
         "merged": "C:\\Users\\Administrator\\.gradle\\daemon\\9.1.0\\com.loveapp.accountbook.app-debug-52:\\drawable_ic_love_flower.xml.flat",
         "source": "C:\\Users\\Administrator\\.gradle\\daemon\\9.1.0\\com.loveapp.accountbook.app-main-54:\\drawable\\ic_love_flower.xml"
+    },
+    {
+        "merged": "com.loveapp.accountbook.app-debug-52:/drawable_ic_splash_main.png.flat",
+        "source": "com.loveapp.accountbook.app-main-54:/drawable/ic_splash_main.png"
     },
     {
         "merged": "C:\\Users\\Administrator\\.gradle\\daemon\\9.1.0\\com.loveapp.accountbook.app-debug-52:\\drawable_bg_diary_swipe_actions.xml.flat",

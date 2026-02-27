@@ -205,6 +205,7 @@ drawable ic_search
 drawable ic_splash_brand
 drawable ic_splash_full_hack
 drawable ic_splash_heart
+drawable ic_splash_main
 drawable ic_stats
 drawable ic_swipe_delete
 drawable ic_swipe_edit
@@ -226,6 +227,8 @@ id action_meeting_to_add
 id action_settings_to_love
 id action_settings_to_love_menu
 id banner
+id bg_decor_1
+id bg_decor_2
 id bottom_nav
 id btn_add_tag
 id btn_auto_backup
@@ -270,7 +273,6 @@ id card_daily
 id card_daily_love
 id card_days
 id card_foreground
-id card_splash
 id chip_attendees
 id chip_categories
 id chip_group_date_filter
@@ -299,9 +301,9 @@ id iv_daily_icon
 id iv_daily_love_icon
 id iv_emoji
 id iv_icon
+id iv_main_icon
 id iv_mood
 id layout_location
-id logo_holder
 id love_list_container
 id month_summary
 id mood_chip_group
@@ -361,6 +363,7 @@ id tv_duration
 id tv_empty_hint
 id tv_end_time
 id tv_expense
+id tv_footer
 id tv_greeting
 id tv_greeting_sub
 id tv_icon
@@ -368,7 +371,6 @@ id tv_income
 id tv_letter_date
 id tv_location
 id tv_location_tag
-id tv_logo
 id tv_month
 id tv_name
 id tv_note
