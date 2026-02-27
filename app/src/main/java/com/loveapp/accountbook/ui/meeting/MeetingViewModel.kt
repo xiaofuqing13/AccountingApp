@@ -18,7 +18,11 @@ class MeetingViewModel(application: Application) : AndroidViewModel(application)
 
     fun loadMeetings() {
         viewModelScope.launch {
-            _meetings.value = repo.getMeetings()
+            try {
+                _meetings.value = repo.getMeetings()
+            } catch (_: Exception) {
+                _meetings.value = emptyList()
+            }
         }
     }
 

@@ -27,9 +27,15 @@ class ExcelRepository(private val context: Context) {
 
         /** 公共存储目录：Documents/我们的小账本/ */
         fun getPublicDir(): File {
-            val dir = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS), "我们的小账本")
-            if (!dir.exists()) dir.mkdirs()
-            return dir
+            return try {
+                val dir = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS), "我们的小账本")
+                if (!dir.exists()) dir.mkdirs()
+                dir
+            } catch (_: SecurityException) {
+                // 没有 MANAGE_EXTERNAL_STORAGE 权限时可能抛出异常
+                // 返回一个不可写的目录，调用方会检测 canWrite() 后走 fallback
+                File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS), "我们的小账本")
+            }
         }
     }
 

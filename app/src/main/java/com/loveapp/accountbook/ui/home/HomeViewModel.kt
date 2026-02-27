@@ -21,9 +21,15 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     fun loadStats() {
         viewModelScope.launch {
-            val yearMonth = DateUtils.currentYearMonth()
-            _accountCount.value = repo.getAccountsByMonth(yearMonth).size
-            _diaryCount.value = repo.getDiaries().count { it.date.startsWith(yearMonth) }
+            try {
+                val yearMonth = DateUtils.currentYearMonth()
+                _accountCount.value = repo.getAccountsByMonth(yearMonth).size
+                _diaryCount.value = repo.getDiaries().count { it.date.startsWith(yearMonth) }
+            } catch (_: Exception) {
+                // 存储权限不足时优雅降级，显示默认值
+                _accountCount.value = 0
+                _diaryCount.value = 0
+            }
         }
     }
 }

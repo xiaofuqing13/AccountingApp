@@ -31,12 +31,19 @@ class AccountViewModel(application: Application) : AndroidViewModel(application)
 
     fun loadAccounts() {
         viewModelScope.launch {
-            val month = _currentMonth.value ?: return@launch
-            val list = repo.getAccountsByMonth(month)
-            _accounts.value = list
-            _totalIncome.value = list.filter { it.isIncome }.sumOf { it.amount }
-            _totalExpense.value = list.filter { it.isExpense }.sumOf { it.amount }
-            _balance.value = (_totalIncome.value ?: 0.0) - (_totalExpense.value ?: 0.0)
+            try {
+                val month = _currentMonth.value ?: return@launch
+                val list = repo.getAccountsByMonth(month)
+                _accounts.value = list
+                _totalIncome.value = list.filter { it.isIncome }.sumOf { it.amount }
+                _totalExpense.value = list.filter { it.isExpense }.sumOf { it.amount }
+                _balance.value = (_totalIncome.value ?: 0.0) - (_totalExpense.value ?: 0.0)
+            } catch (_: Exception) {
+                _accounts.value = emptyList()
+                _totalIncome.value = 0.0
+                _totalExpense.value = 0.0
+                _balance.value = 0.0
+            }
         }
     }
 
