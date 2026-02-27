@@ -202,6 +202,7 @@ int drawable ic_play 0x0
 int drawable ic_promise 0x0
 int drawable ic_search 0x0
 int drawable ic_splash_brand 0x0
+int drawable ic_splash_full_hack 0x0
 int drawable ic_splash_heart 0x0
 int drawable ic_stats 0x0
 int drawable ic_swipe_delete 0x0

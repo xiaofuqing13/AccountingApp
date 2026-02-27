@@ -212,6 +212,7 @@
     <color name="material_dynamic_tertiary99">@color/m3_ref_palette_dynamic_tertiary99</color>
     <style name="Theme.AccountBook.Splash" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">@color/pink_bg</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_full_hack</item>
         <item name="postSplashScreenTheme">@style/Theme.AccountBook</item>
     </style>
     <style name="Theme.Material3.DynamicColors.Dark" parent="Theme.Material3.Dark">

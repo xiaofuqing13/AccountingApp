@@ -203,6 +203,7 @@ drawable ic_play
 drawable ic_promise
 drawable ic_search
 drawable ic_splash_brand
+drawable ic_splash_full_hack
 drawable ic_splash_heart
 drawable ic_stats
 drawable ic_swipe_delete
