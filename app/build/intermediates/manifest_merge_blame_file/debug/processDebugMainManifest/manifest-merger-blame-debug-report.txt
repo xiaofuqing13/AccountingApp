@@ -73,8 +73,8 @@
 41-->C:\Users\Administrator\Desktop\AccountingApp\app\src\main\AndroidManifest.xml:22:9-41
 42        android:requestLegacyExternalStorage="true"
 42-->C:\Users\Administrator\Desktop\AccountingApp\app\src\main\AndroidManifest.xml:26:9-52
-43        android:roundIcon="@mipmap/ic_launcher_round"
-43-->C:\Users\Administrator\Desktop\AccountingApp\app\src\main\AndroidManifest.xml:23:9-54
+43        android:roundIcon="@mipmap/ic_launcher"
+43-->C:\Users\Administrator\Desktop\AccountingApp\app\src\main\AndroidManifest.xml:23:9-48
 44        android:supportsRtl="true"
 44-->C:\Users\Administrator\Desktop\AccountingApp\app\src\main\AndroidManifest.xml:24:9-35
 45        android:theme="@style/Theme.AccountBook" >

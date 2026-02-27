@@ -176,7 +176,7 @@ MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\Administrator\.gra
 	android:label
 		ADDED from C:\Users\Administrator\Desktop\AccountingApp\app\src\main\AndroidManifest.xml:22:9-41
 	android:roundIcon
-		ADDED from C:\Users\Administrator\Desktop\AccountingApp\app\src\main\AndroidManifest.xml:23:9-54
+		ADDED from C:\Users\Administrator\Desktop\AccountingApp\app\src\main\AndroidManifest.xml:23:9-48
 	android:icon
 		ADDED from C:\Users\Administrator\Desktop\AccountingApp\app\src\main\AndroidManifest.xml:21:9-43
 	android:allowBackup
