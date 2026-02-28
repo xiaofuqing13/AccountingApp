@@ -46,3 +46,23 @@ captures/
 
 # External native build files
 .cxx/
+
+# AI editor configs
+CLAUDE.md
+AGENTS.md
+.claude/
+
+# Design prototypes
+design/
+
+# Backup data files
+*.xlsx
+
+# VSCode
+.vscode/
+
+# Kotlin caches
+.kotlin/
+
+# Gradle user
+.gradle-user/
