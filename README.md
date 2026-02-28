@@ -64,7 +64,21 @@ com.loveapp.accountbook
 
 ## 截图预览
 
-> 待补充
+<p align="center">
+  <img src="screenshots/01_home.png" width="180" alt="首页" />
+  <img src="screenshots/02_account.png" width="180" alt="记账" />
+  <img src="screenshots/03_diary.png" width="180" alt="日记" />
+  <img src="screenshots/04_meeting.png" width="180" alt="会议" />
+  <img src="screenshots/05_settings.png" width="180" alt="设置" />
+</p>
+
+| 页面 | 功能说明 |
+|:---:|---|
+| **首页** | 在一起天数实时计时、今日情话、本月统计、快捷操作入口 |
+| **记账** | 按月查看收支明细，支持分类搜索，一键添加记录 |
+| **日记** | 心情日记列表，支持标签筛选（日常/美食/运动/购物/约会） |
+| **会议** | 会议纪要管理，记录重要约定和决定 |
+| **设置** | 数据备份导入导出、主题切换、深色模式、隐私锁 |
 
 ## License
 
