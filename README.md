@@ -1,5 +1,8 @@
 # 我们的小账本 💕
 
+![Python](https://img.shields.io/badge/Python-3776AB?style=flat-square&logo=Python&logoColor=white) ![GitHub](https://img.shields.io/badge/GitHub-Repo-181717?style=flat-square&logo=github)
+
+
 一款专为情侣设计的 Android 记账应用，用爱记录生活的点点滴滴。
 
 ## 功能特色
@@ -80,6 +83,6 @@ com.loveapp.accountbook
 | **会议** | 会议纪要管理，记录重要约定和决定 |
 | **设置** | 数据备份导入导出、主题切换、深色模式、隐私锁 |
 
-## License
+## 许可证
 
 本项目仅供个人学习使用。
