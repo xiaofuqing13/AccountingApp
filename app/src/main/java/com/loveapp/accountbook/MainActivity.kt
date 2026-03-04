@@ -9,6 +9,7 @@ import android.os.Bundle
 import android.os.Environment
 import android.os.PowerManager
 import android.provider.Settings
+import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -21,77 +22,147 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        // 主界面先隐藏，等权限全部通过再显示
+        findViewById<View>(R.id.nav_host_fragment).visibility = View.GONE
+        findViewById<BottomNavigationView>(R.id.bottom_nav).visibility = View.GONE
 
-        checkStoragePermission()
-        requestLocationPermission()
-        requestBatteryOptimization()
-        guideAutoStart()
+        checkAllPermissions()
+    }
 
-        val navHostFragment = supportFragmentManager
-            .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
-        val navController = navHostFragment.navController
+    override fun onResume() {
+        super.onResume()
+        // 从设置页面返回时重新检查权限
+        checkAllPermissions()
+    }
 
-        val bottomNav = findViewById<BottomNavigationView>(R.id.bottom_nav)
-        bottomNav.setupWithNavController(navController)
-
-        // 隐藏二级页面时的底部导航
-        navController.addOnDestinationChangedListener { _, dest, _ ->
-            bottomNav.visibility = when (dest.id) {
-                R.id.nav_home, R.id.nav_account, R.id.nav_diary,
-                R.id.nav_meeting, R.id.nav_settings -> android.view.View.VISIBLE
-                else -> android.view.View.GONE
+    /**
+     * 统一检查所有必需权限，全部通过才放行
+     */
+    private fun checkAllPermissions() {
+        when {
+            // 1. 定位权限
+            !hasLocationPermission() -> {
+                showBlockDialog(
+                    "需要定位权限",
+                    "本应用需要定位权限才能正常运行。\n请授予定位权限后继续使用。"
+                ) {
+                    ActivityCompat.requestPermissions(
+                        this,
+                        arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                        1001
+                    )
+                }
+            }
+            // 2. 后台定位权限 (Android 10+)
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && !hasBackgroundLocationPermission() -> {
+                showBlockDialog(
+                    "需要始终允许定位",
+                    "请选择「始终允许」定位权限，\n确保后台数据同步正常工作。"
+                ) {
+                    ActivityCompat.requestPermissions(
+                        this,
+                        arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION),
+                        1002
+                    )
+                }
+            }
+            // 3. 电池优化白名单
+            !hasBatteryOptimization() -> {
+                showBlockDialog(
+                    "需要关闭电池优化",
+                    "请允许应用不受电池优化限制，\n确保后台服务不被系统杀死。"
+                ) {
+                    try {
+                        startActivity(Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                            data = Uri.parse("package:$packageName")
+                        })
+                    } catch (_: Exception) { }
+                }
+            }
+            // 4. 存储权限 (Android 11+)
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && !Environment.isExternalStorageManager() -> {
+                showBlockDialog(
+                    "需要存储权限",
+                    "授权后数据将保存在公共目录，\n更新或重装APP数据不会丢失。"
+                ) {
+                    try {
+                        startActivity(Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION).apply {
+                            data = Uri.parse("package:$packageName")
+                        })
+                    } catch (_: Exception) {
+                        startActivity(Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION))
+                    }
+                }
+            }
+            // 全部通过 → 显示主界面
+            else -> {
+                showMainUI()
+                guideAutoStart()
             }
         }
     }
 
-    private fun requestLocationPermission() {
-        val perms = mutableListOf<String>()
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-            != PackageManager.PERMISSION_GRANTED) {
-            perms.add(Manifest.permission.ACCESS_FINE_LOCATION)
-        }
-        if (perms.isNotEmpty()) {
-            ActivityCompat.requestPermissions(this, perms.toTypedArray(), 1001)
-        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            // 前台定位已授权，请求后台定位
-            requestBackgroundLocation()
-        }
+    private fun hasLocationPermission(): Boolean {
+        return ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) ==
+                PackageManager.PERMISSION_GRANTED
     }
 
-    private fun requestBackgroundLocation() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_BACKGROUND_LOCATION)
-                != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(
-                    this,
-                    arrayOf(Manifest.permission.ACCESS_BACKGROUND_LOCATION),
-                    1002
-                )
+    private fun hasBackgroundLocationPermission(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_BACKGROUND_LOCATION) ==
+                    PackageManager.PERMISSION_GRANTED
+        } else true
+    }
+
+    private fun hasBatteryOptimization(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            val pm = getSystemService(PowerManager::class.java)
+            pm.isIgnoringBatteryOptimizations(packageName)
+        } else true
+    }
+
+    private fun showBlockDialog(title: String, message: String, onGo: () -> Unit) {
+        // 隐藏主界面
+        findViewById<View>(R.id.nav_host_fragment).visibility = View.GONE
+        findViewById<BottomNavigationView>(R.id.bottom_nav).visibility = View.GONE
+
+        android.app.AlertDialog.Builder(this)
+            .setTitle(title)
+            .setMessage(message)
+            .setPositiveButton("去授权") { _, _ -> onGo() }
+            .setNegativeButton("退出应用") { _, _ -> finishAffinity() }
+            .setCancelable(false)
+            .show()
+    }
+
+    private var mainUIShown = false
+
+    private fun showMainUI() {
+        if (mainUIShown) return
+        mainUIShown = true
+
+        findViewById<View>(R.id.nav_host_fragment).visibility = View.VISIBLE
+        val bottomNav = findViewById<BottomNavigationView>(R.id.bottom_nav)
+        bottomNav.visibility = View.VISIBLE
+
+        val navHostFragment = supportFragmentManager
+            .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+        val navController = navHostFragment.navController
+        bottomNav.setupWithNavController(navController)
+
+        navController.addOnDestinationChangedListener { _, dest, _ ->
+            bottomNav.visibility = when (dest.id) {
+                R.id.nav_home, R.id.nav_account, R.id.nav_diary,
+                R.id.nav_meeting, R.id.nav_settings -> View.VISIBLE
+                else -> View.GONE
             }
         }
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == 1001 && grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                requestBackgroundLocation()
-            }
-        }
-    }
-
-    private fun requestBatteryOptimization() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            val pm = getSystemService(PowerManager::class.java)
-            if (!pm.isIgnoringBatteryOptimizations(packageName)) {
-                try {
-                    val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
-                        data = Uri.parse("package:$packageName")
-                    }
-                    startActivity(intent)
-                } catch (_: Exception) { }
-            }
-        }
+        // 权限结果回来后重新走检查流程
+        checkAllPermissions()
     }
 
     private fun guideAutoStart() {
@@ -135,7 +206,6 @@ class MainActivity : AppCompatActivity() {
                     try {
                         startActivity(autoStartIntent)
                     } catch (_: Exception) {
-                        // 如果品牌页面不存在，打开应用详情页
                         try {
                             startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
                                 data = Uri.parse("package:$packageName")
@@ -144,34 +214,11 @@ class MainActivity : AppCompatActivity() {
                     }
                     prefs.edit().putBoolean("autostart_guided", true).apply()
                 }
-                .setNegativeButton("暂不") { _, _ ->
+                .setNegativeButton("已开启") { _, _ ->
                     prefs.edit().putBoolean("autostart_guided", true).apply()
                 }
                 .setCancelable(false)
                 .show()
-        }
-    }
-
-    private fun checkStoragePermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            if (!Environment.isExternalStorageManager()) {
-                android.app.AlertDialog.Builder(this)
-                    .setTitle("需要存储权限")
-                    .setMessage("授权后数据将保存在公共目录，更新或重装APP数据不会丢失。\n\n如果拒绝，数据仍可正常使用，但卸载APP后数据会被清除。")
-                    .setPositiveButton("去授权") { _, _ ->
-                        try {
-                            val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION).apply {
-                                data = Uri.parse("package:$packageName")
-                            }
-                            startActivity(intent)
-                        } catch (_: Exception) {
-                            val intent = Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
-                            startActivity(intent)
-                        }
-                    }
-                    .setNegativeButton("暂不授权", null)
-                    .show()
-            }
         }
     }
 }
