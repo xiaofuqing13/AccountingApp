@@ -130,10 +130,19 @@ class HomeFragment : Fragment() {
 
         // 公网连接状态监听
         val networkBar = view.findViewById<LinearLayout>(R.id.network_status_bar)
+        val networkDot = view.findViewById<View>(R.id.network_status_dot)
         val tvNetworkStatus = view.findViewById<TextView>(R.id.tv_network_status)
+        networkBar.visibility = View.VISIBLE
         ConnectionMonitor.isConnected.observe(viewLifecycleOwner) { connected ->
-            networkBar.visibility = if (connected) View.GONE else View.VISIBLE
-            tvNetworkStatus.text = if (connected) "云端已连接" else "⚠ 云端断联"
+            if (connected) {
+                networkDot.setBackgroundResource(R.drawable.bg_status_dot_green)
+                tvNetworkStatus.text = "☁ 云端已连接"
+                tvNetworkStatus.setTextColor(0xFFA5D6A7.toInt())
+            } else {
+                networkDot.setBackgroundResource(R.drawable.bg_status_dot_red)
+                tvNetworkStatus.text = "⚠ 云端断联"
+                tvNetworkStatus.setTextColor(0xFFFFCDD2.toInt())
+            }
         }
     }
 
