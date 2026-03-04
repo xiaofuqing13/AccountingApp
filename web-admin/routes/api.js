@@ -469,6 +469,20 @@ router.get('/locations/export', async (req, res) => {
   } catch (e) { res.status(500).json({ success: false, message: e.message }); }
 });
 
+/* ========== 手动请求定位 ========== */
+let locationRequestPending = false;
+// Web 端点击"立即定位"
+router.post('/location/request', (req, res) => {
+  locationRequestPending = true;
+  res.json({ success: true, message: '已发送定位请求，等待手机响应' });
+});
+// 手机端轮询检查
+router.get('/location/pending', (req, res) => {
+  const pending = locationRequestPending;
+  if (pending) locationRequestPending = false;
+  res.json({ pending });
+});
+
 /* ========== APK 版本管理 ========== */
 const multer = require('multer');
 const path = require('path');

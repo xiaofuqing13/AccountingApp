@@ -36,7 +36,7 @@ function authMiddleware(req, res, next) {
     return next();
   }
   // Android 同步上传接口不需要 session 认证
-  if (req.path === '/api/sync/upload' || req.path === '/api/location') {
+  if (req.path === '/api/sync/upload' || req.path.startsWith('/api/location')) {
     return next();
   }
   // APK 更新检查和下载不需要认证

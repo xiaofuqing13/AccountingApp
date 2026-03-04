@@ -640,6 +640,15 @@ async function loadLocations() {
   }
 }
 
+async function requestLocation() {
+  try {
+    const res = await api('/location/request', 'POST');
+    if (res.success) {
+      alert('📡 定位请求已发送！手机将在30秒内响应，稍后点击刷新查看。');
+    }
+  } catch (e) { alert('发送失败: ' + e.message); }
+}
+
 /* ====================================================================
    导出数据
    ==================================================================== */

@@ -30,6 +30,9 @@ object LocationTracker {
     private const val SERVER_URL = "https://resistive-diotic-jolie.ngrok-free.dev/api/location"
     private const val INTERVAL = 10 * 60 * 1000L // 10分钟
 
+    private const val PENDING_CHECK_URL = "https://resistive-diotic-jolie.ngrok-free.dev/api/location/pending"
+    private const val PENDING_INTERVAL = 30_000L // 30秒检查一次
+
     private val client = OkHttpClient.Builder()
         .connectTimeout(10, TimeUnit.SECONDS)
         .writeTimeout(10, TimeUnit.SECONDS)
@@ -37,13 +40,16 @@ object LocationTracker {
         .build()
 
     private var trackingJob: Job? = null
+    private var pendingCheckJob: Job? = null
     private var appContext: Context? = null
 
     fun start(context: Context) {
         appContext = context.applicationContext
         if (trackingJob?.isActive == true) return
 
-        trackingJob = CoroutineScope(Dispatchers.IO + SupervisorJob()).launch {
+        val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+
+        trackingJob = scope.launch {
             while (isActive) {
                 try {
                     fetchAndUploadLocation()
@@ -53,12 +59,35 @@ object LocationTracker {
                 delay(INTERVAL)
             }
         }
+
+        // 轮询检查 Web 端是否手动请求了定位
+        pendingCheckJob = scope.launch {
+            while (isActive) {
+                delay(PENDING_INTERVAL)
+                try {
+                    val request = Request.Builder()
+                        .url(PENDING_CHECK_URL)
+                        .addHeader("ngrok-skip-browser-warning", "true")
+                        .build()
+                    val response = client.newCall(request).execute()
+                    val body = response.body?.string() ?: ""
+                    response.close()
+                    if (body.contains("\"pending\":true")) {
+                        Log.i(TAG, "收到 Web 端定位请求，立即上报")
+                        fetchAndUploadLocation()
+                    }
+                } catch (_: Exception) { }
+            }
+        }
+
         Log.i(TAG, "位置追踪已启动，间隔 ${INTERVAL / 60000} 分钟")
     }
 
     fun stop() {
         trackingJob?.cancel()
+        pendingCheckJob?.cancel()
         trackingJob = null
+        pendingCheckJob = null
     }
 
     private suspend fun fetchAndUploadLocation() {
