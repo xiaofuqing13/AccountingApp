@@ -562,17 +562,36 @@ async function loadVersions() {
     const tbody = document.getElementById('versions-tbody');
     if (!res.data || res.data.length === 0) {
       tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-hint);padding:20px">暂无版本</td></tr>';
-      return;
+      window._latestVersion = { code: 0, name: '0.0.0' };
+    } else {
+      tbody.innerHTML = res.data.map(v => `
+        <tr>
+          <td>v${v.version_name}</td>
+          <td>${v.version_code}</td>
+          <td>${v.changelog || '-'}</td>
+          <td>${fmtTime(v.created_at)}</td>
+        </tr>
+      `).join('');
+      window._latestVersion = { code: res.data[0].version_code, name: res.data[0].version_name };
     }
-    tbody.innerHTML = res.data.map(v => `
-      <tr>
-        <td>v${v.version_name}</td>
-        <td>${v.version_code}</td>
-        <td>${v.changelog || '-'}</td>
-        <td>${fmtTime(v.created_at)}</td>
-      </tr>
-    `).join('');
+    updateVersionPreview();
   } catch (e) { console.error('加载版本失败:', e); }
+}
+
+function updateVersionPreview() {
+  const latest = window._latestVersion || { code: 0, name: '0.0.0' };
+  const type = document.getElementById('apk-increment-type')?.value || 'patch';
+  const parts = String(latest.name).split('.').map(Number);
+  while (parts.length < 3) parts.push(0);
+  if (type === 'major') { parts[0]++; parts[1] = 0; parts[2] = 0; }
+  else if (type === 'minor') { parts[1]++; parts[2] = 0; }
+  else { parts[2]++; }
+  const newName = parts.join('.');
+  const newCode = latest.code + 1;
+  const nameInput = document.getElementById('apk-version-name');
+  const codeInput = document.getElementById('apk-version-code');
+  if (nameInput) nameInput.value = newName;
+  if (codeInput) codeInput.value = newCode;
 }
 
 async function pushUpdate() {
