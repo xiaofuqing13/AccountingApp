@@ -775,9 +775,11 @@ async function requestLocation() {
   try {
     const res = await api('/location/request', { method: 'POST' });
     if (res.success) {
-      alert('📡 定位请求已发送！手机将在30秒内响应，稍后点击刷新查看。');
+      toast('📡 定位请求已发送，手机将在30秒内响应');
+    } else {
+      toast(res.message || '发送失败', 'error');
     }
-  } catch (e) { alert('发送失败: ' + e.message); }
+  } catch (e) { toast('发送失败: ' + e.message, 'error'); }
 }
 
 /* ====================================================================

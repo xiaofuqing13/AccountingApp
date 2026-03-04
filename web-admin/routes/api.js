@@ -87,6 +87,41 @@ router.get('/auth/check', (req, res) => {
   }
 });
 
+/* ========== 用户管理 ========== */
+// 获取所有用户
+router.get('/users', async (req, res) => {
+  try {
+    const [rows] = await db.query('SELECT id, username, created_at FROM admin_users ORDER BY id');
+    res.json({ success: true, data: rows });
+  } catch (e) { res.status(500).json({ success: false, message: e.message }); }
+});
+
+// 新增用户
+router.post('/users', async (req, res) => {
+  try {
+    const { username, password } = req.body;
+    if (!username || !password) return res.status(400).json({ success: false, message: '用户名和密码不能为空' });
+    // 检查重名
+    const [exist] = await db.query('SELECT id FROM admin_users WHERE username=?', [username]);
+    if (exist.length > 0) return res.json({ success: false, message: '用户名已存在' });
+    await db.query('INSERT INTO admin_users (username, password) VALUES (?,?)', [username, hashPassword(password)]);
+    await log('CREATE', 'auth', `新建用户: ${username}`, req.ip);
+    res.json({ success: true, message: '用户创建成功' });
+  } catch (e) { res.status(500).json({ success: false, message: e.message }); }
+});
+
+// 删除用户
+router.delete('/users/:id', async (req, res) => {
+  try {
+    const userId = req.params.id;
+    if (Number(userId) === req.session.userId) return res.json({ success: false, message: '不能删除当前登录用户' });
+    const [user] = await db.query('SELECT username FROM admin_users WHERE id=?', [userId]);
+    await db.query('DELETE FROM admin_users WHERE id=?', [userId]);
+    await log('DELETE', 'auth', `删除用户: ${user[0]?.username || userId}`, req.ip);
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ success: false, message: e.message }); }
+});
+
 router.put('/auth/password', async (req, res) => {
   try {
     const { oldPassword, newPassword } = req.body;
