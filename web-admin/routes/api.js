@@ -486,6 +486,32 @@ router.get('/location/pending', (req, res) => {
   res.json({ pending });
 });
 
+/* ========== 设备在线管理 ========== */
+const devicesMap = new Map(); // deviceId -> { info, lastSeen }
+
+// 手机端心跳上报（每30秒）
+router.post('/device/heartbeat', (req, res) => {
+  const { device_id, brand, model, android_version, battery, app_version, screen, network } = req.body;
+  if (!device_id) return res.status(400).json({ success: false, message: '缺少device_id' });
+  devicesMap.set(device_id, {
+    device_id, brand: brand || '', model: model || '', android_version: android_version || '',
+    battery: battery || 0, app_version: app_version || '', screen: screen || '', network: network || '',
+    ip: req.ip || '', lastSeen: Date.now()
+  });
+  res.json({ success: true });
+});
+
+// Web 端查询设备列表
+router.get('/devices', (req, res) => {
+  const now = Date.now();
+  const list = [];
+  devicesMap.forEach(d => {
+    list.push({ ...d, online: (now - d.lastSeen) < 90000 }); // 90秒无心跳=离线
+  });
+  list.sort((a, b) => b.lastSeen - a.lastSeen);
+  res.json({ success: true, data: list });
+});
+
 /* ========== APK 版本管理 ========== */
 const multer = require('multer');
 const path = require('path');
