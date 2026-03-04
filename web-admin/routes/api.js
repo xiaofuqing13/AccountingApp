@@ -552,20 +552,73 @@ router.post('/location', async (req, res) => {
 router.get('/locations', async (req, res) => {
   try {
     const { limit = 50, device_name } = req.query;
-    let sql = 'SELECT * FROM locations';
+    // 获取隐藏设备列表
+    const [hiddenRows] = await db.query("SELECT setting_value FROM settings WHERE setting_key='hidden_devices'");
+    const hiddenDevices = hiddenRows.length > 0 && hiddenRows[0].setting_value ? hiddenRows[0].setting_value.split(',').filter(Boolean) : [];
+
+    let sql = 'SELECT * FROM locations WHERE 1=1';
     const params = [];
     if (device_name) {
-      sql += ' WHERE device_name = ?';
+      sql += ' AND device_name = ?';
       params.push(device_name);
+    }
+    // 过滤隐藏设备
+    if (hiddenDevices.length > 0 && !device_name) {
+      sql += ` AND device_name NOT IN (${hiddenDevices.map(() => '?').join(',')})`;
+      params.push(...hiddenDevices);
     }
     sql += ' ORDER BY created_at DESC LIMIT ?';
     params.push(Number(limit));
     const [rows] = await db.query(sql, params);
     const latest = rows.length > 0 ? rows[0] : null;
-    // 获取所有不同设备名
-    const [devRows] = await db.query('SELECT DISTINCT device_name FROM locations WHERE device_name != "" ORDER BY device_name');
+    // 获取所有不同设备名（不隐藏）
+    let devSql = 'SELECT DISTINCT device_name FROM locations WHERE device_name != ""';
+    const devParams = [];
+    if (hiddenDevices.length > 0) {
+      devSql += ` AND device_name NOT IN (${hiddenDevices.map(() => '?').join(',')})`;
+      devParams.push(...hiddenDevices);
+    }
+    devSql += ' ORDER BY device_name';
+    const [devRows] = await db.query(devSql, devParams);
     const devices = devRows.map(r => r.device_name);
-    res.json({ success: true, data: rows, latest, devices });
+    res.json({ success: true, data: rows, latest, devices, hiddenDevices });
+  } catch (e) { res.status(500).json({ success: false, message: e.message }); }
+});
+
+// 隐藏设备
+router.post('/devices/hide', async (req, res) => {
+  try {
+    const { device_name } = req.body;
+    if (!device_name) return res.status(400).json({ success: false, message: '缺少设备名' });
+    const [rows] = await db.query("SELECT setting_value FROM settings WHERE setting_key='hidden_devices'");
+    let list = rows.length > 0 && rows[0].setting_value ? rows[0].setting_value.split(',').filter(Boolean) : [];
+    if (!list.includes(device_name)) list.push(device_name);
+    await db.query("INSERT INTO settings (setting_key, setting_value) VALUES ('hidden_devices',?) ON DUPLICATE KEY UPDATE setting_value=?", [list.join(','), list.join(',')]);
+    await log('UPDATE', 'device', `隐藏设备: ${device_name}`, req.ip);
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ success: false, message: e.message }); }
+});
+
+// 取消隐藏设备
+router.post('/devices/unhide', async (req, res) => {
+  try {
+    const { device_name } = req.body;
+    if (!device_name) return res.status(400).json({ success: false, message: '缺少设备名' });
+    const [rows] = await db.query("SELECT setting_value FROM settings WHERE setting_key='hidden_devices'");
+    let list = rows.length > 0 && rows[0].setting_value ? rows[0].setting_value.split(',').filter(Boolean) : [];
+    list = list.filter(d => d !== device_name);
+    await db.query("UPDATE settings SET setting_value=? WHERE setting_key='hidden_devices'", [list.join(',')]);
+    await log('UPDATE', 'device', `取消隐藏设备: ${device_name}`, req.ip);
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ success: false, message: e.message }); }
+});
+
+// 获取隐藏设备列表
+router.get('/devices/hidden', async (req, res) => {
+  try {
+    const [rows] = await db.query("SELECT setting_value FROM settings WHERE setting_key='hidden_devices'");
+    const list = rows.length > 0 && rows[0].setting_value ? rows[0].setting_value.split(',').filter(Boolean) : [];
+    res.json({ success: true, data: list });
   } catch (e) { res.status(500).json({ success: false, message: e.message }); }
 });
 

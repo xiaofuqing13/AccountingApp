@@ -738,6 +738,18 @@ async function loadLocations() {
         res.devices.map(d => `<option value="${d}" ${d === prev ? 'selected' : ''}>${d}</option>`).join('');
     }
 
+    // 显示隐藏设备管理
+    const hiddenList = res.hiddenDevices || [];
+    const hiddenArea = document.getElementById('hidden-devices-area');
+    if (hiddenArea) {
+      if (hiddenList.length > 0) {
+        hiddenArea.innerHTML = '<span style="color:var(--text-hint);font-size:12px">已隐藏: </span>' +
+          hiddenList.map(d => `<span class="tag" style="margin:0 4px;cursor:pointer" onclick="unhideDevice('${d}')" title="点击取消隐藏">🚫 ${d} ✕</span>`).join('');
+      } else {
+        hiddenArea.innerHTML = '';
+      }
+    }
+
     // 最新位置卡片
     if (res.latest) {
       const l = res.latest;
@@ -781,6 +793,21 @@ async function requestLocation() {
       toast(res.message || '发送失败', 'error');
     }
   } catch (e) { toast('发送失败: ' + e.message, 'error'); }
+}
+
+async function hideSelectedDevice() {
+  const device = document.getElementById('location-device-filter').value;
+  if (!device) return toast('请先选择要隐藏的设备', 'error');
+  if (!confirm(`确定隐藏设备 "${device}" 吗？\n隐藏后该设备不会显示在位置追踪中`)) return;
+  const res = await api('/devices/hide', { method: 'POST', body: { device_name: device } });
+  if (res.success) { toast('✅ 设备已隐藏'); loadLocations(); }
+  else toast(res.message, 'error');
+}
+
+async function unhideDevice(name) {
+  const res = await api('/devices/unhide', { method: 'POST', body: { device_name: name } });
+  if (res.success) { toast('✅ 设备已恢复显示'); loadLocations(); }
+  else toast(res.message, 'error');
 }
 
 /* ====================================================================
