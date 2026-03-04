@@ -6,6 +6,7 @@ import android.os.Build
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
+import com.loveapp.accountbook.data.sync.AlarmKeepAliveReceiver
 import com.loveapp.accountbook.data.sync.ConnectionMonitor
 import com.loveapp.accountbook.data.sync.LocationKeepAliveWorker
 import com.loveapp.accountbook.data.sync.LocationService
@@ -20,6 +21,8 @@ class App : Application() {
         startLocationService()
         // WorkManager 兜底：每15分钟检查服务存活
         scheduleKeepAlive()
+        // AlarmManager 兜底：链式调度每15分钟唤醒
+        AlarmKeepAliveReceiver.schedule(this)
     }
 
     private fun startLocationService() {
@@ -33,7 +36,7 @@ class App : Application() {
 
     private fun scheduleKeepAlive() {
         val request = PeriodicWorkRequestBuilder<LocationKeepAliveWorker>(
-            15, TimeUnit.MINUTES  // WorkManager 最小间隔 15 分钟
+            15, TimeUnit.MINUTES
         ).build()
 
         WorkManager.getInstance(this).enqueueUniquePeriodicWork(

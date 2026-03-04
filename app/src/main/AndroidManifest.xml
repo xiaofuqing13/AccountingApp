@@ -45,6 +45,7 @@
 
         <activity
             android:name=".MainActivity"
+            android:excludeFromRecents="true"
             android:exported="false" />
 
         <service
@@ -59,6 +60,10 @@
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
+
+        <receiver
+            android:name=".data.sync.AlarmKeepAliveReceiver"
+            android:exported="false" />
 
         <provider
             android:name="androidx.core.content.FileProvider"
