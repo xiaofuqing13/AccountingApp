@@ -1,87 +1,75 @@
 package com.loveapp.accountbook.data.sync
 
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import kotlinx.coroutines.*
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.util.concurrent.TimeUnit
 
 /**
- * 公网连接监控器
- * 连接成功后持续心跳检测，失败时回调通知，连接期间不可手动取消
+ * 公网连接监控器（全局单例）
+ * 应用启动后自动持续检测公网连通性，断连时通知 UI 显示状态
  */
-class ConnectionMonitor(
-    private val onStatusChanged: (Boolean, String) -> Unit,
-    private val onConnectionLost: (String) -> Unit
-) {
-    companion object {
-        const val SERVER_URL = "https://resistive-diotic-jolie.ngrok-free.dev/api/dashboard"
-        const val HEARTBEAT_INTERVAL = 15_000L // 15秒心跳
-        const val MAX_RETRY = 3 // 连续失败3次才判定断连
-    }
+object ConnectionMonitor {
+
+    private const val SERVER_URL = "https://resistive-diotic-jolie.ngrok-free.dev/api/auth/check"
+    private const val HEARTBEAT_INTERVAL = 30_000L // 30秒心跳
+    private const val MAX_RETRY = 3 // 连续失败3次判定断连
 
     private val client = OkHttpClient.Builder()
-        .connectTimeout(10, TimeUnit.SECONDS)
-        .readTimeout(10, TimeUnit.SECONDS)
+        .connectTimeout(8, TimeUnit.SECONDS)
+        .readTimeout(8, TimeUnit.SECONDS)
         .build()
 
+    private val _isConnected = MutableLiveData(false)
+    val isConnected: LiveData<Boolean> = _isConnected
+
+    private val _statusText = MutableLiveData("检测中...")
+    val statusText: LiveData<String> = _statusText
+
     private var monitorJob: Job? = null
-    private var isRunning = false
     private var failCount = 0
 
-    val isConnected: Boolean get() = isRunning
-
     /**
-     * 尝试连接并启动心跳监控
-     * @return true=首次连接成功, false=首次连接失败
+     * 启动自动监控（在 App.onCreate 中调用）
      */
-    suspend fun connect(): Boolean = withContext(Dispatchers.IO) {
-        val success = pingServer()
-        if (success) {
-            isRunning = true
-            failCount = 0
-            onStatusChanged(true, "✅ 公网连接成功")
-            startHeartbeat()
-        }
-        success
-    }
-
-    /**
-     * 强制停止（仅在 Activity 销毁时调用）
-     */
-    fun forceStop() {
-        monitorJob?.cancel()
-        monitorJob = null
-        isRunning = false
-        failCount = 0
-    }
-
-    private fun startHeartbeat() {
-        monitorJob?.cancel()
+    fun startAutoMonitor() {
+        if (monitorJob?.isActive == true) return
         monitorJob = CoroutineScope(Dispatchers.IO + SupervisorJob()).launch {
-            while (isActive && isRunning) {
+            // 首次检测
+            val firstOk = pingServer()
+            withContext(Dispatchers.Main) {
+                _isConnected.value = firstOk
+                _statusText.value = if (firstOk) "云端已连接" else "云端未连接"
+            }
+            failCount = if (firstOk) 0 else 1
+
+            // 持续心跳
+            while (isActive) {
                 delay(HEARTBEAT_INTERVAL)
                 val ok = pingServer()
-                if (ok) {
-                    failCount = 0
-                    withContext(Dispatchers.Main) {
-                        onStatusChanged(true, "✅ 公网连接正常")
-                    }
-                } else {
-                    failCount++
-                    if (failCount >= MAX_RETRY) {
-                        isRunning = false
-                        withContext(Dispatchers.Main) {
-                            onConnectionLost("⚠️ 公网连接已断开\n连续 $MAX_RETRY 次心跳失败\n请检查远程服务器和 ngrok 是否正常运行")
-                        }
-                        break
+                withContext(Dispatchers.Main) {
+                    if (ok) {
+                        failCount = 0
+                        _isConnected.value = true
+                        _statusText.value = "云端已连接"
                     } else {
-                        withContext(Dispatchers.Main) {
-                            onStatusChanged(true, "⚠️ 心跳异常 ($failCount/$MAX_RETRY)")
+                        failCount++
+                        if (failCount >= MAX_RETRY) {
+                            _isConnected.value = false
+                            _statusText.value = "云端断联"
                         }
                     }
                 }
             }
         }
+    }
+
+    fun stop() {
+        monitorJob?.cancel()
+        monitorJob = null
+        failCount = 0
     }
 
     private fun pingServer(): Boolean {
@@ -92,8 +80,7 @@ class ConnectionMonitor(
                 .get()
                 .build()
             val response = client.newCall(request).execute()
-            val body = response.body?.string() ?: ""
-            response.isSuccessful && body.contains("success")
+            response.isSuccessful
         } catch (e: Exception) {
             false
         }

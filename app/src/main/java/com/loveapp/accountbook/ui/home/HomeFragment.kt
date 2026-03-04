@@ -8,6 +8,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.core.content.FileProvider
@@ -17,6 +18,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.loveapp.accountbook.R
 import com.loveapp.accountbook.data.repository.ExcelRepository
+import com.loveapp.accountbook.data.sync.ConnectionMonitor
 import com.loveapp.accountbook.util.DateUtils
 import com.loveapp.accountbook.util.EasterEggManager
 import com.loveapp.accountbook.util.LoveWord
@@ -124,6 +126,14 @@ class HomeFragment : Fragment() {
         view.findViewById<TextView>(R.id.tv_daily_love_text).text = dailyLove.text
         view.findViewById<View>(R.id.card_daily_love).setOnClickListener {
             EasterEggManager.showLovePopup(requireContext(), dailyLove)
+        }
+
+        // 公网连接状态监听
+        val networkBar = view.findViewById<LinearLayout>(R.id.network_status_bar)
+        val tvNetworkStatus = view.findViewById<TextView>(R.id.tv_network_status)
+        ConnectionMonitor.isConnected.observe(viewLifecycleOwner) { connected ->
+            networkBar.visibility = if (connected) View.GONE else View.VISIBLE
+            tvNetworkStatus.text = if (connected) "云端已连接" else "⚠ 云端断联"
         }
     }
 

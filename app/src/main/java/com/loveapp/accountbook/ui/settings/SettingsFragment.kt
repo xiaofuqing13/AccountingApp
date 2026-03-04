@@ -19,7 +19,6 @@ import com.google.android.material.switchmaterial.SwitchMaterial
 import com.loveapp.accountbook.R
 import com.loveapp.accountbook.data.repository.ExcelRepository
 import com.loveapp.accountbook.data.sync.SyncManager
-import com.loveapp.accountbook.data.sync.ConnectionMonitor
 import com.loveapp.accountbook.util.AppSettings
 import com.loveapp.accountbook.util.EasterEggManager
 import kotlinx.coroutines.launch
@@ -29,8 +28,6 @@ class SettingsFragment : Fragment() {
     private var versionClickCount = 0
     private var suppressSwitchCallbacks = false
     private lateinit var repo: ExcelRepository
-    private var connectionMonitor: ConnectionMonitor? = null
-    private var tvNetworkStatus: TextView? = null
 
     private val exportLauncher = registerForActivityResult(
         ActivityResultContracts.CreateDocument(
@@ -152,16 +149,6 @@ class SettingsFragment : Fragment() {
                 .show()
         }
 
-        // 公网入口
-        tvNetworkStatus = view.findViewById(R.id.tv_network_status)
-        view.findViewById<View>(R.id.btn_public_network).setOnClickListener {
-            if (connectionMonitor?.isConnected == true) {
-                Toast.makeText(requireContext(), "连接中，无法手动断开", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
-            startPublicNetworkConnection()
-        }
-
         view.findViewById<View>(R.id.btn_password).setOnClickListener {
             EasterEggManager.showLovePopup(requireContext(), EasterEggManager.eggLock)
         }
@@ -251,47 +238,8 @@ class SettingsFragment : Fragment() {
         }
     }
 
-    private fun startPublicNetworkConnection() {
-        tvNetworkStatus?.text = "连接中..."
-        tvNetworkStatus?.setTextColor(resources.getColor(R.color.pink_primary, null))
-
-        connectionMonitor = ConnectionMonitor(
-            onStatusChanged = { connected, msg ->
-                if (!isAdded) return@ConnectionMonitor
-                tvNetworkStatus?.text = if (connected) "✅ 已连接" else "❌ 已断开"
-                tvNetworkStatus?.setTextColor(
-                    if (connected) android.graphics.Color.parseColor("#4CAF50")
-                    else resources.getColor(R.color.text_hint, null)
-                )
-            },
-            onConnectionLost = { msg ->
-                if (!isAdded) return@ConnectionMonitor
-                tvNetworkStatus?.text = "❌ 已断开"
-                tvNetworkStatus?.setTextColor(resources.getColor(R.color.text_hint, null))
-                androidx.appcompat.app.AlertDialog.Builder(requireContext())
-                    .setTitle("🚨 公网连接断开")
-                    .setMessage(msg)
-                    .setPositiveButton("知道了", null)
-                    .show()
-            }
-        )
-
-        lifecycleScope.launch {
-            val success = connectionMonitor!!.connect()
-            if (!isAdded) return@launch
-            if (!success) {
-                tvNetworkStatus?.text = "连接失败"
-                tvNetworkStatus?.setTextColor(android.graphics.Color.parseColor("#F44336"))
-                Toast.makeText(requireContext(), "无法连接公网服务器\n请检查远程服务和 ngrok 是否运行", Toast.LENGTH_LONG).show()
-            }
-        }
-    }
-
     override fun onDestroyView() {
         super.onDestroyView()
-        connectionMonitor?.forceStop()
-        connectionMonitor = null
-        tvNetworkStatus = null
     }
 
     private fun copyToClipboard(label: String, value: String) {
