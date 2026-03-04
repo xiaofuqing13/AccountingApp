@@ -575,6 +575,12 @@ async function loadVersions() {
   } catch (e) { console.error('加载版本失败:', e); }
 }
 
+async function pushUpdate() {
+  const res = await api('/app/push-update', { method: 'POST' });
+  if (res.success) toast(res.message || '推送成功');
+  else toast(res.message || '推送失败', 'error');
+}
+
 /* ====================================================================
    操作日志
    ==================================================================== */
@@ -607,8 +613,20 @@ async function loadLogs() {
    ==================================================================== */
 async function loadLocations() {
   try {
-    const res = await api('/locations?limit=50');
+    const filterEl = document.getElementById('location-device-filter');
+    const selectedDevice = filterEl.value;
+    const params = new URLSearchParams({ limit: 50 });
+    if (selectedDevice) params.set('device_name', selectedDevice);
+
+    const res = await api(`/locations?${params}`);
     if (!res.success) return;
+
+    // 填充设备下拉框（保持当前选择）
+    if (res.devices && res.devices.length > 0) {
+      const prev = selectedDevice;
+      filterEl.innerHTML = '<option value="">全部设备</option>' +
+        res.devices.map(d => `<option value="${d}" ${d === prev ? 'selected' : ''}>${d}</option>`).join('');
+    }
 
     // 最新位置卡片
     if (res.latest) {
@@ -619,6 +637,9 @@ async function loadLocations() {
       document.getElementById('latest-coords').textContent = `${l.longitude.toFixed(4)}, ${l.latitude.toFixed(4)}`;
     } else {
       document.getElementById('latest-address').textContent = '暂无数据';
+      document.getElementById('latest-time').textContent = '-';
+      document.getElementById('latest-device').textContent = '-';
+      document.getElementById('latest-coords').textContent = '-';
     }
 
     // 位置列表

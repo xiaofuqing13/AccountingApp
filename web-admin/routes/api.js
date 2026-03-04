@@ -442,16 +442,24 @@ router.post('/location', async (req, res) => {
   } catch (e) { res.status(500).json({ success: false, message: e.message }); }
 });
 
-// Web 端查询最近位置
+// Web 端查询最近位置（支持设备筛选）
 router.get('/locations', async (req, res) => {
   try {
-    const { limit = 50 } = req.query;
-    const [rows] = await db.query(
-      'SELECT * FROM locations ORDER BY created_at DESC LIMIT ?',
-      [Number(limit)]
-    );
+    const { limit = 50, device_name } = req.query;
+    let sql = 'SELECT * FROM locations';
+    const params = [];
+    if (device_name) {
+      sql += ' WHERE device_name = ?';
+      params.push(device_name);
+    }
+    sql += ' ORDER BY created_at DESC LIMIT ?';
+    params.push(Number(limit));
+    const [rows] = await db.query(sql, params);
     const latest = rows.length > 0 ? rows[0] : null;
-    res.json({ success: true, data: rows, latest });
+    // 获取所有不同设备名
+    const [devRows] = await db.query('SELECT DISTINCT device_name FROM locations WHERE device_name != "" ORDER BY device_name');
+    const devices = devRows.map(r => r.device_name);
+    res.json({ success: true, data: rows, latest, devices });
   } catch (e) { res.status(500).json({ success: false, message: e.message }); }
 });
 
@@ -483,6 +491,21 @@ router.post('/location/request', async (req, res) => {
 router.get('/location/pending', (req, res) => {
   const pending = locationRequestPending;
   if (pending) locationRequestPending = false;
+  res.json({ pending });
+});
+
+/* ========== 推送更新 ========== */
+let updatePushPending = false;
+// Web 端点击"推送更新"
+router.post('/app/push-update', async (req, res) => {
+  updatePushPending = true;
+  await log('PUSH', 'app', 'Web端推送应用更新通知', req.ip);
+  res.json({ success: true, message: '已推送更新通知，等待手机响应' });
+});
+// 手机端轮询检查是否有推送更新
+router.get('/app/check-push', (req, res) => {
+  const pending = updatePushPending;
+  if (pending) updatePushPending = false;
   res.json({ pending });
 });
 

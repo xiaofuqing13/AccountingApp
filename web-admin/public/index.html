@@ -253,6 +253,9 @@
     <div class="top-bar">
       <h2 class="page-title"><span class="emoji">📍</span>位置追踪</h2>
       <div class="top-actions">
+        <select class="form-control" id="location-device-filter" style="width:180px;margin-right:8px" onchange="loadLocations()">
+          <option value="">全部设备</option>
+        </select>
         <button class="btn btn-accent" onclick="requestLocation()" style="margin-right:8px">📡 立即定位</button>
         <a class="btn btn-secondary" href="/api/locations/export" target="_blank" style="margin-right:8px;text-decoration:none">📥 导出CSV</a>
         <button class="btn btn-primary" onclick="loadLocations()">🔄 刷新</button>
@@ -297,6 +300,9 @@
   <section id="page-appupdate" class="page-section">
     <div class="top-bar">
       <h2 class="page-title"><span class="emoji">📦</span>应用更新</h2>
+      <div class="top-actions">
+        <button class="btn btn-primary" onclick="pushUpdate()">📡 推送更新</button>
+      </div>
     </div>
     <div class="card">
       <div class="card-header"><h3>📤 上传新版本</h3></div>

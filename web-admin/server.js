@@ -40,7 +40,7 @@ function authMiddleware(req, res, next) {
     return next();
   }
   // APK 更新检查和下载不需要认证
-  if (req.path === '/api/app/check-update' || req.path === '/api/app/latest') {
+  if (req.path === '/api/app/check-update' || req.path === '/api/app/latest' || req.path === '/api/app/check-push') {
     return next();
   }
   // 其他 API 接口需要认证
