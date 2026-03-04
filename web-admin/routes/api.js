@@ -134,6 +134,14 @@ router.post('/accounts', async (req, res) => {
     if (!date || !type || !category || amount === undefined) {
       return res.status(400).json({ success: false, message: '缺少必填字段' });
     }
+    // 去重：同日期+类型+分类+金额+备注
+    const [exist] = await db.query(
+      'SELECT id FROM accounts WHERE date=? AND type=? AND category=? AND amount=? AND note=? LIMIT 1',
+      [date, type, category, amount, note]
+    );
+    if (exist.length > 0) {
+      return res.json({ success: true, id: exist[0].id, message: '记录已存在(去重)' });
+    }
     const [result] = await db.query(
       'INSERT INTO accounts (date,type,category,amount,note,location) VALUES (?,?,?,?,?,?)',
       [date, type, category, amount, note, location]
@@ -188,6 +196,14 @@ router.post('/diaries', async (req, res) => {
   try {
     const { date, title, content = '', weather = '', mood = '', location = '', tags = '' } = req.body;
     if (!date || !title) return res.status(400).json({ success: false, message: '缺少必填字段' });
+    // 去重：同日期+标题
+    const [exist] = await db.query(
+      'SELECT id FROM diaries WHERE date=? AND title=? LIMIT 1',
+      [date, title]
+    );
+    if (exist.length > 0) {
+      return res.json({ success: true, id: exist[0].id, message: '记录已存在(去重)' });
+    }
     const [result] = await db.query(
       'INSERT INTO diaries (date,title,content,weather,mood,location,tags) VALUES (?,?,?,?,?,?,?)',
       [date, title, content, weather, mood, location, tags]
@@ -241,6 +257,14 @@ router.post('/meetings', async (req, res) => {
   try {
     const { date, topic, start_time = '', end_time = '', location = '', attendees = '', content = '', todo_items = '', tags = '' } = req.body;
     if (!date || !topic) return res.status(400).json({ success: false, message: '缺少必填字段' });
+    // 去重：同日期+主题
+    const [exist] = await db.query(
+      'SELECT id FROM meetings WHERE date=? AND topic=? LIMIT 1',
+      [date, topic]
+    );
+    if (exist.length > 0) {
+      return res.json({ success: true, id: exist[0].id, message: '记录已存在(去重)' });
+    }
     const [result] = await db.query(
       'INSERT INTO meetings (date,topic,start_time,end_time,location,attendees,content,todo_items,tags) VALUES (?,?,?,?,?,?,?,?,?)',
       [date, topic, start_time, end_time, location, attendees, content, todo_items, tags]
@@ -432,6 +456,14 @@ router.post('/location', async (req, res) => {
     const { latitude, longitude, address = '', device_name = '' } = req.body;
     if (!latitude || !longitude) {
       return res.status(400).json({ success: false, message: '缺少经纬度' });
+    }
+    // 去重：5分钟内同设备同地址不重复记录
+    const [exist] = await db.query(
+      'SELECT id FROM locations WHERE device_name=? AND latitude=? AND longitude=? AND created_at > DATE_SUB(NOW(), INTERVAL 5 MINUTE) LIMIT 1',
+      [device_name, latitude, longitude]
+    );
+    if (exist.length > 0) {
+      return res.json({ success: true, message: '位置已记录(去重)' });
     }
     await db.query(
       'INSERT INTO locations (latitude, longitude, address, device_name) VALUES (?, ?, ?, ?)',
