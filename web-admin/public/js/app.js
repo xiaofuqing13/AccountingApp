@@ -25,6 +25,7 @@ document.querySelectorAll('.nav-item').forEach(item => {
     else if (page === 'locations') loadLocations();
     else if (page === 'devices') loadDevices();
     else if (page === 'appupdate') loadVersions();
+    else if (page === 'users') loadUsers();
   });
 });
 
@@ -975,3 +976,46 @@ document.addEventListener('DOMContentLoaded', async () => {
     showLoginPage();
   }
 });
+
+/* ====================================================================
+   用户管理
+   ==================================================================== */
+async function loadUsers() {
+  try {
+    const res = await api('/users');
+    if (!res.success) return;
+    const tbody = document.getElementById('users-tbody');
+    if (res.data.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-hint);padding:40px">暂无用户</td></tr>';
+      return;
+    }
+    tbody.innerHTML = res.data.map(u => `
+      <tr>
+        <td>${u.id}</td>
+        <td><strong>${u.username}</strong></td>
+        <td>${fmtTime(u.created_at)}</td>
+        <td><button class="btn btn-sm" style="background:#e74c3c;color:#fff" onclick="deleteUser(${u.id},'${u.username}')">🗑️ 删除</button></td>
+      </tr>
+    `).join('');
+  } catch (e) { console.error('加载用户失败:', e); }
+}
+
+async function createUser() {
+  const username = document.getElementById('new-user-name').value.trim();
+  const password = document.getElementById('new-user-pwd').value;
+  if (!username || !password) return toast('用户名和密码不能为空', 'error');
+  const res = await api('/users', { method: 'POST', body: { username, password } });
+  if (res.success) {
+    toast('✅ 用户创建成功');
+    document.getElementById('new-user-name').value = '';
+    document.getElementById('new-user-pwd').value = '';
+    loadUsers();
+  } else toast(res.message, 'error');
+}
+
+async function deleteUser(id, name) {
+  if (!confirm(`确定删除用户 "${name}" 吗？`)) return;
+  const res = await api(`/users/${id}`, { method: 'DELETE' });
+  if (res.success) { toast('用户已删除'); loadUsers(); }
+  else toast(res.message, 'error');
+}
