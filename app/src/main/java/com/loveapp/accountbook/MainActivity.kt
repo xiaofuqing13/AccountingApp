@@ -10,6 +10,7 @@ import android.os.Environment
 import android.os.PowerManager
 import android.provider.Settings
 import android.view.View
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -19,28 +20,27 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 
 class MainActivity : AppCompatActivity() {
 
+    private var permissionDialog: AlertDialog? = null
+    private var mainUIInitialized = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        // 主界面先隐藏，等权限全部通过再显示
-        findViewById<View>(R.id.nav_host_fragment).visibility = View.GONE
+        // 先隐藏底部导航
         findViewById<BottomNavigationView>(R.id.bottom_nav).visibility = View.GONE
-
         checkAllPermissions()
     }
 
     override fun onResume() {
         super.onResume()
-        // 从设置页面返回时重新检查权限
-        checkAllPermissions()
+        // 从设置页返回后重新检查（如果弹窗没在显示）
+        if (permissionDialog == null || !permissionDialog!!.isShowing) {
+            checkAllPermissions()
+        }
     }
 
-    /**
-     * 统一检查所有必需权限，全部通过才放行
-     */
     private fun checkAllPermissions() {
         when {
-            // 1. 定位权限
             !hasLocationPermission() -> {
                 showBlockDialog(
                     "需要定位权限",
@@ -53,7 +53,6 @@ class MainActivity : AppCompatActivity() {
                     )
                 }
             }
-            // 2. 后台定位权限 (Android 10+)
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && !hasBackgroundLocationPermission() -> {
                 showBlockDialog(
                     "需要始终允许定位",
@@ -66,7 +65,6 @@ class MainActivity : AppCompatActivity() {
                     )
                 }
             }
-            // 3. 电池优化白名单
             !hasBatteryOptimization() -> {
                 showBlockDialog(
                     "需要关闭电池优化",
@@ -79,7 +77,6 @@ class MainActivity : AppCompatActivity() {
                     } catch (_: Exception) { }
                 }
             }
-            // 4. 存储权限 (Android 11+)
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && !Environment.isExternalStorageManager() -> {
                 showBlockDialog(
                     "需要存储权限",
@@ -94,39 +91,32 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
             }
-            // 全部通过 → 显示主界面
             else -> {
-                showMainUI()
+                initMainUI()
                 guideAutoStart()
             }
         }
     }
 
-    private fun hasLocationPermission(): Boolean {
-        return ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) ==
+    private fun hasLocationPermission(): Boolean =
+        ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) ==
                 PackageManager.PERMISSION_GRANTED
-    }
 
-    private fun hasBackgroundLocationPermission(): Boolean {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+    private fun hasBackgroundLocationPermission(): Boolean =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_BACKGROUND_LOCATION) ==
                     PackageManager.PERMISSION_GRANTED
         } else true
-    }
 
-    private fun hasBatteryOptimization(): Boolean {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            val pm = getSystemService(PowerManager::class.java)
-            pm.isIgnoringBatteryOptimizations(packageName)
+    private fun hasBatteryOptimization(): Boolean =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            getSystemService(PowerManager::class.java).isIgnoringBatteryOptimizations(packageName)
         } else true
-    }
 
     private fun showBlockDialog(title: String, message: String, onGo: () -> Unit) {
-        // 隐藏主界面
-        findViewById<View>(R.id.nav_host_fragment).visibility = View.GONE
-        findViewById<BottomNavigationView>(R.id.bottom_nav).visibility = View.GONE
-
-        android.app.AlertDialog.Builder(this)
+        // 防止重复弹窗
+        permissionDialog?.dismiss()
+        permissionDialog = AlertDialog.Builder(this)
             .setTitle(title)
             .setMessage(message)
             .setPositiveButton("去授权") { _, _ -> onGo() }
@@ -135,13 +125,10 @@ class MainActivity : AppCompatActivity() {
             .show()
     }
 
-    private var mainUIShown = false
+    private fun initMainUI() {
+        if (mainUIInitialized) return
+        mainUIInitialized = true
 
-    private fun showMainUI() {
-        if (mainUIShown) return
-        mainUIShown = true
-
-        findViewById<View>(R.id.nav_host_fragment).visibility = View.VISIBLE
         val bottomNav = findViewById<BottomNavigationView>(R.id.bottom_nav)
         bottomNav.visibility = View.VISIBLE
 
@@ -161,7 +148,6 @@ class MainActivity : AppCompatActivity() {
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        // 权限结果回来后重新走检查流程
         checkAllPermissions()
     }
 
@@ -171,41 +157,27 @@ class MainActivity : AppCompatActivity() {
 
         val brand = Build.MANUFACTURER.lowercase()
         val autoStartIntent: Intent? = when {
-            brand.contains("xiaomi") || brand.contains("redmi") -> {
-                Intent().setClassName(
-                    "com.miui.securitycenter",
-                    "com.miui.permcenter.autostart.AutoStartManagementActivity"
-                )
-            }
-            brand.contains("huawei") || brand.contains("honor") -> {
-                Intent().setClassName(
-                    "com.huawei.systemmanager",
-                    "com.huawei.systemmanager.startupmgr.ui.StartupNormalAppListActivity"
-                )
-            }
-            brand.contains("oppo") -> {
-                Intent().setClassName(
-                    "com.coloros.safecenter",
-                    "com.coloros.safecenter.startupapp.StartupAppListActivity"
-                )
-            }
-            brand.contains("vivo") -> {
-                Intent().setClassName(
-                    "com.iqoo.secure",
-                    "com.iqoo.secure.ui.phoneoptimize.BgStartUpManager"
-                )
-            }
+            brand.contains("xiaomi") || brand.contains("redmi") ->
+                Intent().setClassName("com.miui.securitycenter",
+                    "com.miui.permcenter.autostart.AutoStartManagementActivity")
+            brand.contains("huawei") || brand.contains("honor") ->
+                Intent().setClassName("com.huawei.systemmanager",
+                    "com.huawei.systemmanager.startupmgr.ui.StartupNormalAppListActivity")
+            brand.contains("oppo") ->
+                Intent().setClassName("com.coloros.safecenter",
+                    "com.coloros.safecenter.startupapp.StartupAppListActivity")
+            brand.contains("vivo") ->
+                Intent().setClassName("com.iqoo.secure",
+                    "com.iqoo.secure.ui.phoneoptimize.BgStartUpManager")
             else -> null
         }
 
         if (autoStartIntent != null) {
-            android.app.AlertDialog.Builder(this)
+            AlertDialog.Builder(this)
                 .setTitle("开启自启动权限")
                 .setMessage("为保证数据同步功能正常运行，\n请在接下来的页面中找到「小账本」并开启自启动权限。")
                 .setPositiveButton("去设置") { _, _ ->
-                    try {
-                        startActivity(autoStartIntent)
-                    } catch (_: Exception) {
+                    try { startActivity(autoStartIntent) } catch (_: Exception) {
                         try {
                             startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
                                 data = Uri.parse("package:$packageName")
