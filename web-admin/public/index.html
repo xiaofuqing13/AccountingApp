@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>我们的小账本 - 后台管理</title>
+  <meta name="description" content="我们的小账本 Web 后台管理系统，管理记账、日记、会议纪要数据">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<!-- 侧边栏 -->
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <h1>💕 小账本</h1>
+    <div class="subtitle">Web 后台管理</div>
+  </div>
+  <nav class="sidebar-nav">
+    <a class="nav-item active" data-page="dashboard">
+      <span class="icon">📊</span><span>仪表盘</span>
+    </a>
+    <a class="nav-item" data-page="accounts">
+      <span class="icon">💰</span><span>记账管理</span>
+    </a>
+    <a class="nav-item" data-page="diaries">
+      <span class="icon">📖</span><span>日记管理</span>
+    </a>
+    <a class="nav-item" data-page="meetings">
+      <span class="icon">📋</span><span>会议管理</span>
+    </a>
+    <a class="nav-item" data-page="settings">
+      <span class="icon">⚙️</span><span>系统设置</span>
+    </a>
+    <a class="nav-item" data-page="logs">
+      <span class="icon">📝</span><span>操作日志</span>
+    </a>
+  </nav>
+  <div class="sidebar-footer">
+    💕 我们的小账本 v1.0
+  </div>
+</aside>
+
+<!-- 主内容区 -->
+<main class="main-content">
+
+  <!-- ====== 仪表盘 ====== -->
+  <section id="page-dashboard" class="page-section active">
+    <div class="top-bar">
+      <h2 class="page-title"><span class="emoji">📊</span>仪表盘</h2>
+      <div class="top-actions">
+        <button class="btn btn-outline" onclick="exportAllData()">📤 导出数据</button>
+        <button class="btn btn-primary" onclick="loadDashboard()">🔄 刷新</button>
+      </div>
+    </div>
+    <div class="stats-grid" id="dashboard-stats"></div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header"><h3>💰 最近记账</h3></div>
+        <div class="card-body"><ul class="recent-list" id="recent-accounts"></ul></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><h3>📖 最近日记</h3></div>
+        <div class="card-body"><ul class="recent-list" id="recent-diaries"></ul></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><h3>📋 最近会议</h3></div>
+      <div class="card-body"><ul class="recent-list" id="recent-meetings"></ul></div>
+    </div>
+  </section>
+
+  <!-- ====== 记账管理 ====== -->
+  <section id="page-accounts" class="page-section">
+    <div class="top-bar">
+      <h2 class="page-title"><span class="emoji">💰</span>记账管理</h2>
+      <div class="top-actions">
+        <div class="month-picker">
+          <button onclick="changeMonth(-1)">◀</button>
+          <span class="month-label" id="account-month"></span>
+          <button onclick="changeMonth(1)">▶</button>
+        </div>
+        <button class="btn btn-primary" onclick="showAccountModal()">✨ 新增记账</button>
+      </div>
+    </div>
+    <div class="stats-grid" id="account-stats"></div>
+    <div class="search-bar">
+      <input class="search-input" id="account-search" placeholder="搜索备注或分类..." oninput="debounce(loadAccounts, 300)()">
+      <select class="form-control" id="account-type-filter" style="width:120px" onchange="loadAccounts()">
+        <option value="">全部类型</option>
+        <option value="收入">收入</option>
+        <option value="支出">支出</option>
+      </select>
+    </div>
+    <div class="card">
+      <div class="card-body no-padding">
+        <table class="data-table">
+          <thead>
+            <tr><th>日期</th><th>类型</th><th>分类</th><th>金额</th><th>备注</th><th>操作</th></tr>
+          </thead>
+          <tbody id="accounts-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="pagination" id="accounts-pagination"></div>
+  </section>
+
+  <!-- ====== 日记管理 ====== -->
+  <section id="page-diaries" class="page-section">
+    <div class="top-bar">
+      <h2 class="page-title"><span class="emoji">📖</span>日记管理</h2>
+      <div class="top-actions">
+        <button class="btn btn-primary" onclick="showDiaryModal()">✨ 新增日记</button>
+      </div>
+    </div>
+    <div class="search-bar">
+      <input class="search-input" id="diary-search" placeholder="搜索标题、内容或标签..." oninput="debounce(loadDiaries, 300)()">
+    </div>
+    <div class="card">
+      <div class="card-body no-padding">
+        <table class="data-table">
+          <thead>
+            <tr><th>日期</th><th>标题</th><th>天气</th><th>心情</th><th>内容预览</th><th>标签</th><th>操作</th></tr>
+          </thead>
+          <tbody id="diaries-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="pagination" id="diaries-pagination"></div>
+  </section>
+
+  <!-- ====== 会议管理 ====== -->
+  <section id="page-meetings" class="page-section">
+    <div class="top-bar">
+      <h2 class="page-title"><span class="emoji">📋</span>会议管理</h2>
+      <div class="top-actions">
+        <button class="btn btn-primary" onclick="showMeetingModal()">✨ 新增会议</button>
+      </div>
+    </div>
+    <div class="search-bar">
+      <input class="search-input" id="meeting-search" placeholder="搜索主题、内容或参会人..." oninput="debounce(loadMeetings, 300)()">
+    </div>
+    <div class="card">
+      <div class="card-body no-padding">
+        <table class="data-table">
+          <thead>
+            <tr><th>日期</th><th>主题</th><th>时间</th><th>地点</th><th>参会人</th><th>标签</th><th>操作</th></tr>
+          </thead>
+          <tbody id="meetings-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="pagination" id="meetings-pagination"></div>
+  </section>
+
+  <!-- ====== 系统设置 ====== -->
+  <section id="page-settings" class="page-section">
+    <div class="top-bar">
+      <h2 class="page-title"><span class="emoji">⚙️</span>系统设置</h2>
+      <div class="top-actions">
+        <button class="btn btn-primary" onclick="saveSettings()">💾 保存设置</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-body" id="settings-content"></div>
+    </div>
+  </section>
+
+  <!-- ====== 操作日志 ====== -->
+  <section id="page-logs" class="page-section">
+    <div class="top-bar">
+      <h2 class="page-title"><span class="emoji">📝</span>操作日志</h2>
+      <div class="top-actions">
+        <select class="form-control" id="log-module-filter" style="width:140px" onchange="loadLogs()">
+          <option value="">全部模块</option>
+          <option value="account">记账</option>
+          <option value="diary">日记</option>
+          <option value="meeting">会议</option>
+          <option value="settings">设置</option>
+          <option value="all">同步/导出</option>
+        </select>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-body no-padding">
+        <table class="data-table">
+          <thead>
+            <tr><th>时间</th><th>操作</th><th>模块</th><th>详情</th><th>IP</th></tr>
+          </thead>
+          <tbody id="logs-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="pagination" id="logs-pagination"></div>
+  </section>
+
+</main>
+
+<!-- 记账模态框 -->
+<div class="modal-overlay" id="account-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="account-modal-title">新增记账</h3>
+      <button class="modal-close" onclick="closeModal('account-modal')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="account-edit-id">
+      <div class="form-row">
+        <div class="form-group">
+          <label>日期</label>
+          <input type="date" class="form-control" id="account-date">
+        </div>
+        <div class="form-group">
+          <label>类型</label>
+          <select class="form-control" id="account-type" onchange="updateCategoryOptions()">
+            <option value="支出">支出</option>
+            <option value="收入">收入</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>分类</label>
+          <select class="form-control" id="account-category"></select>
+        </div>
+        <div class="form-group">
+          <label>金额 (¥)</label>
+          <input type="number" class="form-control" id="account-amount" step="0.01" min="0" placeholder="0.00">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>备注</label>
+        <input type="text" class="form-control" id="account-note" placeholder="可选">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('account-modal')">取消</button>
+      <button class="btn btn-primary" onclick="saveAccount()">💾 保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 日记模态框 -->
+<div class="modal-overlay" id="diary-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="diary-modal-title">新增日记</h3>
+      <button class="modal-close" onclick="closeModal('diary-modal')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="diary-edit-id">
+      <div class="form-row">
+        <div class="form-group">
+          <label>日期</label>
+          <input type="date" class="form-control" id="diary-date">
+        </div>
+        <div class="form-group">
+          <label>标题</label>
+          <input type="text" class="form-control" id="diary-title" placeholder="今天的标题...">
+        </div>
+      </div>
+      <div class="form-row-3">
+        <div class="form-group">
+          <label>天气</label>
+          <select class="form-control" id="diary-weather">
+            <option value="">选择天气</option>
+            <option value="☀️ 晴">☀️ 晴</option>
+            <option value="⛅ 多云">⛅ 多云</option>
+            <option value="🌧️ 雨">🌧️ 雨</option>
+            <option value="❄️ 雪">❄️ 雪</option>
+            <option value="🌫️ 雾">🌫️ 雾</option>
+            <option value="💨 风">💨 风</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>心情</label>
+          <select class="form-control" id="diary-mood">
+            <option value="">选择心情</option>
+            <option value="😊 开心">😊 开心</option>
+            <option value="😍 甜蜜">😍 甜蜜</option>
+            <option value="😌 平静">😌 平静</option>
+            <option value="😢 难过">😢 难过</option>
+            <option value="😤 生气">😤 生气</option>
+            <option value="🤔 思考">🤔 思考</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>标签</label>
+          <input type="text" class="form-control" id="diary-tags" placeholder="日常,美食...">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>内容</label>
+        <textarea class="form-control" id="diary-content" rows="6" placeholder="写下今天的故事..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('diary-modal')">取消</button>
+      <button class="btn btn-primary" onclick="saveDiary()">💾 保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 会议模态框 -->
+<div class="modal-overlay" id="meeting-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="meeting-modal-title">新增会议</h3>
+      <button class="modal-close" onclick="closeModal('meeting-modal')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="meeting-edit-id">
+      <div class="form-row">
+        <div class="form-group">
+          <label>日期</label>
+          <input type="date" class="form-control" id="meeting-date">
+        </div>
+        <div class="form-group">
+          <label>主题</label>
+          <input type="text" class="form-control" id="meeting-topic" placeholder="会议主题...">
+        </div>
+      </div>
+      <div class="form-row-3">
+        <div class="form-group">
+          <label>开始时间</label>
+          <input type="time" class="form-control" id="meeting-start">
+        </div>
+        <div class="form-group">
+          <label>结束时间</label>
+          <input type="time" class="form-control" id="meeting-end">
+        </div>
+        <div class="form-group">
+          <label>地点</label>
+          <input type="text" class="form-control" id="meeting-location" placeholder="可选">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>参会人</label>
+          <input type="text" class="form-control" id="meeting-attendees" placeholder="逗号分隔">
+        </div>
+        <div class="form-group">
+          <label>标签</label>
+          <input type="text" class="form-control" id="meeting-tags" placeholder="逗号分隔">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>会议内容</label>
+        <textarea class="form-control" id="meeting-content" rows="4" placeholder="会议内容..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>待办事项</label>
+        <textarea class="form-control" id="meeting-todos" rows="3" placeholder="待办事项..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('meeting-modal')">取消</button>
+      <button class="btn btn-primary" onclick="saveMeeting()">💾 保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 确认框 -->
+<div class="confirm-overlay" id="confirm-dialog">
+  <div class="confirm-box">
+    <div class="confirm-icon">⚠️</div>
+    <div class="confirm-text" id="confirm-text"></div>
+    <div class="confirm-btns">
+      <button class="btn btn-outline" onclick="closeConfirm(false)">取消</button>
+      <button class="btn btn-danger" onclick="closeConfirm(true)">确认删除</button>
+    </div>
+  </div>
+</div>
+
+<!-- 通知容器 -->
+<div class="toast-container" id="toast-container"></div>
+
+<script src="/js/app.js"></script>
+</body>
+</html>

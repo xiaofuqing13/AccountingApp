@@ -66,3 +66,5 @@ design/
 
 # Gradle user
 .gradle-user/
+
+web-admin/node_modules/
