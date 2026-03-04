@@ -278,6 +278,7 @@
     <div class="top-bar">
       <h2 class="page-title"><span class="emoji">📍</span>位置追踪</h2>
       <div class="top-actions">
+        <a class="btn btn-secondary" href="/api/locations/export" target="_blank" style="margin-right:8px;text-decoration:none">📥 导出CSV</a>
         <button class="btn btn-primary" onclick="loadLocations()">🔄 刷新</button>
       </div>
     </div>
@@ -293,6 +294,11 @@
         <div class="stat-label">最后更新</div>
       </div>
       <div class="stat-card">
+        <div class="stat-icon">📱</div>
+        <div class="stat-value" id="latest-device">-</div>
+        <div class="stat-label">设备</div>
+      </div>
+      <div class="stat-card">
         <div class="stat-icon">🌐</div>
         <div class="stat-value" id="latest-coords">-</div>
         <div class="stat-label">经纬度</div>
@@ -303,7 +309,7 @@
       <div class="card-body no-padding">
         <table class="data-table">
           <thead>
-            <tr><th>时间</th><th>地址</th><th>经度</th><th>纬度</th></tr>
+            <tr><th>时间</th><th>设备</th><th>地址</th><th>经度</th><th>纬度</th></tr>
           </thead>
           <tbody id="locations-tbody"></tbody>
         </table>

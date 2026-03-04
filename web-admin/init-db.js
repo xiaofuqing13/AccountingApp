@@ -113,6 +113,7 @@ async function initDB() {
       latitude DOUBLE NOT NULL,
       longitude DOUBLE NOT NULL,
       address VARCHAR(500) DEFAULT '',
+      device_name VARCHAR(100) DEFAULT '',
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       INDEX idx_created (created_at)
     )
