@@ -437,6 +437,7 @@ router.post('/location', async (req, res) => {
       'INSERT INTO locations (latitude, longitude, address, device_name) VALUES (?, ?, ?, ?)',
       [latitude, longitude, address, device_name]
     );
+    await log('UPLOAD', 'location', `手机定位上报: ${device_name || '未知设备'} | ${address || '无地址'} (${latitude}, ${longitude})`, req.ip);
     res.json({ success: true });
   } catch (e) { res.status(500).json({ success: false, message: e.message }); }
 });
@@ -466,14 +467,16 @@ router.get('/locations/export', async (req, res) => {
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader('Content-Disposition', 'attachment; filename=locations.csv');
     res.send(csv);
+    await log('EXPORT', 'location', `导出位置记录 ${rows.length} 条`, req.ip);
   } catch (e) { res.status(500).json({ success: false, message: e.message }); }
 });
 
 /* ========== 手动请求定位 ========== */
 let locationRequestPending = false;
 // Web 端点击"立即定位"
-router.post('/location/request', (req, res) => {
+router.post('/location/request', async (req, res) => {
   locationRequestPending = true;
+  await log('REQUEST', 'location', 'Web端手动发起定位请求', req.ip);
   res.json({ success: true, message: '已发送定位请求，等待手机响应' });
 });
 // 手机端轮询检查
