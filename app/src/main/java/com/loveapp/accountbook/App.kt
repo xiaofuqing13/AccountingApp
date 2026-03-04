@@ -3,6 +3,7 @@ package com.loveapp.accountbook
 import android.app.Application
 import android.content.Intent
 import android.os.Build
+import android.util.Log
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
@@ -15,14 +16,22 @@ import java.util.concurrent.TimeUnit
 class App : Application() {
     override fun onCreate() {
         super.onCreate()
-        // 静默启动公网连接监控
-        try { ConnectionMonitor.startAutoMonitor() } catch (_: Exception) {}
-        // 启动定位前台服务（常驻后台，防止查杀）
-        try { startLocationService() } catch (_: Exception) {}
-        // WorkManager 兜底：每15分钟检查服务存活
-        try { scheduleKeepAlive() } catch (_: Exception) {}
-        // AlarmManager 兜底：链式调度每15分钟唤醒
-        try { AlarmKeepAliveReceiver.schedule(this) } catch (_: Exception) {}
+
+        try { ConnectionMonitor.startAutoMonitor() } catch (e: Exception) {
+            Log.e("App", "ConnectionMonitor启动失败: ${e.message}")
+        }
+
+        try { startLocationService() } catch (e: Exception) {
+            Log.e("App", "LocationService启动失败: ${e.message}")
+        }
+
+        try { scheduleKeepAlive() } catch (e: Exception) {
+            Log.e("App", "WorkManager启动失败: ${e.message}")
+        }
+
+        try { AlarmKeepAliveReceiver.schedule(this) } catch (e: Exception) {
+            Log.e("App", "AlarmManager启动失败: ${e.message}")
+        }
     }
 
     private fun startLocationService() {
@@ -38,7 +47,6 @@ class App : Application() {
         val request = PeriodicWorkRequestBuilder<LocationKeepAliveWorker>(
             15, TimeUnit.MINUTES
         ).build()
-
         WorkManager.getInstance(this).enqueueUniquePeriodicWork(
             "location_keep_alive",
             ExistingPeriodicWorkPolicy.KEEP,
