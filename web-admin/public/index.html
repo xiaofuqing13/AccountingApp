@@ -76,6 +76,9 @@
     <a class="nav-item" data-page="locations">
       <span class="icon">📍</span><span>位置追踪</span>
     </a>
+    <a class="nav-item" data-page="devices">
+      <span class="icon">📱</span><span>设备在线</span>
+    </a>
     <a class="nav-item" data-page="appupdate">
       <span class="icon">📦</span><span>应用更新</span>
     </a>
@@ -328,6 +331,17 @@
         </table>
       </div>
     </div>
+  </section>
+
+  <!-- ====== 设备在线 ====== -->
+  <section id="page-devices" class="page-section">
+    <div class="top-bar">
+      <h2 class="page-title"><span class="emoji">📱</span>设备在线</h2>
+      <div class="top-actions">
+        <button class="btn btn-primary" onclick="loadDevices()">🔄 刷新</button>
+      </div>
+    </div>
+    <div id="devices-container" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px"></div>
   </section>
 
 </main>
