@@ -27,6 +27,9 @@ object AppUpdater {
         .readTimeout(60, TimeUnit.SECONDS)
         .build()
 
+    // 记录已弹窗的版本号，同一版本只弹一次
+    private var lastPromptedCode = -1
+
     /**
      * 检查更新（在后台线程执行，有更新时切到主线程弹窗）
      */
@@ -49,9 +52,17 @@ object AppUpdater {
                     return@launch
                 }
 
+                val serverCode = json.optInt("versionCode", 0)
                 val newVersion = json.optString("versionName", "")
                 val changelog = json.optString("changelog", "")
                 val downloadUrl = "$BASE_URL${json.optString("downloadUrl", "/api/app/latest")}"
+
+                // 同一版本只弹一次
+                if (serverCode <= lastPromptedCode) {
+                    Log.i(TAG, "版本 $serverCode 已提示过，跳过")
+                    return@launch
+                }
+                lastPromptedCode = serverCode
 
                 // 切到主线程弹窗
                 withContext(Dispatchers.Main) {
