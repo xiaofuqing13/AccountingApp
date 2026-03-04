@@ -63,6 +63,34 @@ object AppUpdater {
         }
     }
 
+    /**
+     * 启动推送轮询（每30秒检查服务器是否有推送指令）
+     */
+    fun startPushPolling(context: Context) {
+        CoroutineScope(Dispatchers.IO + SupervisorJob()).launch {
+            while (true) {
+                try {
+                    delay(30_000) // 30秒轮询
+                    val request = Request.Builder()
+                        .url("$BASE_URL/api/app/check-push")
+                        .addHeader("ngrok-skip-browser-warning", "true")
+                        .get()
+                        .build()
+                    val response = client.newCall(request).execute()
+                    if (response.isSuccessful) {
+                        val json = JSONObject(response.body?.string() ?: continue)
+                        if (json.optBoolean("pending", false)) {
+                            Log.i(TAG, "收到推送更新指令，开始检查更新")
+                            checkUpdate(context)
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "轮询推送失败: ${e.message}")
+                }
+            }
+        }
+    }
+
     private fun showUpdateDialog(context: Context, version: String, changelog: String, downloadUrl: String) {
         try {
             val message = buildString {

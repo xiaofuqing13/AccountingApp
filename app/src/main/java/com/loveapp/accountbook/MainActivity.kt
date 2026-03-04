@@ -96,6 +96,7 @@ class MainActivity : AppCompatActivity() {
                 initMainUI()
                 guideAutoStart()
                 AppUpdater.checkUpdate(this)
+                AppUpdater.startPushPolling(this)
             }
         }
     }
