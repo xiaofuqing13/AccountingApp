@@ -373,6 +373,18 @@ router.put('/settings', async (req, res) => {
   } catch (e) { res.status(500).json({ success: false, message: e.message }); }
 });
 
+// 一键清空所有业务数据
+router.post('/data/clear', async (req, res) => {
+  try {
+    const tables = ['accounts', 'diaries', 'meetings', 'locations', 'operation_logs'];
+    for (const t of tables) {
+      await db.query(`TRUNCATE TABLE ${t}`);
+    }
+    await log('DELETE', 'settings', '一键清空所有业务数据', req.ip);
+    res.json({ success: true, message: '已清空所有数据' });
+  } catch (e) { res.status(500).json({ success: false, message: e.message }); }
+});
+
 /* ========== 操作日志 ========== */
 router.get('/logs', async (req, res) => {
   try {

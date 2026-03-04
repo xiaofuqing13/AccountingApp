@@ -600,6 +600,18 @@ async function pushUpdate() {
   else toast(res.message || '推送失败', 'error');
 }
 
+async function clearAllData() {
+  if (!confirm('⚠️ 确定清空所有数据吗？\n（记账、日记、会议、位置、日志将全部删除，不可恢复）')) return;
+  if (!confirm('⚠️ 再次确认：真的要清空吗？')) return;
+  try {
+    const res = await api('/data/clear', 'POST');
+    if (res.success) {
+      toast('✅ 所有数据已清空', 'success');
+      location.reload();
+    } else { toast(res.message, 'error'); }
+  } catch (e) { toast('清空失败: ' + e.message, 'error'); }
+}
+
 /* ====================================================================
    操作日志
    ==================================================================== */
