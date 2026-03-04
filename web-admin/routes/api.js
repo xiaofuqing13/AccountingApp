@@ -275,8 +275,15 @@ router.post('/sync/upload', async (req, res) => {
   try {
     const { accounts = [], diaries = [], meetings = [] } = req.body;
     let aCount = 0, dCount = 0, mCount = 0;
+    let aSkip = 0, dSkip = 0, mSkip = 0;
 
     for (const a of accounts) {
+      // 去重：同日期+类型+分类+金额视为重复
+      const [exist] = await db.query(
+        'SELECT id FROM accounts WHERE date=? AND type=? AND category=? AND amount=? LIMIT 1',
+        [a.date, a.type, a.category, a.amount]
+      );
+      if (exist.length > 0) { aSkip++; continue; }
       await db.query(
         'INSERT INTO accounts (date,type,category,amount,note,location) VALUES (?,?,?,?,?,?)',
         [a.date, a.type, a.category, a.amount, a.note || '', a.location || '']
@@ -284,6 +291,12 @@ router.post('/sync/upload', async (req, res) => {
       aCount++;
     }
     for (const d of diaries) {
+      // 去重：同日期+标题视为重复
+      const [exist] = await db.query(
+        'SELECT id FROM diaries WHERE date=? AND title=? LIMIT 1',
+        [d.date, d.title]
+      );
+      if (exist.length > 0) { dSkip++; continue; }
       await db.query(
         'INSERT INTO diaries (date,title,content,weather,mood,location,tags) VALUES (?,?,?,?,?,?,?)',
         [d.date, d.title, d.content || '', d.weather || '', d.mood || '', d.location || '', d.tags || '']
@@ -291,6 +304,12 @@ router.post('/sync/upload', async (req, res) => {
       dCount++;
     }
     for (const m of meetings) {
+      // 去重：同日期+主题视为重复
+      const [exist] = await db.query(
+        'SELECT id FROM meetings WHERE date=? AND topic=? LIMIT 1',
+        [m.date, m.topic]
+      );
+      if (exist.length > 0) { mSkip++; continue; }
       await db.query(
         'INSERT INTO meetings (date,topic,start_time,end_time,location,attendees,content,todo_items,tags) VALUES (?,?,?,?,?,?,?,?,?)',
         [m.date, m.topic, m.start_time || '', m.end_time || '', m.location || '', m.attendees || '', m.content || '', m.todo_items || '', m.tags || '']
@@ -298,8 +317,11 @@ router.post('/sync/upload', async (req, res) => {
       mCount++;
     }
 
-    await log('SYNC', 'all', `Android同步: 记账${aCount}条, 日记${dCount}条, 会议${mCount}条`, req.ip);
-    res.json({ success: true, synced: { accounts: aCount, diaries: dCount, meetings: mCount } });
+    const skipTotal = aSkip + dSkip + mSkip;
+    const detail = `Android同步: 新增 记账${aCount} 日记${dCount} 会议${mCount}` +
+      (skipTotal > 0 ? `, 跳过重复 ${skipTotal}条` : '');
+    await log('SYNC', 'all', detail, req.ip);
+    res.json({ success: true, synced: { accounts: aCount, diaries: dCount, meetings: mCount }, skipped: { accounts: aSkip, diaries: dSkip, meetings: mSkip } });
   } catch (e) { res.status(500).json({ success: false, message: e.message }); }
 });
 
