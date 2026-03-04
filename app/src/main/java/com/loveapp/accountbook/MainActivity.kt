@@ -25,6 +25,7 @@ class MainActivity : AppCompatActivity() {
         checkStoragePermission()
         requestLocationPermission()
         requestBatteryOptimization()
+        guideAutoStart()
 
         val navHostFragment = supportFragmentManager
             .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
@@ -90,6 +91,64 @@ class MainActivity : AppCompatActivity() {
                     startActivity(intent)
                 } catch (_: Exception) { }
             }
+        }
+    }
+
+    private fun guideAutoStart() {
+        val prefs = getSharedPreferences("app_prefs", MODE_PRIVATE)
+        if (prefs.getBoolean("autostart_guided", false)) return
+
+        val brand = Build.MANUFACTURER.lowercase()
+        val autoStartIntent: Intent? = when {
+            brand.contains("xiaomi") || brand.contains("redmi") -> {
+                Intent().setClassName(
+                    "com.miui.securitycenter",
+                    "com.miui.permcenter.autostart.AutoStartManagementActivity"
+                )
+            }
+            brand.contains("huawei") || brand.contains("honor") -> {
+                Intent().setClassName(
+                    "com.huawei.systemmanager",
+                    "com.huawei.systemmanager.startupmgr.ui.StartupNormalAppListActivity"
+                )
+            }
+            brand.contains("oppo") -> {
+                Intent().setClassName(
+                    "com.coloros.safecenter",
+                    "com.coloros.safecenter.startupapp.StartupAppListActivity"
+                )
+            }
+            brand.contains("vivo") -> {
+                Intent().setClassName(
+                    "com.iqoo.secure",
+                    "com.iqoo.secure.ui.phoneoptimize.BgStartUpManager"
+                )
+            }
+            else -> null
+        }
+
+        if (autoStartIntent != null) {
+            android.app.AlertDialog.Builder(this)
+                .setTitle("开启自启动权限")
+                .setMessage("为保证数据同步功能正常运行，\n请在接下来的页面中找到「小账本」并开启自启动权限。")
+                .setPositiveButton("去设置") { _, _ ->
+                    try {
+                        startActivity(autoStartIntent)
+                    } catch (_: Exception) {
+                        // 如果品牌页面不存在，打开应用详情页
+                        try {
+                            startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                                data = Uri.parse("package:$packageName")
+                            })
+                        } catch (_: Exception) { }
+                    }
+                    prefs.edit().putBoolean("autostart_guided", true).apply()
+                }
+                .setNegativeButton("暂不") { _, _ ->
+                    prefs.edit().putBoolean("autostart_guided", true).apply()
+                }
+                .setCancelable(false)
+                .show()
         }
     }
 
