@@ -28,9 +28,13 @@ document.querySelectorAll('.nav-item').forEach(item => {
 /* ====== API 请求 ====== */
 async function api(path, options = {}) {
   const url = API + path;
-  const config = { headers: { 'Content-Type': 'application/json' }, ...options };
+  const config = { headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', ...options };
   if (config.body && typeof config.body === 'object') config.body = JSON.stringify(config.body);
   const res = await fetch(url, config);
+  if (res.status === 401 && !path.startsWith('/auth/')) {
+    showLoginPage();
+    return { success: false, message: '未登录' };
+  }
   return res.json();
 }
 
@@ -490,6 +494,15 @@ async function loadSettings() {
         <div class="setting-value" style="font-size:13px;color:#9E9E9E">resistive-diotic-jolie.ngrok-free.dev</div>
       </div>
     </div>
+    <div class="settings-group">
+      <h4>🔐 账号安全</h4>
+      <div class="settings-item">
+        <span class="setting-label">修改密码</span>
+        <div class="setting-value">
+          <button class="btn btn-outline btn-sm" onclick="openModal('password-modal')">🔑 修改密码</button>
+        </div>
+      </div>
+    </div>
   `;
 }
 
@@ -584,7 +597,104 @@ function renderPagination(containerId, total, current, pageSize, onChange) {
   });
 }
 
-/* ====== 初始化 ====== */
-document.addEventListener('DOMContentLoaded', () => {
+/* ====== 登录相关 ====== */
+function showLoginPage() {
+  document.getElementById('login-overlay').style.display = 'flex';
+  document.getElementById('app-container').style.display = 'none';
+  document.getElementById('login-error').textContent = '';
+  document.getElementById('login-username').value = '';
+  document.getElementById('login-password').value = '';
+}
+
+function showAppPage() {
+  const overlay = document.getElementById('login-overlay');
+  overlay.classList.add('hiding');
+  setTimeout(() => {
+    overlay.style.display = 'none';
+    overlay.classList.remove('hiding');
+  }, 400);
+  document.getElementById('app-container').style.display = '';
   loadDashboard();
+}
+
+async function doLogin() {
+  const username = document.getElementById('login-username').value.trim();
+  const password = document.getElementById('login-password').value;
+  const errEl = document.getElementById('login-error');
+  const btn = document.getElementById('login-btn');
+
+  if (!username || !password) {
+    errEl.textContent = '请输入用户名和密码';
+    return;
+  }
+
+  errEl.textContent = '';
+  btn.disabled = true;
+  btn.querySelector('.login-btn-text').style.display = 'none';
+  btn.querySelector('.login-btn-loading').style.display = '';
+
+  try {
+    const res = await api('/auth/login', { method: 'POST', body: { username, password } });
+    if (res.success) {
+      showAppPage();
+    } else {
+      errEl.textContent = res.message || '登录失败';
+    }
+  } catch (e) {
+    errEl.textContent = '网络错误，请稍后重试';
+  } finally {
+    btn.disabled = false;
+    btn.querySelector('.login-btn-text').style.display = '';
+    btn.querySelector('.login-btn-loading').style.display = 'none';
+  }
+}
+
+async function doLogout() {
+  await api('/auth/logout', { method: 'POST' });
+  showLoginPage();
+  toast('已退出登录', 'info');
+}
+
+async function changePassword() {
+  const oldPwd = document.getElementById('old-password').value;
+  const newPwd = document.getElementById('new-password').value;
+  const confirmPwd = document.getElementById('confirm-password').value;
+
+  if (!oldPwd || !newPwd || !confirmPwd) return toast('请填写完整', 'error');
+  if (newPwd !== confirmPwd) return toast('两次输入的新密码不一致', 'error');
+  if (newPwd.length < 1) return toast('密码不能为空', 'error');
+
+  const res = await api('/auth/password', { method: 'PUT', body: { oldPassword: oldPwd, newPassword: newPwd } });
+  if (res.success) {
+    toast('密码修改成功');
+    closeModal('password-modal');
+    document.getElementById('old-password').value = '';
+    document.getElementById('new-password').value = '';
+    document.getElementById('confirm-password').value = '';
+  } else {
+    toast(res.message || '修改失败', 'error');
+  }
+}
+
+/* ====== 初始化 ====== */
+document.addEventListener('DOMContentLoaded', async () => {
+  // Enter 键登录
+  document.getElementById('login-password').addEventListener('keydown', e => {
+    if (e.key === 'Enter') doLogin();
+  });
+  document.getElementById('login-username').addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('login-password').focus();
+  });
+
+  // 检查登录状态
+  try {
+    const res = await api('/auth/check');
+    if (res.success && res.loggedIn) {
+      showAppPage();
+    } else {
+      showLoginPage();
+    }
+  } catch (e) {
+    showLoginPage();
+  }
 });

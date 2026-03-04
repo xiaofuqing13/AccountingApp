@@ -1,18 +1,46 @@
 const express = require('express');
 const path = require('path');
 const cors = require('cors');
+const session = require('express-session');
 const apiRoutes = require('./routes/api');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 // 中间件
-app.use(cors());
+app.use(cors({ origin: true, credentials: true }));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
+// Session 配置
+app.use(session({
+  secret: 'xiaozhanben-secret-2025',
+  resave: false,
+  saveUninitialized: false,
+  cookie: { maxAge: 7 * 24 * 60 * 60 * 1000 } // 7天
+}));
+
 // 静态文件
 app.use(express.static(path.join(__dirname, 'public')));
+
+// 认证中间件 - API 路由保护（排除登录相关和同步上传接口）
+function authMiddleware(req, res, next) {
+  // 登录/登出/检查状态接口不需要认证
+  if (req.path === '/api/auth/login' || req.path === '/api/auth/check' || req.path === '/api/auth/logout') {
+    return next();
+  }
+  // Android 同步上传接口不需要 session 认证
+  if (req.path === '/api/sync/upload') {
+    return next();
+  }
+  // 其他 API 接口需要认证
+  if (req.path.startsWith('/api/') && !req.session.userId) {
+    return res.status(401).json({ success: false, message: '未登录' });
+  }
+  next();
+}
+
+app.use(authMiddleware);
 
 // API 路由
 app.use('/api', apiRoutes);

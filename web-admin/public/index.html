@@ -9,6 +9,57 @@
 </head>
 <body>
 
+<!-- 浮动粒子背景 -->
+<div class="particles-bg">
+  <div class="particle"></div><div class="particle"></div><div class="particle"></div>
+  <div class="particle"></div><div class="particle"></div><div class="particle"></div>
+  <div class="particle"></div><div class="particle"></div><div class="particle"></div>
+  <div class="particle"></div><div class="particle"></div><div class="particle"></div>
+</div>
+<!-- 浮动爱心 -->
+<div class="floating-hearts">
+  <div class="heart">💕</div><div class="heart">💗</div><div class="heart">✨</div>
+  <div class="heart">🌸</div><div class="heart">💕</div><div class="heart">✨</div>
+  <div class="heart">🌸</div><div class="heart">💗</div>
+</div>
+<!-- 星光闪烁 -->
+<div class="sparkle">
+  <div class="sparkle-dot"></div><div class="sparkle-dot"></div><div class="sparkle-dot"></div>
+  <div class="sparkle-dot"></div><div class="sparkle-dot"></div><div class="sparkle-dot"></div>
+  <div class="sparkle-dot"></div><div class="sparkle-dot"></div>
+</div>
+
+<!-- 登录页面 -->
+<div class="login-overlay" id="login-overlay">
+  <div class="login-particles"></div>
+  <div class="login-box">
+    <div class="login-logo">💕</div>
+    <h2 class="login-title">我们的小账本</h2>
+    <p class="login-subtitle">Web 后台管理系统</p>
+    <div class="login-form">
+      <div class="login-field">
+        <label for="login-username">用户名</label>
+        <input type="text" id="login-username" class="login-input" placeholder="请输入用户名" autocomplete="username">
+      </div>
+      <div class="login-field">
+        <label for="login-password">密码</label>
+        <input type="password" id="login-password" class="login-input" placeholder="请输入密码" autocomplete="current-password">
+      </div>
+      <div class="login-error" id="login-error"></div>
+      <button class="login-btn" id="login-btn" onclick="doLogin()">
+        <span class="login-btn-text">登 录</span>
+        <span class="login-btn-loading" style="display:none">
+          <span class="login-spinner"></span> 登录中...
+        </span>
+      </button>
+    </div>
+    <div class="login-footer">💕 安全登录 · 仅限管理员</div>
+  </div>
+</div>
+
+<!-- 主应用容器（登录后显示） -->
+<div id="app-container" style="display:none">
+
 <!-- 侧边栏 -->
 <aside class="sidebar">
   <div class="sidebar-brand">
@@ -35,6 +86,11 @@
       <span class="icon">📝</span><span>操作日志</span>
     </a>
   </nav>
+  <div class="sidebar-user">
+    <a class="nav-item" onclick="doLogout()">
+      <span class="icon">🚪</span><span>退出登录</span>
+    </a>
+  </div>
   <div class="sidebar-footer">
     💕 我们的小账本 v1.0
   </div>
@@ -370,6 +426,36 @@
     </div>
   </div>
 </div>
+
+<!-- 修改密码模态框 -->
+<div class="modal-overlay" id="password-modal">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-header">
+      <h3>🔑 修改密码</h3>
+      <button class="modal-close" onclick="closeModal('password-modal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>原密码</label>
+        <input type="password" class="form-control" id="old-password" placeholder="请输入原密码">
+      </div>
+      <div class="form-group">
+        <label>新密码</label>
+        <input type="password" class="form-control" id="new-password" placeholder="请输入新密码">
+      </div>
+      <div class="form-group">
+        <label>确认新密码</label>
+        <input type="password" class="form-control" id="confirm-password" placeholder="再次输入新密码">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('password-modal')">取消</button>
+      <button class="btn btn-primary" onclick="changePassword()">💾 确认修改</button>
+    </div>
+  </div>
+</div>
+
+</div><!-- /app-container -->
 
 <!-- 通知容器 -->
 <div class="toast-container" id="toast-container"></div>

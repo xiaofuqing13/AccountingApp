@@ -93,6 +93,26 @@ async function initDB() {
   `);
   console.log('✅ operation_logs 表已创建');
 
+  await conn.query(`
+    CREATE TABLE IF NOT EXISTS admin_users (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      username VARCHAR(50) UNIQUE NOT NULL,
+      password VARCHAR(128) NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `);
+  console.log('✅ admin_users 表已创建');
+
+  // 插入默认管理员（用户名: 1, 密码: 1）
+  const crypto = require('crypto');
+  const defaultPwd = crypto.createHash('sha256').update('1').digest('hex');
+  await conn.query(
+    'INSERT IGNORE INTO admin_users (username, password) VALUES (?, ?)',
+    ['1', defaultPwd]
+  );
+  console.log('✅ 默认管理员已创建（用户名: 1, 密码: 1）');
+
   // 插入默认设置
   const defaults = [
     ['couple_name_1', '宝贝'],

@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
+const crypto = require('crypto');
 
 /* ========== 工具函数 ========== */
 function formatDate(d) {
@@ -8,6 +9,10 @@ function formatDate(d) {
   const dt = new Date(d);
   if (isNaN(dt.getTime())) return d;
   return dt.toISOString().slice(0, 10);
+}
+
+function hashPassword(password) {
+  return crypto.createHash('sha256').update(password).digest('hex');
 }
 
 async function log(action, module, detail, ip) {
@@ -18,6 +23,63 @@ async function log(action, module, detail, ip) {
     );
   } catch (e) { /* silent */ }
 }
+
+/* ========== 认证 ========== */
+router.post('/auth/login', async (req, res) => {
+  try {
+    const { username, password } = req.body;
+    if (!username || !password) {
+      return res.status(400).json({ success: false, message: '请输入用户名和密码' });
+    }
+    const hashedPwd = hashPassword(password);
+    const [rows] = await db.query(
+      'SELECT id, username FROM admin_users WHERE username = ? AND password = ?',
+      [username, hashedPwd]
+    );
+    if (rows.length === 0) {
+      await log('LOGIN_FAIL', 'auth', `登录失败: ${username}`, req.ip);
+      return res.status(401).json({ success: false, message: '用户名或密码错误' });
+    }
+    req.session.userId = rows[0].id;
+    req.session.username = rows[0].username;
+    await log('LOGIN', 'auth', `登录成功: ${username}`, req.ip);
+    res.json({ success: true, username: rows[0].username });
+  } catch (e) { res.status(500).json({ success: false, message: e.message }); }
+});
+
+router.post('/auth/logout', (req, res) => {
+  req.session.destroy();
+  res.json({ success: true });
+});
+
+router.get('/auth/check', (req, res) => {
+  if (req.session.userId) {
+    res.json({ success: true, loggedIn: true, username: req.session.username });
+  } else {
+    res.json({ success: true, loggedIn: false });
+  }
+});
+
+router.put('/auth/password', async (req, res) => {
+  try {
+    const { oldPassword, newPassword } = req.body;
+    if (!oldPassword || !newPassword) {
+      return res.status(400).json({ success: false, message: '请填写完整' });
+    }
+    const oldHash = hashPassword(oldPassword);
+    const [rows] = await db.query(
+      'SELECT id FROM admin_users WHERE id = ? AND password = ?',
+      [req.session.userId, oldHash]
+    );
+    if (rows.length === 0) {
+      return res.status(400).json({ success: false, message: '原密码错误' });
+    }
+    const newHash = hashPassword(newPassword);
+    await db.query('UPDATE admin_users SET password = ? WHERE id = ?', [newHash, req.session.userId]);
+    await log('UPDATE', 'auth', '修改密码', req.ip);
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ success: false, message: e.message }); }
+});
 
 /* ========== 记账 CRUD ========== */
 router.get('/accounts', async (req, res) => {
