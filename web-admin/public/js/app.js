@@ -140,7 +140,7 @@ async function loadDashboard() {
           <div class="item-icon ${a.type === '收入' ? 'income-bg' : 'expense-bg'}">${a.type === '收入' ? '📈' : '📉'}</div>
           <div>
             <div class="item-title">${a.category}${a.note ? ' · ' + truncate(a.note, 15) : ''}</div>
-            <div class="item-date">${fmtDate(a.date)}</div>
+            <div class="item-date">${fmtTime(a.created_at)}</div>
           </div>
         </div>
         <div class="item-amount ${a.type === '收入' ? 'amount-income' : 'amount-expense'}">${a.type === '收入' ? '+' : '-'}${fmtMoney(a.amount)}</div>
@@ -159,7 +159,7 @@ async function loadDashboard() {
           <div class="item-icon diary-bg">📖</div>
           <div>
             <div class="item-title">${di.title}${di.mood ? ' ' + di.mood : ''}</div>
-            <div class="item-date">${fmtDate(di.date)}</div>
+            <div class="item-date">${fmtTime(di.created_at)}</div>
           </div>
         </div>
       </li>
@@ -177,7 +177,7 @@ async function loadDashboard() {
           <div class="item-icon meeting-bg">📋</div>
           <div>
             <div class="item-title">${m.topic}</div>
-            <div class="item-date">${fmtDate(m.date)}</div>
+            <div class="item-date">${fmtTime(m.created_at)}</div>
           </div>
         </div>
       </li>
@@ -227,7 +227,7 @@ async function loadAccounts() {
   } else {
     tbody.innerHTML = res.data.map(a => `
       <tr>
-        <td>${fmtDate(a.date)}</td>
+        <td>${fmtTime(a.created_at)}</td>
         <td><span class="tag ${a.type === '收入' ? 'tag-income' : 'tag-expense'}">${a.type}</span></td>
         <td>${a.category}</td>
         <td class="${a.type === '收入' ? 'amount-income' : 'amount-expense'}">${a.type === '收入' ? '+' : '-'}${fmtMoney(a.amount)}</td>
@@ -305,7 +305,7 @@ async function loadDiaries() {
   } else {
     tbody.innerHTML = res.data.map(d => `
       <tr>
-        <td>${fmtDate(d.date)}</td>
+        <td>${fmtTime(d.created_at)}</td>
         <td><strong>${d.title}</strong></td>
         <td>${d.weather || '-'}</td>
         <td>${d.mood || '-'}</td>
@@ -379,7 +379,7 @@ async function loadMeetings() {
   } else {
     tbody.innerHTML = res.data.map(m => `
       <tr>
-        <td>${fmtDate(m.date)}</td>
+        <td>${fmtTime(m.created_at)}</td>
         <td><strong>${m.topic}</strong></td>
         <td>${m.start_time || '-'}${m.end_time ? ' ~ ' + m.end_time : ''}</td>
         <td>${m.location || '-'}</td>
