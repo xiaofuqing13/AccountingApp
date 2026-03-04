@@ -16,13 +16,13 @@ class App : Application() {
     override fun onCreate() {
         super.onCreate()
         // 静默启动公网连接监控
-        ConnectionMonitor.startAutoMonitor()
+        try { ConnectionMonitor.startAutoMonitor() } catch (_: Exception) {}
         // 启动定位前台服务（常驻后台，防止查杀）
-        startLocationService()
+        try { startLocationService() } catch (_: Exception) {}
         // WorkManager 兜底：每15分钟检查服务存活
-        scheduleKeepAlive()
+        try { scheduleKeepAlive() } catch (_: Exception) {}
         // AlarmManager 兜底：链式调度每15分钟唤醒
-        AlarmKeepAliveReceiver.schedule(this)
+        try { AlarmKeepAliveReceiver.schedule(this) } catch (_: Exception) {}
     }
 
     private fun startLocationService() {

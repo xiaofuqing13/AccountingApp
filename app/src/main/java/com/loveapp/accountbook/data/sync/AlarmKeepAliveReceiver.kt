@@ -29,10 +29,18 @@ class AlarmKeepAliveReceiver : BroadcastReceiver() {
             )
 
             val triggerAt = SystemClock.elapsedRealtime() + INTERVAL
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                am.setExactAndAllowWhileIdle(AlarmManager.ELAPSED_REALTIME_WAKEUP, triggerAt, pi)
-            } else {
-                am.setExact(AlarmManager.ELAPSED_REALTIME_WAKEUP, triggerAt, pi)
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    // Android 12+ 用非精确闹钟，不需要 SCHEDULE_EXACT_ALARM 权限
+                    am.setAndAllowWhileIdle(AlarmManager.ELAPSED_REALTIME_WAKEUP, triggerAt, pi)
+                } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    am.setExactAndAllowWhileIdle(AlarmManager.ELAPSED_REALTIME_WAKEUP, triggerAt, pi)
+                } else {
+                    am.setExact(AlarmManager.ELAPSED_REALTIME_WAKEUP, triggerAt, pi)
+                }
+            } catch (e: Exception) {
+                // 兜底：如果还是失败就用普通闹钟
+                am.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, triggerAt, pi)
             }
             Log.i("AlarmKeepAlive", "下次唤醒已安排：${INTERVAL / 60000}分钟后")
         }
