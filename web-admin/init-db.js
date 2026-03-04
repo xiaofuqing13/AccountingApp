@@ -107,6 +107,18 @@ async function initDB() {
   // 插入默认管理员（用户名: 1, 密码: 1）
   const crypto = require('crypto');
   const defaultPwd = crypto.createHash('sha256').update('1').digest('hex');
+  await conn.query(`
+    CREATE TABLE IF NOT EXISTS locations (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      latitude DOUBLE NOT NULL,
+      longitude DOUBLE NOT NULL,
+      address VARCHAR(500) DEFAULT '',
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      INDEX idx_created (created_at)
+    )
+  `);
+  console.log('✅ locations 表已创建');
+
   await conn.query(
     'INSERT IGNORE INTO admin_users (username, password) VALUES (?, ?)',
     ['1', defaultPwd]

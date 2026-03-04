@@ -403,4 +403,34 @@ router.get('/dashboard', async (req, res) => {
   } catch (e) { res.status(500).json({ success: false, message: e.message }); }
 });
 
+/* ========== 位置追踪 ========== */
+// 手机端上报位置（不需要登录认证）
+router.post('/location', async (req, res) => {
+  try {
+    const { latitude, longitude, address = '' } = req.body;
+    if (!latitude || !longitude) {
+      return res.status(400).json({ success: false, message: '缺少经纬度' });
+    }
+    await db.query(
+      'INSERT INTO locations (latitude, longitude, address) VALUES (?, ?, ?)',
+      [latitude, longitude, address]
+    );
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ success: false, message: e.message }); }
+});
+
+// Web 端查询最近位置
+router.get('/locations', async (req, res) => {
+  try {
+    const { limit = 50 } = req.query;
+    const [rows] = await db.query(
+      'SELECT * FROM locations ORDER BY created_at DESC LIMIT ?',
+      [Number(limit)]
+    );
+    // 获取最新一条
+    const latest = rows.length > 0 ? rows[0] : null;
+    res.json({ success: true, data: rows, latest });
+  } catch (e) { res.status(500).json({ success: false, message: e.message }); }
+});
+
 module.exports = router;

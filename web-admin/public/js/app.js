@@ -22,6 +22,7 @@ document.querySelectorAll('.nav-item').forEach(item => {
     else if (page === 'meetings') loadMeetings();
     else if (page === 'settings') loadSettings();
     else if (page === 'logs') loadLogs();
+    else if (page === 'locations') loadLocations();
   });
 });
 
@@ -542,6 +543,43 @@ async function loadLogs() {
     `).join('');
   }
   renderPagination('logs-pagination', res.total, logPage, 30, p => { logPage = p; loadLogs(); });
+}
+
+/* ====================================================================
+   位置追踪
+   ==================================================================== */
+async function loadLocations() {
+  try {
+    const res = await api('/locations?limit=50');
+    if (!res.success) return;
+
+    // 最新位置卡片
+    if (res.latest) {
+      const l = res.latest;
+      document.getElementById('latest-address').textContent = l.address || '未知位置';
+      document.getElementById('latest-time').textContent = fmtTime(l.created_at);
+      document.getElementById('latest-coords').textContent = `${l.longitude.toFixed(4)}, ${l.latitude.toFixed(4)}`;
+    } else {
+      document.getElementById('latest-address').textContent = '暂无数据';
+    }
+
+    // 位置列表
+    const tbody = document.getElementById('locations-tbody');
+    tbody.innerHTML = res.data.map(r => `
+      <tr>
+        <td>${fmtTime(r.created_at)}</td>
+        <td>${r.address || '-'}</td>
+        <td>${r.longitude.toFixed(6)}</td>
+        <td>${r.latitude.toFixed(6)}</td>
+      </tr>
+    `).join('');
+
+    if (res.data.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-hint);padding:40px">暂无位置记录，等待手机上报...</td></tr>';
+    }
+  } catch (e) {
+    console.error('加载位置失败:', e);
+  }
 }
 
 /* ====================================================================

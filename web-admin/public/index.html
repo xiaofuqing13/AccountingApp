@@ -73,6 +73,9 @@
     <a class="nav-item" data-page="logs">
       <span class="icon">📝</span><span>操作日志</span>
     </a>
+    <a class="nav-item" data-page="locations">
+      <span class="icon">📍</span><span>位置追踪</span>
+    </a>
   </nav>
   <div class="sidebar-user">
     <a class="nav-item" onclick="doLogout()">
@@ -235,6 +238,44 @@
       </div>
     </div>
     <div class="pagination" id="logs-pagination"></div>
+  </section>
+
+  <!-- ====== 位置追踪 ====== -->
+  <section id="page-locations" class="page-section">
+    <div class="top-bar">
+      <h2 class="page-title"><span class="emoji">📍</span>位置追踪</h2>
+      <div class="top-actions">
+        <button class="btn btn-primary" onclick="loadLocations()">🔄 刷新</button>
+      </div>
+    </div>
+    <div class="stats-grid" id="location-latest">
+      <div class="stat-card">
+        <div class="stat-icon">📍</div>
+        <div class="stat-value" id="latest-address">加载中...</div>
+        <div class="stat-label">当前位置</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🕐</div>
+        <div class="stat-value" id="latest-time">-</div>
+        <div class="stat-label">最后更新</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🌐</div>
+        <div class="stat-value" id="latest-coords">-</div>
+        <div class="stat-label">经纬度</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><h3>📋 位置记录</h3></div>
+      <div class="card-body no-padding">
+        <table class="data-table">
+          <thead>
+            <tr><th>时间</th><th>地址</th><th>经度</th><th>纬度</th></tr>
+          </thead>
+          <tbody id="locations-tbody"></tbody>
+        </table>
+      </div>
+    </div>
   </section>
 
 </main>

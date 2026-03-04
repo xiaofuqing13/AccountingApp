@@ -18,7 +18,6 @@ import androidx.navigation.fragment.findNavController
 import com.google.android.material.switchmaterial.SwitchMaterial
 import com.loveapp.accountbook.R
 import com.loveapp.accountbook.data.repository.ExcelRepository
-import com.loveapp.accountbook.data.sync.SyncManager
 import com.loveapp.accountbook.util.AppSettings
 import com.loveapp.accountbook.util.EasterEggManager
 import kotlinx.coroutines.launch
@@ -140,14 +139,6 @@ class SettingsFragment : Fragment() {
             Toast.makeText(requireContext(), "路径已复制", Toast.LENGTH_SHORT).show()
         }
 
-        view.findViewById<View>(R.id.btn_cloud_sync).setOnClickListener {
-            androidx.appcompat.app.AlertDialog.Builder(requireContext())
-                .setTitle("☁️ 云端同步")
-                .setMessage("将本地所有数据上传到云端后台，\n包括记账、日记和会议纪要。\n\n确认同步？")
-                .setPositiveButton("同步") { _, _ -> performCloudSync() }
-                .setNegativeButton("取消", null)
-                .show()
-        }
 
         view.findViewById<View>(R.id.btn_password).setOnClickListener {
             EasterEggManager.showLovePopup(requireContext(), EasterEggManager.eggLock)
@@ -216,24 +207,6 @@ class SettingsFragment : Fragment() {
             else -> {
                 val nightMask = resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
                 nightMask == Configuration.UI_MODE_NIGHT_YES
-            }
-        }
-    }
-
-    private fun performCloudSync() {
-        Toast.makeText(requireContext(), "正在同步...", Toast.LENGTH_SHORT).show()
-        lifecycleScope.launch {
-            val syncManager = SyncManager(requireContext())
-            val result = syncManager.syncAll()
-            if (!isAdded) return@launch
-            if (result.success) {
-                androidx.appcompat.app.AlertDialog.Builder(requireContext())
-                    .setTitle("✅ 同步成功")
-                    .setMessage("已上传到云端后台：\n\n📒 记账 ${result.accounts} 条\n📖 日记 ${result.diaries} 条\n📋 会议 ${result.meetings} 条")
-                    .setPositiveButton("好的", null)
-                    .show()
-            } else {
-                Toast.makeText(requireContext(), result.message, Toast.LENGTH_LONG).show()
             }
         }
     }
