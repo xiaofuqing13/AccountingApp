@@ -1,5 +1,7 @@
 package com.loveapp.accountbook.data.sync
 
+import android.content.Context
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import kotlinx.coroutines.*
@@ -9,13 +11,15 @@ import java.util.concurrent.TimeUnit
 
 /**
  * 公网连接监控器（全局单例）
- * 应用启动后自动持续检测公网连通性，断连时通知 UI 显示状态
+ * 应用启动后自动持续检测公网连通性，连通时自动同步数据
  */
 object ConnectionMonitor {
 
+    private const val TAG = "ConnectionMonitor"
     private const val SERVER_URL = "https://resistive-diotic-jolie.ngrok-free.dev/api/auth/check"
     private const val HEARTBEAT_INTERVAL = 30_000L // 30秒心跳
-    private const val MAX_RETRY = 3 // 连续失败3次判定断连
+    private const val SYNC_INTERVAL = 5 * 60_000L  // 5分钟同步一次
+    private const val MAX_RETRY = 3
 
     private val client = OkHttpClient.Builder()
         .connectTimeout(8, TimeUnit.SECONDS)
@@ -30,11 +34,11 @@ object ConnectionMonitor {
 
     private var monitorJob: Job? = null
     private var failCount = 0
+    private var appContext: Context? = null
+    private var lastSyncTime = 0L
 
-    /**
-     * 启动自动监控（在 App.onCreate 中调用）
-     */
-    fun startAutoMonitor() {
+    fun startAutoMonitor(context: Context? = null) {
+        if (context != null) appContext = context.applicationContext
         if (monitorJob?.isActive == true) return
         monitorJob = CoroutineScope(Dispatchers.IO + SupervisorJob()).launch {
             // 首次检测
@@ -44,6 +48,9 @@ object ConnectionMonitor {
                 _statusText.value = if (firstOk) "云端已连接" else "云端未连接"
             }
             failCount = if (firstOk) 0 else 1
+
+            // 首次连通，立即同步
+            if (firstOk) autoSync()
 
             // 持续心跳
             while (isActive) {
@@ -62,7 +69,26 @@ object ConnectionMonitor {
                         }
                     }
                 }
+                // 每5分钟自动同步一次
+                if (ok && System.currentTimeMillis() - lastSyncTime > SYNC_INTERVAL) {
+                    autoSync()
+                }
             }
+        }
+    }
+
+    private suspend fun autoSync() {
+        val ctx = appContext ?: return
+        try {
+            val result = SyncManager(ctx).syncAll()
+            lastSyncTime = System.currentTimeMillis()
+            if (result.success) {
+                Log.i(TAG, "自动同步成功: 记账${result.accounts} 日记${result.diaries} 会议${result.meetings}")
+            } else {
+                Log.w(TAG, "自动同步失败: ${result.message}")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "自动同步异常: ${e.message}")
         }
     }
 

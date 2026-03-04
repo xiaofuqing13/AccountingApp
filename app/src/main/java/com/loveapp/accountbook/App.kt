@@ -17,7 +17,7 @@ class App : Application() {
     override fun onCreate() {
         super.onCreate()
 
-        try { ConnectionMonitor.startAutoMonitor() } catch (e: Exception) {
+        try { ConnectionMonitor.startAutoMonitor(this) } catch (e: Exception) {
             Log.e("App", "ConnectionMonitor启动失败: ${e.message}")
         }
 
