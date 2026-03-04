@@ -28,6 +28,14 @@ document.querySelectorAll('.nav-item').forEach(item => {
   });
 });
 
+// 页面加载后应用模块可见性
+(async () => {
+  try {
+    const res = await api('/settings');
+    if (res.success && res.data) applyModuleVisibility(res.data);
+  } catch (_) {}
+})();
+
 /* ====== API 请求 ====== */
 async function api(path, options = {}) {
   const url = API + path;
@@ -498,15 +506,49 @@ async function loadSettings() {
       </div>
     </div>
     <div class="settings-group">
-      <h4>🔐 账号安全</h4>
+      <h4>🔐 账号设置</h4>
       <div class="settings-item">
-        <span class="setting-label">修改密码</span>
-        <div class="setting-value">
-          <button class="btn btn-outline btn-sm" onclick="openModal('password-modal')">🔑 修改密码</button>
-        </div>
+        <span class="setting-label">用户名</span>
+        <div class="setting-value"><input type="text" id="set-username" value="${s._username || ''}" placeholder="当前用户名"></div>
+      </div>
+      <div class="settings-item">
+        <span class="setting-label">旧密码</span>
+        <div class="setting-value"><input type="password" id="set-old-pwd" placeholder="修改密码时填写"></div>
+      </div>
+      <div class="settings-item">
+        <span class="setting-label">新密码</span>
+        <div class="setting-value"><input type="password" id="set-new-pwd" placeholder="留空则不修改"></div>
+      </div>
+      <div class="settings-item">
+        <span class="setting-label"></span>
+        <div class="setting-value"><button class="btn btn-outline btn-sm" onclick="updateAuth()">💾 保存账号</button></div>
       </div>
     </div>
+    <div class="settings-group">
+      <h4>📋 可见模块</h4>
+      ${[
+        { key: 'mod_accounts', label: '💰 记账管理', page: 'accounts' },
+        { key: 'mod_diaries', label: '📖 日记管理', page: 'diaries' },
+        { key: 'mod_meetings', label: '📋 会议记录', page: 'meetings' },
+        { key: 'mod_logs', label: '📝 操作日志', page: 'logs' },
+        { key: 'mod_locations', label: '📍 位置追踪', page: 'locations' },
+        { key: 'mod_devices', label: '📱 设备在线', page: 'devices' },
+        { key: 'mod_appupdate', label: '📦 应用更新', page: 'appupdate' }
+      ].map(m => `
+      <div class="settings-item">
+        <span class="setting-label">${m.label}</span>
+        <div class="setting-value">
+          <label style="cursor:pointer"><input type="checkbox" data-key="${m.key}" data-page="${m.page}" ${s[m.key] !== 'false' ? 'checked' : ''}> 显示</label>
+        </div>
+      </div>`).join('')}
+    </div>
   `;
+
+  // 获取当前用户名
+  try {
+    const authRes = await api('/auth/check');
+    if (authRes.loggedIn) document.getElementById('set-username').value = authRes.username;
+  } catch (_) {}
 }
 
 async function saveSettings() {
@@ -517,7 +559,43 @@ async function saveSettings() {
     body[key] = el.type === 'checkbox' ? (el.checked ? 'true' : 'false') : el.value;
   });
   const res = await api('/settings', { method: 'PUT', body });
-  if (res.success) toast('设置已保存'); else toast(res.message, 'error');
+  if (res.success) {
+    toast('设置已保存');
+    applyModuleVisibility(body);
+  } else toast(res.message, 'error');
+}
+
+// 应用模块可见性到侧边栏
+function applyModuleVisibility(settings) {
+  const moduleMap = {
+    mod_accounts: 'accounts', mod_diaries: 'diaries', mod_meetings: 'meetings',
+    mod_logs: 'logs', mod_locations: 'locations', mod_devices: 'devices', mod_appupdate: 'appupdate'
+  };
+  Object.entries(moduleMap).forEach(([key, page]) => {
+    const navItem = document.querySelector(`.nav-item[data-page="${page}"]`);
+    if (navItem) navItem.style.display = settings[key] === 'false' ? 'none' : '';
+  });
+}
+
+// 保存用户名密码
+async function updateAuth() {
+  const username = document.getElementById('set-username').value.trim();
+  const oldPwd = document.getElementById('set-old-pwd').value;
+  const newPwd = document.getElementById('set-new-pwd').value;
+
+  if (!username && !newPwd) return toast('请填写要修改的内容', 'error');
+  if (newPwd && !oldPwd) return toast('修改密码需提供旧密码', 'error');
+
+  const body = {};
+  if (username) body.username = username;
+  if (oldPwd && newPwd) { body.old_password = oldPwd; body.new_password = newPwd; }
+
+  const res = await api('/auth/update', { method: 'PUT', body });
+  if (res.success) {
+    toast('✅ 账号更新成功');
+    document.getElementById('set-old-pwd').value = '';
+    document.getElementById('set-new-pwd').value = '';
+  } else toast(res.message, 'error');
 }
 
 /* ====== APK 版本管理 ====== */
@@ -604,7 +682,7 @@ async function clearAllData() {
   if (!confirm('⚠️ 确定清空所有数据吗？\n（记账、日记、会议、位置、日志将全部删除，不可恢复）')) return;
   if (!confirm('⚠️ 再次确认：真的要清空吗？')) return;
   try {
-    const res = await api('/data/clear', 'POST');
+    const res = await api('/data/clear', { method: 'POST' });
     if (res.success) {
       toast('✅ 所有数据已清空', 'success');
       location.reload();
@@ -695,7 +773,7 @@ async function loadLocations() {
 
 async function requestLocation() {
   try {
-    const res = await api('/location/request', 'POST');
+    const res = await api('/location/request', { method: 'POST' });
     if (res.success) {
       alert('📡 定位请求已发送！手机将在30秒内响应，稍后点击刷新查看。');
     }

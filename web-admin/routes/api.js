@@ -52,6 +52,33 @@ router.post('/auth/logout', (req, res) => {
   res.json({ success: true });
 });
 
+// 修改用户名和密码
+router.put('/auth/update', async (req, res) => {
+  try {
+    const { username, old_password, new_password } = req.body;
+    const userId = req.session.userId;
+    if (!userId) return res.status(401).json({ success: false, message: '未登录' });
+
+    // 验证旧密码
+    if (old_password && new_password) {
+      const hashedOld = hashPassword(old_password);
+      const [check] = await db.query('SELECT id FROM admin_users WHERE id=? AND password=?', [userId, hashedOld]);
+      if (check.length === 0) return res.json({ success: false, message: '旧密码错误' });
+      await db.query('UPDATE admin_users SET password=? WHERE id=?', [hashPassword(new_password), userId]);
+      await log('UPDATE', 'auth', '修改密码', req.ip);
+    }
+
+    // 修改用户名
+    if (username) {
+      await db.query('UPDATE admin_users SET username=? WHERE id=?', [username, userId]);
+      req.session.username = username;
+      await log('UPDATE', 'auth', `修改用户名为: ${username}`, req.ip);
+    }
+
+    res.json({ success: true, message: '更新成功' });
+  } catch (e) { res.status(500).json({ success: false, message: e.message }); }
+});
+
 router.get('/auth/check', (req, res) => {
   if (req.session.userId) {
     res.json({ success: true, loggedIn: true, username: req.session.username });
