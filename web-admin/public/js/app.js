@@ -23,6 +23,7 @@ document.querySelectorAll('.nav-item').forEach(item => {
     else if (page === 'settings') loadSettings();
     else if (page === 'logs') loadLogs();
     else if (page === 'locations') loadLocations();
+    else if (page === 'appupdate') loadVersions();
   });
 });
 
@@ -505,7 +506,6 @@ async function loadSettings() {
       </div>
     </div>
   `;
-  loadVersions();
 }
 
 async function saveSettings() {
