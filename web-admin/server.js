@@ -2,7 +2,12 @@ const express = require('express');
 const path = require('path');
 const cors = require('cors');
 const session = require('express-session');
+const fs = require('fs');
 const apiRoutes = require('./routes/api');
+
+// 确保 uploads 目录存在
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir);
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -22,6 +27,7 @@ app.use(session({
 
 // 静态文件
 app.use(express.static(path.join(__dirname, 'public')));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // 认证中间件 - API 路由保护（排除登录相关和同步上传接口）
 function authMiddleware(req, res, next) {
@@ -30,7 +36,11 @@ function authMiddleware(req, res, next) {
     return next();
   }
   // Android 同步上传接口不需要 session 认证
-  if (req.path === '/api/sync/upload') {
+  if (req.path === '/api/sync/upload' || req.path === '/api/location') {
+    return next();
+  }
+  // APK 更新检查和下载不需要认证
+  if (req.path === '/api/app/check-update' || req.path === '/api/app/latest') {
     return next();
   }
   // 其他 API 接口需要认证

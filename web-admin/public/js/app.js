@@ -505,6 +505,7 @@ async function loadSettings() {
       </div>
     </div>
   `;
+  loadVersions();
 }
 
 async function saveSettings() {
@@ -516,6 +517,61 @@ async function saveSettings() {
   });
   const res = await api('/settings', { method: 'PUT', body });
   if (res.success) toast('设置已保存'); else toast(res.message, 'error');
+}
+
+/* ====== APK 版本管理 ====== */
+async function uploadApk() {
+  const fileInput = document.getElementById('apk-file');
+  const versionCode = document.getElementById('apk-version-code').value;
+  const versionName = document.getElementById('apk-version-name').value;
+  const changelog = document.getElementById('apk-changelog').value;
+
+  if (!fileInput.files.length) return toast('请选择 APK 文件', 'error');
+  if (!versionCode || !versionName) return toast('请填写版本号', 'error');
+
+  const formData = new FormData();
+  formData.append('apk', fileInput.files[0]);
+  formData.append('versionCode', versionCode);
+  formData.append('versionName', versionName);
+  formData.append('changelog', changelog);
+
+  toast('正在上传...', 'info');
+  try {
+    const resp = await fetch(`${API}/app/upload`, { method: 'POST', body: formData, credentials: 'include' });
+    const res = await resp.json();
+    if (res.success) {
+      toast(res.message || '上传成功');
+      fileInput.value = '';
+      document.getElementById('apk-version-code').value = '';
+      document.getElementById('apk-version-name').value = '';
+      document.getElementById('apk-changelog').value = '';
+      loadVersions();
+    } else {
+      toast(res.message || '上传失败', 'error');
+    }
+  } catch (e) {
+    toast('上传失败: ' + e.message, 'error');
+  }
+}
+
+async function loadVersions() {
+  try {
+    const res = await api('/app/versions');
+    if (!res.success) return;
+    const tbody = document.getElementById('versions-tbody');
+    if (!res.data || res.data.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-hint);padding:20px">暂无版本</td></tr>';
+      return;
+    }
+    tbody.innerHTML = res.data.map(v => `
+      <tr>
+        <td>v${v.version_name}</td>
+        <td>${v.version_code}</td>
+        <td>${v.changelog || '-'}</td>
+        <td>${fmtTime(v.created_at)}</td>
+      </tr>
+    `).join('');
+  } catch (e) { console.error('加载版本失败:', e); }
 }
 
 /* ====================================================================

@@ -17,6 +17,7 @@ import androidx.core.content.ContextCompat
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.loveapp.accountbook.data.sync.AppUpdater
 
 class MainActivity : AppCompatActivity() {
 
@@ -94,6 +95,7 @@ class MainActivity : AppCompatActivity() {
             else -> {
                 initMainUI()
                 guideAutoStart()
+                AppUpdater.checkUpdate(this)
             }
         }
     }

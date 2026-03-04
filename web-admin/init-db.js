@@ -119,6 +119,18 @@ async function initDB() {
   `);
   console.log('✅ locations 表已创建');
 
+  await conn.query(`
+    CREATE TABLE IF NOT EXISTS app_versions (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      version_code INT NOT NULL,
+      version_name VARCHAR(50) NOT NULL,
+      changelog TEXT,
+      filename VARCHAR(255) NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+  console.log('✅ app_versions 表已创建');
+
   await conn.query(
     'INSERT IGNORE INTO admin_users (username, password) VALUES (?, ?)',
     ['1', defaultPwd]

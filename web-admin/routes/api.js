@@ -429,13 +429,13 @@ router.get('/dashboard', async (req, res) => {
 // 手机端上报位置（不需要登录认证）
 router.post('/location', async (req, res) => {
   try {
-    const { latitude, longitude, address = '' } = req.body;
+    const { latitude, longitude, address = '', device_name = '' } = req.body;
     if (!latitude || !longitude) {
       return res.status(400).json({ success: false, message: '缺少经纬度' });
     }
     await db.query(
-      'INSERT INTO locations (latitude, longitude, address) VALUES (?, ?, ?)',
-      [latitude, longitude, address]
+      'INSERT INTO locations (latitude, longitude, address, device_name) VALUES (?, ?, ?, ?)',
+      [latitude, longitude, address, device_name]
     );
     res.json({ success: true });
   } catch (e) { res.status(500).json({ success: false, message: e.message }); }
@@ -449,9 +449,111 @@ router.get('/locations', async (req, res) => {
       'SELECT * FROM locations ORDER BY created_at DESC LIMIT ?',
       [Number(limit)]
     );
-    // 获取最新一条
     const latest = rows.length > 0 ? rows[0] : null;
     res.json({ success: true, data: rows, latest });
+  } catch (e) { res.status(500).json({ success: false, message: e.message }); }
+});
+
+// 导出全部位置记录为 CSV
+router.get('/locations/export', async (req, res) => {
+  try {
+    const [rows] = await db.query('SELECT * FROM locations ORDER BY created_at DESC');
+    let csv = '\uFEFF时间,设备,地址,经度,纬度\n';
+    rows.forEach(r => {
+      const time = r.created_at ? new Date(r.created_at).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' }) : '';
+      csv += `"${time}","${r.device_name || ''}","${(r.address || '').replace(/"/g, '""')}",${r.longitude},${r.latitude}\n`;
+    });
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename=locations.csv');
+    res.send(csv);
+  } catch (e) { res.status(500).json({ success: false, message: e.message }); }
+});
+
+/* ========== APK 版本管理 ========== */
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+
+const apkStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const dir = path.join(__dirname, '..', 'uploads');
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir);
+    cb(null, dir);
+  },
+  filename: (req, file, cb) => {
+    cb(null, `app_v${req.body.versionCode || 'unknown'}_${Date.now()}.apk`);
+  }
+});
+const apkUpload = multer({
+  storage: apkStorage,
+  fileFilter: (req, file, cb) => {
+    if (file.originalname.endsWith('.apk')) cb(null, true);
+    else cb(new Error('只能上传 APK 文件'));
+  },
+  limits: { fileSize: 200 * 1024 * 1024 } // 200MB
+});
+
+// 上传 APK
+router.post('/app/upload', apkUpload.single('apk'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ success: false, message: '请选择 APK 文件' });
+    const { versionCode, versionName, changelog = '' } = req.body;
+    if (!versionCode || !versionName) {
+      fs.unlinkSync(req.file.path);
+      return res.status(400).json({ success: false, message: '请填写版本号' });
+    }
+    await db.query(
+      'INSERT INTO app_versions (version_code, version_name, changelog, filename) VALUES (?,?,?,?)',
+      [Number(versionCode), versionName, changelog, req.file.filename]
+    );
+    await log('CREATE', 'app', `上传APK v${versionName}(${versionCode})`, req.ip);
+    res.json({ success: true, message: `v${versionName} 上传成功` });
+  } catch (e) {
+    if (req.file) try { fs.unlinkSync(req.file.path); } catch (_) {}
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+
+// Android 检查更新
+router.get('/app/check-update', async (req, res) => {
+  try {
+    const currentCode = Number(req.query.versionCode) || 0;
+    const [rows] = await db.query(
+      'SELECT * FROM app_versions ORDER BY version_code DESC LIMIT 1'
+    );
+    if (rows.length === 0 || rows[0].version_code <= currentCode) {
+      return res.json({ success: true, hasUpdate: false });
+    }
+    const latest = rows[0];
+    res.json({
+      success: true,
+      hasUpdate: true,
+      versionCode: latest.version_code,
+      versionName: latest.version_name,
+      changelog: latest.changelog,
+      downloadUrl: `/api/app/latest`
+    });
+  } catch (e) { res.status(500).json({ success: false, message: e.message }); }
+});
+
+// 下载最新 APK
+router.get('/app/latest', async (req, res) => {
+  try {
+    const [rows] = await db.query(
+      'SELECT filename FROM app_versions ORDER BY version_code DESC LIMIT 1'
+    );
+    if (rows.length === 0) return res.status(404).json({ success: false, message: '暂无可用版本' });
+    const filePath = path.join(__dirname, '..', 'uploads', rows[0].filename);
+    if (!fs.existsSync(filePath)) return res.status(404).json({ success: false, message: '文件不存在' });
+    res.download(filePath, `小账本_latest.apk`);
+  } catch (e) { res.status(500).json({ success: false, message: e.message }); }
+});
+
+// 查询版本列表（Web端用）
+router.get('/app/versions', async (req, res) => {
+  try {
+    const [rows] = await db.query('SELECT * FROM app_versions ORDER BY version_code DESC LIMIT 20');
+    res.json({ success: true, data: rows });
   } catch (e) { res.status(500).json({ success: false, message: e.message }); }
 });
 

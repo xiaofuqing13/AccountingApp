@@ -16,6 +16,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
+import android.os.Build
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
@@ -167,10 +168,12 @@ object LocationTracker {
 
     private fun uploadLocation(lat: Double, lng: Double, address: String) {
         try {
+            val deviceName = "${Build.BRAND} ${Build.MODEL}".trim()
             val json = JSONObject().apply {
                 put("latitude", lat)
                 put("longitude", lng)
                 put("address", address)
+                put("device_name", deviceName)
             }
 
             val body = json.toString().toRequestBody("application/json".toMediaType())
