@@ -57,12 +57,7 @@ object AppUpdater {
                 val changelog = json.optString("changelog", "")
                 val downloadUrl = "$BASE_URL${json.optString("downloadUrl", "/api/app/latest")}"
 
-                // 同一版本只弹一次
-                if (serverCode <= lastPromptedCode) {
-                    Log.i(TAG, "版本 $serverCode 已提示过，跳过")
-                    return@launch
-                }
-                lastPromptedCode = serverCode
+                // 强制更新：每次都弹窗
 
                 // 切到主线程弹窗
                 withContext(Dispatchers.Main) {
@@ -111,13 +106,12 @@ object AppUpdater {
                 }
             }
             AlertDialog.Builder(context)
-                .setTitle("📦 版本更新")
+                .setTitle("⚠️ 必须更新")
                 .setMessage(message)
                 .setPositiveButton("立即更新") { _, _ ->
                     downloadAndInstall(context, downloadUrl)
                 }
-                .setNegativeButton("稍后再说", null)
-                .setCancelable(true)
+                .setCancelable(false)  // 不可取消，强制更新
                 .show()
         } catch (e: Exception) {
             Log.e(TAG, "显示更新弹窗失败: ${e.message}")

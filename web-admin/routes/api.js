@@ -745,8 +745,11 @@ let updatePushPending = false;
 // Web 端点击"推送更新"
 router.post('/app/push-update', async (req, res) => {
   updatePushPending = true;
+  // WebSocket 实时推送更新通知
+  const broadcast = req.app.get('wsBroadcast');
+  if (broadcast) broadcast({ type: 'update' });
   await log('PUSH', 'app', 'Web端推送应用更新通知', req.ip);
-  res.json({ success: true, message: '已推送更新通知，等待手机响应' });
+  res.json({ success: true, message: '已推送更新通知' });
 });
 // 手机端轮询检查是否有推送更新
 router.get('/app/check-push', (req, res) => {

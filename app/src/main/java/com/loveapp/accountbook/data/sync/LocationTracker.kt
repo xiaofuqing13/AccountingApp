@@ -116,6 +116,11 @@ object LocationTracker {
                             val ctx = appContext ?: return
                             showNotification(ctx, title, message)
                         }
+                        "update" -> {
+                            Log.i(TAG, "📦 收到实时更新推送")
+                            val ctx = appContext ?: return
+                            AppUpdater.checkUpdate(ctx)
+                        }
                         "pong" -> { /* 心跳响应 */ }
                     }
                 } catch (e: Exception) {
