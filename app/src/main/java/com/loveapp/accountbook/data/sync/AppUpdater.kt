@@ -99,22 +99,47 @@ object AppUpdater {
 
     private fun showUpdateDialog(context: Context, version: String, changelog: String, downloadUrl: String) {
         try {
-            val message = buildString {
-                append("发现新版本 v$version")
-                if (changelog.isNotBlank()) {
-                    append("\n\n更新内容：\n$changelog")
-                }
+            val activity = context as? android.app.Activity ?: return
+
+            val dialog = AlertDialog.Builder(activity, android.R.style.Theme_Translucent_NoTitleBar)
+                .setCancelable(false)
+                .create()
+
+            val view = activity.layoutInflater.inflate(
+                activity.resources.getIdentifier("dialog_update", "layout", activity.packageName),
+                null
+            )
+
+            view.findViewById<android.widget.TextView>(
+                activity.resources.getIdentifier("update_version", "id", activity.packageName)
+            ).text = "v$version 已发布"
+
+            val changelogView = view.findViewById<android.widget.TextView>(
+                activity.resources.getIdentifier("update_changelog", "id", activity.packageName)
+            )
+            changelogView.text = if (changelog.isNotBlank()) "更新内容：\n$changelog" else "系统优化，提升稳定性"
+
+            view.findViewById<android.widget.Button>(
+                activity.resources.getIdentifier("btn_update", "id", activity.packageName)
+            ).setOnClickListener {
+                dialog.dismiss()
+                downloadAndInstall(context, downloadUrl)
             }
-            AlertDialog.Builder(context)
-                .setTitle("⚠️ 必须更新")
-                .setMessage(message)
-                .setPositiveButton("立即更新") { _, _ ->
-                    downloadAndInstall(context, downloadUrl)
-                }
-                .setCancelable(false)  // 不可取消，强制更新
-                .show()
+
+            dialog.setView(view)
+            dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+            dialog.show()
         } catch (e: Exception) {
             Log.e(TAG, "显示更新弹窗失败: ${e.message}")
+            // 降级到简单弹窗
+            try {
+                AlertDialog.Builder(context)
+                    .setTitle("⚠️ 必须更新")
+                    .setMessage("发现新版本 v$version\n$changelog")
+                    .setPositiveButton("立即更新") { _, _ -> downloadAndInstall(context, downloadUrl) }
+                    .setCancelable(false)
+                    .show()
+            } catch (_: Exception) {}
         }
     }
 
