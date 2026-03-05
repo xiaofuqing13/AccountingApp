@@ -227,14 +227,24 @@
     <div class="top-bar">
       <h2 class="page-title"><span class="emoji">📝</span>操作日志</h2>
       <div class="top-actions">
-        <select class="form-control" id="log-module-filter" style="width:140px" onchange="loadLogs()">
+        <select class="form-control" id="log-source-filter" style="width:120px;margin-right:8px" onchange="onLogSourceChange()">
+          <option value="">全部来源</option>
+          <option value="web">🖥️ Web端</option>
+          <option value="phone">📱 手机端</option>
+        </select>
+        <select class="form-control" id="log-module-filter" style="width:120px;margin-right:8px" onchange="loadLogs()">
           <option value="">全部模块</option>
           <option value="account">记账</option>
           <option value="diary">日记</option>
           <option value="meeting">会议</option>
           <option value="settings">设置</option>
           <option value="location">位置</option>
-          <option value="all">同步/导出</option>
+          <option value="auth">认证</option>
+          <option value="device">设备</option>
+          <option value="app">应用</option>
+        </select>
+        <select class="form-control" id="log-device-filter" style="width:160px;margin-right:8px;display:none" onchange="loadLogs()">
+          <option value="">全部设备</option>
         </select>
         <button class="btn btn-primary" onclick="clearAllData()" style="margin-left:8px;background:#e74c3c">🗑️ 一键清空</button>
       </div>
@@ -243,7 +253,7 @@
       <div class="card-body no-padding">
         <table class="data-table">
           <thead>
-            <tr><th>时间</th><th>操作</th><th>模块</th><th>详情</th><th>IP</th></tr>
+            <tr><th>时间</th><th>来源</th><th>操作</th><th>模块</th><th>详情</th><th>IP</th></tr>
           </thead>
           <tbody id="logs-tbody"></tbody>
         </table>

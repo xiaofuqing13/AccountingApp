@@ -694,26 +694,54 @@ async function clearAllData() {
 /* ====================================================================
    操作日志
    ==================================================================== */
+function onLogSourceChange() {
+  const source = document.getElementById('log-source-filter').value;
+  const deviceFilter = document.getElementById('log-device-filter');
+  deviceFilter.style.display = source === 'phone' ? '' : 'none';
+  if (source !== 'phone') deviceFilter.value = '';
+  logPage = 1;
+  loadLogs();
+}
+
 async function loadLogs() {
   const module = document.getElementById('log-module-filter').value;
+  const source = document.getElementById('log-source-filter').value;
+  const device = document.getElementById('log-device-filter').value;
   const params = new URLSearchParams({ page: logPage, limit: 30 });
   if (module) params.set('module', module);
+  if (source) params.set('source', source);
+  if (device) params.set('device', device);
 
   const res = await api(`/logs?${params}`);
   if (!res.success) return;
+
+  // 填充手机端设备下拉框
+  if (res.phoneDevices && res.phoneDevices.length > 0 && source === 'phone') {
+    const devEl = document.getElementById('log-device-filter');
+    const prev = device;
+    devEl.innerHTML = '<option value="">全部设备</option>' +
+      res.phoneDevices.map(d => `<option value="${d}" ${d === prev ? 'selected' : ''}>${d}</option>`).join('');
+  }
+
   const tbody = document.getElementById('logs-tbody');
   if (res.data.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">📝</div><p>暂无操作日志</p></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">📝</div><p>暂无操作日志</p></div></td></tr>`;
   } else {
-    tbody.innerHTML = res.data.map(l => `
+    tbody.innerHTML = res.data.map(l => {
+      const isPhone = ['location', 'device'].includes(l.module);
+      const sourceTag = isPhone
+        ? '<span style="background:#3498db;color:#fff;padding:2px 6px;border-radius:4px;font-size:11px">📱 手机</span>'
+        : '<span style="background:#2ecc71;color:#fff;padding:2px 6px;border-radius:4px;font-size:11px">🖥️ Web</span>';
+      return `
       <tr>
         <td style="white-space:nowrap">${fmtTime(l.created_at)}</td>
+        <td>${sourceTag}</td>
         <td><span class="log-action ${l.action}">${l.action}</span></td>
         <td>${l.module}</td>
-        <td>${truncate(l.detail, 40)}</td>
+        <td>${truncate(l.detail, 50)}</td>
         <td style="color:#9E9E9E;font-size:12px">${l.ip_address || '-'}</td>
-      </tr>
-    `).join('');
+      </tr>`;
+    }).join('');
   }
   renderPagination('logs-pagination', res.total, logPage, 30, p => { logPage = p; loadLogs(); });
 }

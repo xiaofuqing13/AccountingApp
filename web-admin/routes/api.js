@@ -364,10 +364,10 @@ router.post('/sync/upload', async (req, res) => {
     let aSkip = 0, dSkip = 0, mSkip = 0;
 
     for (const a of accounts) {
-      // 去重：同日期+类型+分类+金额视为重复
+      // 去重：同日期+类型+分类+金额+备注视为重复
       const [exist] = await db.query(
-        'SELECT id FROM accounts WHERE date=? AND type=? AND category=? AND amount=? LIMIT 1',
-        [a.date, a.type, a.category, a.amount]
+        'SELECT id FROM accounts WHERE date=? AND type=? AND category=? AND amount=? AND note=? LIMIT 1',
+        [a.date, a.type, a.category, a.amount, a.note || '']
       );
       if (exist.length > 0) { aSkip++; continue; }
       await db.query(
@@ -450,10 +450,22 @@ router.post('/data/clear', async (req, res) => {
 /* ========== 操作日志 ========== */
 router.get('/logs', async (req, res) => {
   try {
-    const { module, page = 1, limit = 50 } = req.query;
+    const { module, source, device, page = 1, limit = 50 } = req.query;
     let sql = 'SELECT * FROM operation_logs WHERE 1=1';
     const params = [];
     if (module) { sql += ' AND module = ?'; params.push(module); }
+
+    // 来源筛选
+    const phoneModules = ['location', 'device'];
+    if (source === 'web') {
+      sql += ` AND module NOT IN (${phoneModules.map(() => '?').join(',')})`;
+      params.push(...phoneModules);
+    } else if (source === 'phone') {
+      sql += ` AND module IN (${phoneModules.map(() => '?').join(',')})`;
+      params.push(...phoneModules);
+      // 按设备筛选
+      if (device) { sql += ' AND detail LIKE ?'; params.push(`%${device}%`); }
+    }
 
     const [countRows] = await db.query(sql.replace('SELECT *', 'SELECT COUNT(*) as total'), params);
     const total = countRows[0].total;
@@ -461,7 +473,17 @@ router.get('/logs', async (req, res) => {
     sql += ' ORDER BY created_at DESC LIMIT ? OFFSET ?';
     params.push(Number(limit), (Number(page) - 1) * Number(limit));
     const [rows] = await db.query(sql, params);
-    res.json({ success: true, data: rows, total });
+
+    // 返回手机端涉及的设备名列表
+    let phoneDevices = [];
+    if (!source || source === 'phone') {
+      const [devRows] = await db.query(
+        "SELECT DISTINCT SUBSTRING_INDEX(SUBSTRING_INDEX(detail, '设备:', -1), ' ', 1) AS dev FROM operation_logs WHERE module IN ('location','device') AND detail LIKE '%设备:%'"
+      );
+      phoneDevices = devRows.map(r => r.dev).filter(Boolean);
+    }
+
+    res.json({ success: true, data: rows, total, phoneDevices });
   } catch (e) { res.status(500).json({ success: false, message: e.message }); }
 });
 
