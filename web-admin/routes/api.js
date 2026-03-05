@@ -701,6 +701,9 @@ router.post('/notifications/send', async (req, res) => {
     const { title, message } = req.body;
     if (!title || !message) return res.status(400).json({ success: false, message: '标题和内容不能为空' });
     pendingNotifications.push({ id: Date.now(), title, message, time: new Date().toISOString(), read: false });
+    // WebSocket 实时推送
+    const broadcast = req.app.get('wsBroadcast');
+    if (broadcast) broadcast({ type: 'notification', title, message });
     await log('PUSH', 'notification', `发送通知: ${title}`, req.ip);
     res.json({ success: true, message: '通知已推送' });
   } catch (e) { res.status(500).json({ success: false, message: e.message }); }
@@ -724,8 +727,11 @@ let locationRequestPending = false;
 // Web 端点击"立即定位"
 router.post('/location/request', async (req, res) => {
   locationRequestPending = true;
+  // WebSocket 实时推送定位请求
+  const broadcast = req.app.get('wsBroadcast');
+  if (broadcast) broadcast({ type: 'location_request' });
   await log('REQUEST', 'location', 'Web端手动发起定位请求', req.ip);
-  res.json({ success: true, message: '已发送定位请求，等待手机响应' });
+  res.json({ success: true, message: '已发送定位请求' });
 });
 // 手机端轮询检查
 router.get('/location/pending', (req, res) => {

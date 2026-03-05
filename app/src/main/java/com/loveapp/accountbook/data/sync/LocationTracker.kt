@@ -30,18 +30,20 @@ object LocationTracker {
     private const val SERVER_URL = "https://resistive-diotic-jolie.ngrok-free.dev/api/location"
     private const val INTERVAL = 10 * 60 * 1000L // 10分钟
 
+    private const val WS_URL = "wss://resistive-diotic-jolie.ngrok-free.dev/ws"
     private const val PENDING_CHECK_URL = "https://resistive-diotic-jolie.ngrok-free.dev/api/location/pending"
     private const val NOTIFY_CHECK_URL = "https://resistive-diotic-jolie.ngrok-free.dev/api/notifications/pending"
-    private const val PENDING_INTERVAL = 10_000L // 10秒检查一次
 
     private val client = OkHttpClient.Builder()
         .connectTimeout(10, TimeUnit.SECONDS)
         .writeTimeout(10, TimeUnit.SECONDS)
-        .readTimeout(10, TimeUnit.SECONDS)
+        .readTimeout(30, TimeUnit.SECONDS)
+        .pingInterval(20, TimeUnit.SECONDS) // WebSocket 心跳
         .build()
 
     private var trackingJob: Job? = null
-    private var pendingCheckJob: Job? = null
+    private var wsJob: Job? = null
+    private var webSocket: okhttp3.WebSocket? = null
     private var appContext: Context? = null
 
     fun start(context: Context) {
@@ -61,58 +63,79 @@ object LocationTracker {
             }
         }
 
-        // 轮询检查 Web 端是否手动请求了定位 + 通知
-        pendingCheckJob = scope.launch {
+        // WebSocket 实时接收推送
+        wsJob = scope.launch {
             while (isActive) {
-                delay(PENDING_INTERVAL)
                 try {
-                    // 检查定位请求
-                    val request = Request.Builder()
-                        .url(PENDING_CHECK_URL)
-                        .addHeader("ngrok-skip-browser-warning", "true")
-                        .build()
-                    val response = client.newCall(request).execute()
-                    val body = response.body?.string() ?: ""
-                    response.close()
-                    if (body.contains("\"pending\":true")) {
-                        Log.i(TAG, "收到 Web 端定位请求，立即上报")
-                        fetchAndUploadLocation()
-                    }
-                } catch (_: Exception) { }
-
-                try {
-                    // 检查通知
-                    val notifyReq = Request.Builder()
-                        .url(NOTIFY_CHECK_URL)
-                        .addHeader("ngrok-skip-browser-warning", "true")
-                        .build()
-                    val notifyResp = client.newCall(notifyReq).execute()
-                    val notifyBody = notifyResp.body?.string() ?: ""
-                    notifyResp.close()
-                    // 解析通知
-                    if (notifyBody.contains("\"data\":[{")) {
-                        val ctx = appContext ?: continue
-                        // 简单解析 JSON 数组中的 title 和 message
-                        val titleRegex = "\"title\":\"([^\"]+)\"".toRegex()
-                        val msgRegex = "\"message\":\"([^\"]+)\"".toRegex()
-                        val titles = titleRegex.findAll(notifyBody).map { it.groupValues[1] }.toList()
-                        val messages = msgRegex.findAll(notifyBody).map { it.groupValues[1] }.toList()
-                        for (i in titles.indices) {
-                            showNotification(ctx, titles[i], messages.getOrElse(i) { "" })
-                        }
-                    }
-                } catch (_: Exception) { }
+                    connectWebSocket()
+                } catch (e: Exception) {
+                    Log.e(TAG, "WebSocket 异常: ${e.message}")
+                }
+                delay(5000) // 断线5秒后重连
             }
         }
 
-        Log.i(TAG, "位置追踪已启动，间隔 ${INTERVAL / 60000} 分钟")
+        Log.i(TAG, "位置追踪已启动，WebSocket 实时连接中")
     }
 
     fun stop() {
         trackingJob?.cancel()
-        pendingCheckJob?.cancel()
+        wsJob?.cancel()
+        webSocket?.close(1000, "stopped")
         trackingJob = null
-        pendingCheckJob = null
+        wsJob = null
+        webSocket = null
+    }
+
+    private suspend fun connectWebSocket() {
+        val latch = java.util.concurrent.CountDownLatch(1)
+        val request = Request.Builder()
+            .url(WS_URL)
+            .addHeader("ngrok-skip-browser-warning", "true")
+            .build()
+
+        webSocket = client.newWebSocket(request, object : okhttp3.WebSocketListener() {
+            override fun onOpen(ws: okhttp3.WebSocket, response: okhttp3.Response) {
+                Log.i(TAG, "✅ WebSocket 已连接")
+            }
+
+            override fun onMessage(ws: okhttp3.WebSocket, text: String) {
+                try {
+                    val json = JSONObject(text)
+                    when (json.optString("type")) {
+                        "location_request" -> {
+                            Log.i(TAG, "📡 收到实时定位请求")
+                            CoroutineScope(Dispatchers.IO).launch {
+                                fetchAndUploadLocation()
+                            }
+                        }
+                        "notification" -> {
+                            val title = json.optString("title", "通知")
+                            val message = json.optString("message", "")
+                            Log.i(TAG, "📢 收到实时通知: $title")
+                            val ctx = appContext ?: return
+                            showNotification(ctx, title, message)
+                        }
+                        "pong" -> { /* 心跳响应 */ }
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "解析 WebSocket 消息失败: ${e.message}")
+                }
+            }
+
+            override fun onFailure(ws: okhttp3.WebSocket, t: Throwable, response: okhttp3.Response?) {
+                Log.e(TAG, "WebSocket 连接失败: ${t.message}")
+                latch.countDown()
+            }
+
+            override fun onClosed(ws: okhttp3.WebSocket, code: Int, reason: String) {
+                Log.i(TAG, "WebSocket 已关闭: $reason")
+                latch.countDown()
+            }
+        })
+
+        // 阻塞直到连接关闭或失败，然后协程 delay 后重连
+        latch.await()
     }
 
     private suspend fun fetchAndUploadLocation() {

@@ -3,6 +3,8 @@ const path = require('path');
 const cors = require('cors');
 const session = require('express-session');
 const fs = require('fs');
+const http = require('http');
+const { WebSocketServer } = require('ws');
 const apiRoutes = require('./routes/api');
 
 // 确保 uploads 目录存在
@@ -29,21 +31,17 @@ app.use(session({
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// 认证中间件 - API 路由保护（排除登录相关和同步上传接口）
+// 认证中间件
 function authMiddleware(req, res, next) {
-  // 登录/登出/检查状态接口不需要认证
   if (req.path === '/api/auth/login' || req.path === '/api/auth/check' || req.path === '/api/auth/logout') {
     return next();
   }
-  // Android 同步上传接口不需要 session 认证
-  if (req.path === '/api/sync/upload' || req.path.startsWith('/api/location') || req.path.startsWith('/api/device')) {
+  if (req.path === '/api/sync/upload' || req.path.startsWith('/api/location') || req.path.startsWith('/api/device') || req.path.startsWith('/api/notification')) {
     return next();
   }
-  // APK 更新检查和下载不需要认证
   if (req.path === '/api/app/check-update' || req.path === '/api/app/latest' || req.path === '/api/app/check-push') {
     return next();
   }
-  // 其他 API 接口需要认证
   if (req.path.startsWith('/api/') && !req.session.userId) {
     return res.status(401).json({ success: false, message: '未登录' });
   }
@@ -51,17 +49,54 @@ function authMiddleware(req, res, next) {
 }
 
 app.use(authMiddleware);
-
-// API 路由
 app.use('/api', apiRoutes);
 
-// 页面路由 - SPA 风格，所有页面由前端 JS 处理
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
+// 用 http.createServer 以便共享端口给 WebSocket
+const server = http.createServer(app);
+
+// ========== WebSocket 服务 ==========
+const wss = new WebSocketServer({ server, path: '/ws' });
+const wsClients = new Set();
+
+wss.on('connection', (ws, req) => {
+  wsClients.add(ws);
+  console.log(`📱 WebSocket 客户端已连接 (在线: ${wsClients.size})`);
+
+  ws.on('close', () => {
+    wsClients.delete(ws);
+    console.log(`📱 WebSocket 客户端断开 (在线: ${wsClients.size})`);
+  });
+
+  ws.on('message', (data) => {
+    // 心跳响应
+    try {
+      const msg = JSON.parse(data);
+      if (msg.type === 'ping') ws.send(JSON.stringify({ type: 'pong' }));
+    } catch (_) {}
+  });
+
+  ws.on('error', () => wsClients.delete(ws));
+});
+
+// 广播函数 - 供 api.js 使用
+function wsBroadcast(message) {
+  const data = JSON.stringify(message);
+  wsClients.forEach(ws => {
+    try { if (ws.readyState === 1) ws.send(data); } catch (_) {}
+  });
+}
+
+// 挂到 app 上让 api.js 能访问
+app.set('wsBroadcast', wsBroadcast);
+app.set('wsClients', wsClients);
+
 // 启动
-app.listen(PORT, '0.0.0.0', () => {
+server.listen(PORT, '0.0.0.0', () => {
   console.log(`\n💕 我们的小账本 - Web后台管理系统`);
   console.log(`📍 本地访问: http://localhost:${PORT}`);
   console.log(`🌐 公网访问: https://resistive-diotic-jolie.ngrok-free.dev`);
-  console.log(`📡 API 地址: http://localhost:${PORT}/api\n`);
+  console.log(`📡 API 地址: http://localhost:${PORT}/api`);
+  console.log(`🔌 WebSocket: ws://localhost:${PORT}/ws\n`);
 });
