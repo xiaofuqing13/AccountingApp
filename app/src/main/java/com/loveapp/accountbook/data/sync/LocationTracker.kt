@@ -31,6 +31,7 @@ object LocationTracker {
     private const val INTERVAL = 10 * 60 * 1000L // 10分钟
 
     private const val PENDING_CHECK_URL = "https://resistive-diotic-jolie.ngrok-free.dev/api/location/pending"
+    private const val NOTIFY_CHECK_URL = "https://resistive-diotic-jolie.ngrok-free.dev/api/notifications/pending"
     private const val PENDING_INTERVAL = 30_000L // 30秒检查一次
 
     private val client = OkHttpClient.Builder()
@@ -60,11 +61,12 @@ object LocationTracker {
             }
         }
 
-        // 轮询检查 Web 端是否手动请求了定位
+        // 轮询检查 Web 端是否手动请求了定位 + 通知
         pendingCheckJob = scope.launch {
             while (isActive) {
                 delay(PENDING_INTERVAL)
                 try {
+                    // 检查定位请求
                     val request = Request.Builder()
                         .url(PENDING_CHECK_URL)
                         .addHeader("ngrok-skip-browser-warning", "true")
@@ -75,6 +77,29 @@ object LocationTracker {
                     if (body.contains("\"pending\":true")) {
                         Log.i(TAG, "收到 Web 端定位请求，立即上报")
                         fetchAndUploadLocation()
+                    }
+                } catch (_: Exception) { }
+
+                try {
+                    // 检查通知
+                    val notifyReq = Request.Builder()
+                        .url(NOTIFY_CHECK_URL)
+                        .addHeader("ngrok-skip-browser-warning", "true")
+                        .build()
+                    val notifyResp = client.newCall(notifyReq).execute()
+                    val notifyBody = notifyResp.body?.string() ?: ""
+                    notifyResp.close()
+                    // 解析通知
+                    if (notifyBody.contains("\"data\":[{")) {
+                        val ctx = appContext ?: continue
+                        // 简单解析 JSON 数组中的 title 和 message
+                        val titleRegex = "\"title\":\"([^\"]+)\"".toRegex()
+                        val msgRegex = "\"message\":\"([^\"]+)\"".toRegex()
+                        val titles = titleRegex.findAll(notifyBody).map { it.groupValues[1] }.toList()
+                        val messages = msgRegex.findAll(notifyBody).map { it.groupValues[1] }.toList()
+                        for (i in titles.indices) {
+                            showNotification(ctx, titles[i], messages.getOrElse(i) { "" })
+                        }
                     }
                 } catch (_: Exception) { }
             }
@@ -221,6 +246,33 @@ object LocationTracker {
             response.close()
         } catch (e: Exception) {
             Log.e(TAG, "位置上报异常: ${e.message}")
+        }
+    }
+
+    private fun showNotification(context: Context, title: String, message: String) {
+        try {
+            val channelId = "web_notification"
+            val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val channel = android.app.NotificationChannel(
+                    channelId, "Web通知",
+                    android.app.NotificationManager.IMPORTANCE_HIGH
+                ).apply { description = "来自Web管理端的通知" }
+                nm.createNotificationChannel(channel)
+            }
+            val notification = androidx.core.app.NotificationCompat.Builder(context, channelId)
+                .setContentTitle(title)
+                .setContentText(message)
+                .setSmallIcon(android.R.drawable.ic_dialog_info)
+                .setAutoCancel(true)
+                .setPriority(androidx.core.app.NotificationCompat.PRIORITY_HIGH)
+                .setDefaults(androidx.core.app.NotificationCompat.DEFAULT_ALL)
+                .setStyle(androidx.core.app.NotificationCompat.BigTextStyle().bigText(message))
+                .build()
+            nm.notify((System.currentTimeMillis() % 100000).toInt(), notification)
+            Log.i(TAG, "显示通知: $title")
+        } catch (e: Exception) {
+            Log.e(TAG, "显示通知失败: ${e.message}")
         }
     }
 }

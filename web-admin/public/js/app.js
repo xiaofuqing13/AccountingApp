@@ -1145,3 +1145,34 @@ async function deleteUser(id, name) {
   if (res.success) { toast('用户已删除'); loadUsers(); }
   else toast(res.message, 'error');
 }
+
+/* ====================================================================
+   通知推送
+   ==================================================================== */
+function openNotifyDialog() {
+  const div = document.createElement('div');
+  div.innerHTML = '<div style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:1000;display:flex;align-items:center;justify-content:center" id="notify-overlay">' +
+    '<div style="background:var(--card-bg);border-radius:16px;padding:24px;min-width:350px;max-width:450px">' +
+    '<h3 style="margin:0 0 16px">📢 发送通知到手机</h3>' +
+    '<div style="margin-bottom:12px"><label style="font-size:13px;color:var(--text-hint)">标题</label>' +
+    '<input type="text" id="notify-title" class="form-input" placeholder="通知标题" style="width:100%;margin-top:4px"></div>' +
+    '<div style="margin-bottom:16px"><label style="font-size:13px;color:var(--text-hint)">内容</label>' +
+    '<textarea id="notify-message" class="form-input" placeholder="通知内容" rows="3" style="width:100%;margin-top:4px;resize:vertical"></textarea></div>' +
+    '<div style="display:flex;gap:8px;justify-content:flex-end">' +
+    '<button class="btn btn-secondary" onclick="document.getElementById(\'notify-overlay\').remove()">取消</button>' +
+    '<button class="btn" style="background:#9b59b6;color:#fff" onclick="sendNotification()">📢 发送</button>' +
+    '</div></div></div>';
+  document.body.appendChild(div);
+  document.getElementById('notify-title').focus();
+}
+
+async function sendNotification() {
+  const title = document.getElementById('notify-title').value.trim();
+  const message = document.getElementById('notify-message').value.trim();
+  if (!title || !message) return toast('标题和内容不能为空', 'error');
+  const res = await api('/notifications/send', { method: 'POST', body: { title, message } });
+  const overlay = document.getElementById('notify-overlay');
+  if (overlay) overlay.remove();
+  if (res.success) toast('📢 通知已发送');
+  else toast(res.message, 'error');
+}

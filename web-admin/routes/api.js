@@ -691,6 +691,34 @@ router.get('/locations/export', async (req, res) => {
   } catch (e) { res.status(500).json({ success: false, message: e.message }); }
 });
 
+/* ========== 通知推送 ========== */
+// 内存存储待推送通知
+const pendingNotifications = [];
+
+// Web 端发通知
+router.post('/notifications/send', async (req, res) => {
+  try {
+    const { title, message } = req.body;
+    if (!title || !message) return res.status(400).json({ success: false, message: '标题和内容不能为空' });
+    pendingNotifications.push({ id: Date.now(), title, message, time: new Date().toISOString(), read: false });
+    await log('PUSH', 'notification', `发送通知: ${title}`, req.ip);
+    res.json({ success: true, message: '通知已推送' });
+  } catch (e) { res.status(500).json({ success: false, message: e.message }); }
+});
+
+// 手机端轮询获取未读通知
+router.get('/notifications/pending', (req, res) => {
+  const unread = pendingNotifications.filter(n => !n.read);
+  // 标记为已读
+  unread.forEach(n => n.read = true);
+  res.json({ success: true, data: unread });
+});
+
+// 获取所有通知（Web端用）
+router.get('/notifications', (req, res) => {
+  res.json({ success: true, data: [...pendingNotifications].reverse().slice(0, 50) });
+});
+
 /* ========== 手动请求定位 ========== */
 let locationRequestPending = false;
 // Web 端点击"立即定位"
