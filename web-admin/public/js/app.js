@@ -990,6 +990,9 @@ async function doLogin() {
   try {
     const res = await api('/auth/login', { method: 'POST', body: { username, password } });
     if (res.success) {
+      currentRole = res.role || 'user';
+      currentModules = res.allowedModules || '';
+      applyRoleModules(currentRole, currentModules);
       showAppPage();
     } else {
       errEl.textContent = res.message || '登录失败';
