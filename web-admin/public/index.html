@@ -333,6 +333,17 @@
             <button class="btn btn-primary" onclick="createUser()">➕ 创建</button>
           </div>
         </div>
+        <div style="margin-top:8px">
+          <label style="font-size:13px;color:var(--text-hint)">分配模块：</label>
+          <label style="margin:0 8px;cursor:pointer"><input type="checkbox" class="new-user-module" value="accounts"> 💰记账</label>
+          <label style="margin:0 8px;cursor:pointer"><input type="checkbox" class="new-user-module" value="diaries"> 📖日记</label>
+          <label style="margin:0 8px;cursor:pointer"><input type="checkbox" class="new-user-module" value="meetings"> 📋会议</label>
+          <label style="margin:0 8px;cursor:pointer"><input type="checkbox" class="new-user-module" value="logs"> 📝日志</label>
+          <label style="margin:0 8px;cursor:pointer"><input type="checkbox" class="new-user-module" value="locations"> 📍位置</label>
+          <label style="margin:0 8px;cursor:pointer"><input type="checkbox" class="new-user-module" value="devices"> 📱设备</label>
+          <label style="margin:0 8px;cursor:pointer"><input type="checkbox" class="new-user-module" value="appupdate"> 📦更新</label>
+          <label style="margin:0 8px;cursor:pointer"><input type="checkbox" class="new-user-module" value="settings"> ⚙️设置</label>
+        </div>
       </div>
     </div>
     <div class="card">
@@ -340,7 +351,7 @@
       <div class="card-body no-padding">
         <table class="data-table">
           <thead>
-            <tr><th>ID</th><th>用户名</th><th>创建时间</th><th>操作</th></tr>
+            <tr><th>ID</th><th>用户名</th><th>可用模块</th><th>创建时间</th><th>操作</th></tr>
           </thead>
           <tbody id="users-tbody"></tbody>
         </table>

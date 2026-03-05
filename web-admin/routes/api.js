@@ -33,7 +33,7 @@ router.post('/auth/login', async (req, res) => {
     }
     const hashedPwd = hashPassword(password);
     const [rows] = await db.query(
-      'SELECT id, username FROM admin_users WHERE username = ? AND password = ?',
+      'SELECT id, username, role, allowed_modules FROM admin_users WHERE username = ? AND password = ?',
       [username, hashedPwd]
     );
     if (rows.length === 0) {
@@ -42,8 +42,10 @@ router.post('/auth/login', async (req, res) => {
     }
     req.session.userId = rows[0].id;
     req.session.username = rows[0].username;
+    req.session.role = rows[0].role || 'user';
+    req.session.allowedModules = rows[0].allowed_modules || '';
     await log('LOGIN', 'auth', `登录成功: ${username}`, req.ip);
-    res.json({ success: true, username: rows[0].username });
+    res.json({ success: true, username: rows[0].username, role: rows[0].role, allowedModules: rows[0].allowed_modules });
   } catch (e) { res.status(500).json({ success: false, message: e.message }); }
 });
 
@@ -81,7 +83,7 @@ router.put('/auth/update', async (req, res) => {
 
 router.get('/auth/check', (req, res) => {
   if (req.session.userId) {
-    res.json({ success: true, loggedIn: true, username: req.session.username });
+    res.json({ success: true, loggedIn: true, username: req.session.username, role: req.session.role || 'user', allowedModules: req.session.allowedModules || '' });
   } else {
     res.json({ success: true, loggedIn: false });
   }
@@ -91,7 +93,7 @@ router.get('/auth/check', (req, res) => {
 // 获取所有用户
 router.get('/users', async (req, res) => {
   try {
-    const [rows] = await db.query('SELECT id, username, created_at FROM admin_users ORDER BY id');
+    const [rows] = await db.query('SELECT id, username, role, allowed_modules, created_at FROM admin_users ORDER BY id');
     res.json({ success: true, data: rows });
   } catch (e) { res.status(500).json({ success: false, message: e.message }); }
 });
@@ -99,14 +101,25 @@ router.get('/users', async (req, res) => {
 // 新增用户
 router.post('/users', async (req, res) => {
   try {
-    const { username, password } = req.body;
+    const { username, password, allowed_modules = '' } = req.body;
     if (!username || !password) return res.status(400).json({ success: false, message: '用户名和密码不能为空' });
-    // 检查重名
     const [exist] = await db.query('SELECT id FROM admin_users WHERE username=?', [username]);
     if (exist.length > 0) return res.json({ success: false, message: '用户名已存在' });
-    await db.query('INSERT INTO admin_users (username, password) VALUES (?,?)', [username, hashPassword(password)]);
-    await log('CREATE', 'auth', `新建用户: ${username}`, req.ip);
+    await db.query('INSERT INTO admin_users (username, password, role, allowed_modules) VALUES (?,?,?,?)', [username, hashPassword(password), 'user', allowed_modules]);
+    await log('CREATE', 'auth', `新建用户: ${username}, 模块: ${allowed_modules || '无'}`, req.ip);
     res.json({ success: true, message: '用户创建成功' });
+  } catch (e) { res.status(500).json({ success: false, message: e.message }); }
+});
+
+// 更新用户模块权限
+router.put('/users/:id/modules', async (req, res) => {
+  try {
+    if (req.session.role !== 'admin') return res.status(403).json({ success: false, message: '仅管理员可操作' });
+    const { allowed_modules } = req.body;
+    await db.query('UPDATE admin_users SET allowed_modules=? WHERE id=?', [allowed_modules, req.params.id]);
+    const [user] = await db.query('SELECT username FROM admin_users WHERE id=?', [req.params.id]);
+    await log('UPDATE', 'auth', `修改用户 ${user[0]?.username} 模块权限: ${allowed_modules}`, req.ip);
+    res.json({ success: true });
   } catch (e) { res.status(500).json({ success: false, message: e.message }); }
 });
 
@@ -114,6 +127,7 @@ router.post('/users', async (req, res) => {
 router.delete('/users/:id', async (req, res) => {
   try {
     const userId = req.params.id;
+    if (Number(userId) === 1) return res.json({ success: false, message: '不能删除管理员账户' });
     if (Number(userId) === req.session.userId) return res.json({ success: false, message: '不能删除当前登录用户' });
     const [user] = await db.query('SELECT username FROM admin_users WHERE id=?', [userId]);
     await db.query('DELETE FROM admin_users WHERE id=?', [userId]);

@@ -29,13 +29,38 @@ document.querySelectorAll('.nav-item').forEach(item => {
   });
 });
 
-// 页面加载后应用模块可见性
+// 页面加载后检查角色并应用模块可见性
+let currentRole = 'user';
+let currentModules = '';
 (async () => {
   try {
-    const res = await api('/settings');
-    if (res.success && res.data) applyModuleVisibility(res.data);
+    const authRes = await api('/auth/check');
+    if (authRes.loggedIn) {
+      currentRole = authRes.role || 'user';
+      currentModules = authRes.allowedModules || '';
+      applyRoleModules(currentRole, currentModules);
+    }
   } catch (_) {}
 })();
+
+function applyRoleModules(role, modules) {
+  const allPages = ['dashboard','accounts','diaries','meetings','settings','logs','locations','devices','appupdate','users'];
+  if (role === 'admin') {
+    allPages.forEach(p => {
+      const nav = document.querySelector(`.nav-item[data-page="${p}"]`);
+      if (nav) nav.style.display = '';
+    });
+    return;
+  }
+  // 普通用户：只看 dashboard + 分配的模块，隐藏 users
+  const allowed = modules.split(',').map(s => s.trim()).filter(Boolean);
+  allPages.forEach(p => {
+    const nav = document.querySelector(`.nav-item[data-page="${p}"]`);
+    if (!nav) return;
+    if (p === 'dashboard') { nav.style.display = ''; return; }
+    nav.style.display = allowed.includes(p) ? '' : 'none';
+  });
+}
 
 /* ====== API 请求 ====== */
 async function api(path, options = {}) {
