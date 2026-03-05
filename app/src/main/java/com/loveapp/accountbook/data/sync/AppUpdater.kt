@@ -119,11 +119,23 @@ object AppUpdater {
             )
             changelogView.text = if (changelog.isNotBlank()) "更新内容：\n$changelog" else "系统优化，提升稳定性"
 
-            view.findViewById<android.widget.Button>(
+            val btnUpdate = view.findViewById<android.widget.Button>(
                 activity.resources.getIdentifier("btn_update", "id", activity.packageName)
-            ).setOnClickListener {
-                dialog.dismiss()
-                downloadAndInstall(context, downloadUrl)
+            )
+            val progressArea = view.findViewById<android.view.View>(
+                activity.resources.getIdentifier("progress_area", "id", activity.packageName)
+            )
+            val progressBar = view.findViewById<android.widget.ProgressBar>(
+                activity.resources.getIdentifier("download_progress", "id", activity.packageName)
+            )
+            val progressText = view.findViewById<android.widget.TextView>(
+                activity.resources.getIdentifier("progress_text", "id", activity.packageName)
+            )
+
+            btnUpdate.setOnClickListener {
+                btnUpdate.visibility = android.view.View.GONE
+                progressArea.visibility = android.view.View.VISIBLE
+                downloadWithProgress(context, downloadUrl, progressBar, progressText, dialog)
             }
 
             dialog.setView(view)
@@ -131,55 +143,79 @@ object AppUpdater {
             dialog.show()
         } catch (e: Exception) {
             Log.e(TAG, "显示更新弹窗失败: ${e.message}")
-            // 降级到简单弹窗
             try {
                 AlertDialog.Builder(context)
                     .setTitle("⚠️ 必须更新")
                     .setMessage("发现新版本 v$version\n$changelog")
-                    .setPositiveButton("立即更新") { _, _ -> downloadAndInstall(context, downloadUrl) }
+                    .setPositiveButton("立即更新") { d, _ ->
+                        d.dismiss()
+                        // 重新尝试显示更新弹窗
+                        checkUpdate(context)
+                    }
                     .setCancelable(false)
                     .show()
             } catch (_: Exception) {}
         }
     }
 
-    private fun downloadAndInstall(context: Context, downloadUrl: String) {
+    private fun downloadWithProgress(
+        context: Context, downloadUrl: String,
+        progressBar: android.widget.ProgressBar,
+        progressText: android.widget.TextView,
+        dialog: AlertDialog
+    ) {
         CoroutineScope(Dispatchers.IO + SupervisorJob()).launch {
             try {
-                withContext(Dispatchers.Main) {
-                    android.widget.Toast.makeText(context, "正在下载更新...", android.widget.Toast.LENGTH_LONG).show()
-                }
-
                 val request = Request.Builder()
                     .url(downloadUrl)
                     .addHeader("ngrok-skip-browser-warning", "true")
-                    .get()
                     .build()
 
                 val response = client.newCall(request).execute()
                 if (!response.isSuccessful) {
                     withContext(Dispatchers.Main) {
-                        android.widget.Toast.makeText(context, "下载失败", android.widget.Toast.LENGTH_SHORT).show()
+                        progressText.text = "下载失败，请重试"
                     }
                     return@launch
                 }
 
-                // 保存到 cache 目录
+                val body = response.body ?: return@launch
+                val totalBytes = body.contentLength()
                 val apkFile = File(context.cacheDir, "update.apk")
-                response.body?.byteStream()?.use { input ->
+
+                body.byteStream().use { input ->
                     apkFile.outputStream().use { output ->
-                        input.copyTo(output)
+                        val buffer = ByteArray(8192)
+                        var downloaded = 0L
+                        var read: Int
+
+                        while (input.read(buffer).also { read = it } != -1) {
+                            output.write(buffer, 0, read)
+                            downloaded += read
+
+                            if (totalBytes > 0) {
+                                val percent = (downloaded * 100 / totalBytes).toInt()
+                                val downloadedMB = String.format("%.1f", downloaded / 1048576.0)
+                                val totalMB = String.format("%.1f", totalBytes / 1048576.0)
+                                withContext(Dispatchers.Main) {
+                                    progressBar.progress = percent
+                                    progressText.text = "下载中 ${downloadedMB}MB / ${totalMB}MB ($percent%)"
+                                }
+                            }
+                        }
                     }
                 }
 
-                // 触发安装
                 withContext(Dispatchers.Main) {
+                    progressBar.progress = 100
+                    progressText.text = "下载完成，正在安装..."
+                    dialog.dismiss()
                     installApk(context, apkFile)
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "下载安装失败: ${e.message}")
                 withContext(Dispatchers.Main) {
-                    android.widget.Toast.makeText(context, "下载失败: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
+                    progressText.text = "下载失败: ${e.message}"
                 }
             }
         }

@@ -84,7 +84,38 @@
                 android:textStyle="bold"
                 android:textAllCaps="false" />
 
+            <!-- 下载进度区域（初始隐藏） -->
+            <LinearLayout
+                android:id="@+id/progress_area"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <ProgressBar
+                    android:id="@+id/download_progress"
+                    style="@android:style/Widget.ProgressBar.Horizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="8dp"
+                    android:max="100"
+                    android:progress="0"
+                    android:progressDrawable="@drawable/update_progress_bg" />
+
+                <TextView
+                    android:id="@+id/progress_text"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="准备下载..."
+                    android:textSize="13sp"
+                    android:textColor="#9E9E9E"
+                    android:gravity="center" />
+
+            </LinearLayout>
+
             <TextView
+                android:id="@+id/update_hint"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
