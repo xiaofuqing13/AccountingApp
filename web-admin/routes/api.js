@@ -378,43 +378,26 @@ router.post('/sync/upload', async (req, res) => {
     let aSkip = 0, dSkip = 0, mSkip = 0;
 
     for (const a of accounts) {
-      // 去重：同日期+类型+分类+金额+备注视为重复
-      const [exist] = await db.query(
-        'SELECT id FROM accounts WHERE date=? AND type=? AND category=? AND amount=? AND note=? LIMIT 1',
-        [a.date, a.type, a.category, a.amount, a.note || '']
-      );
-      if (exist.length > 0) { aSkip++; continue; }
-      await db.query(
-        'INSERT INTO accounts (date,type,category,amount,note,location) VALUES (?,?,?,?,?,?)',
+      // INSERT IGNORE 配合唯一索引(date+type+category+amount+note)自动去重
+      const [result] = await db.query(
+        'INSERT IGNORE INTO accounts (date,type,category,amount,note,location) VALUES (?,?,?,?,?,?)',
         [a.date, a.type, a.category, a.amount, a.note || '', a.location || '']
       );
-      aCount++;
+      if (result.affectedRows > 0) aCount++; else aSkip++;
     }
     for (const d of diaries) {
-      // 去重：同日期+标题视为重复
-      const [exist] = await db.query(
-        'SELECT id FROM diaries WHERE date=? AND title=? LIMIT 1',
-        [d.date, d.title]
-      );
-      if (exist.length > 0) { dSkip++; continue; }
-      await db.query(
-        'INSERT INTO diaries (date,title,content,weather,mood,location,tags) VALUES (?,?,?,?,?,?,?)',
+      const [result] = await db.query(
+        'INSERT IGNORE INTO diaries (date,title,content,weather,mood,location,tags) VALUES (?,?,?,?,?,?,?)',
         [d.date, d.title, d.content || '', d.weather || '', d.mood || '', d.location || '', d.tags || '']
       );
-      dCount++;
+      if (result.affectedRows > 0) dCount++; else dSkip++;
     }
     for (const m of meetings) {
-      // 去重：同日期+主题视为重复
-      const [exist] = await db.query(
-        'SELECT id FROM meetings WHERE date=? AND topic=? LIMIT 1',
-        [m.date, m.topic]
-      );
-      if (exist.length > 0) { mSkip++; continue; }
-      await db.query(
-        'INSERT INTO meetings (date,topic,start_time,end_time,location,attendees,content,todo_items,tags) VALUES (?,?,?,?,?,?,?,?,?)',
+      const [result] = await db.query(
+        'INSERT IGNORE INTO meetings (date,topic,start_time,end_time,location,attendees,content,todo_items,tags) VALUES (?,?,?,?,?,?,?,?,?)',
         [m.date, m.topic, m.start_time || '', m.end_time || '', m.location || '', m.attendees || '', m.content || '', m.todo_items || '', m.tags || '']
       );
-      mCount++;
+      if (result.affectedRows > 0) mCount++; else mSkip++;
     }
 
     const skipTotal = aSkip + dSkip + mSkip;
