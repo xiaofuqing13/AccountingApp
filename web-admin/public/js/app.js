@@ -1061,18 +1061,34 @@ async function loadUsers() {
     const res = await api('/users');
     if (!res.success) return;
     const tbody = document.getElementById('users-tbody');
+    const ALL_MODULES = [
+      { key: 'accounts', label: '💰记账' }, { key: 'diaries', label: '📖日记' },
+      { key: 'meetings', label: '📋会议' }, { key: 'logs', label: '📝日志' },
+      { key: 'locations', label: '📍位置' }, { key: 'devices', label: '📱设备' },
+      { key: 'appupdate', label: '📦更新' }, { key: 'settings', label: '⚙️设置' }
+    ];
     if (res.data.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-hint);padding:40px">暂无用户</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-hint);padding:40px">暂无用户</td></tr>';
       return;
     }
-    tbody.innerHTML = res.data.map(u => `
-      <tr>
-        <td>${u.id}</td>
-        <td><strong>${u.username}</strong></td>
-        <td>${fmtTime(u.created_at)}</td>
-        <td><button class="btn btn-sm" style="background:#e74c3c;color:#fff" onclick="deleteUser(${u.id},'${u.username}')">🗑️ 删除</button></td>
-      </tr>
-    `).join('');
+    tbody.innerHTML = res.data.map(u => {
+      const isAdmin = u.role === 'admin';
+      const userModules = (u.allowed_modules || '').split(',').filter(Boolean);
+      const moduleTags = isAdmin ? '<span class="tag" style="background:#27ae60;color:#fff">全部模块</span>' :
+        (userModules.length > 0 ? userModules.map(m => {
+          const found = ALL_MODULES.find(am => am.key === m);
+          return '<span class="tag">' + (found ? found.label : m) + '</span>';
+        }).join(' ') : '<span style="color:var(--text-hint)">无模块</span>');
+      const editBtn = isAdmin ? '' : '<button class="btn btn-sm btn-outline" onclick="editUserModules(' + u.id + ',\'' + u.username + '\',\'' + (u.allowed_modules || '') + '\')">📝 分配</button> ';
+      const delBtn = isAdmin ? '' : '<button class="btn btn-sm" style="background:#e74c3c;color:#fff" onclick="deleteUser(' + u.id + ',\'' + u.username + '\')">🗑️ 删除</button>';
+      return '<tr>' +
+        '<td>' + u.id + '</td>' +
+        '<td><strong>' + u.username + '</strong> ' + (isAdmin ? '<span class="tag" style="background:#e67e22;color:#fff">管理员</span>' : '') + '</td>' +
+        '<td>' + moduleTags + '</td>' +
+        '<td>' + fmtTime(u.created_at) + '</td>' +
+        '<td>' + editBtn + delBtn + '</td>' +
+        '</tr>';
+    }).join('');
   } catch (e) { console.error('加载用户失败:', e); }
 }
 
@@ -1080,18 +1096,52 @@ async function createUser() {
   const username = document.getElementById('new-user-name').value.trim();
   const password = document.getElementById('new-user-pwd').value;
   if (!username || !password) return toast('用户名和密码不能为空', 'error');
-  const res = await api('/users', { method: 'POST', body: { username, password } });
+  const checks = document.querySelectorAll('.new-user-module:checked');
+  const modules = Array.from(checks).map(c => c.value).join(',');
+  const res = await api('/users', { method: 'POST', body: { username, password, allowed_modules: modules } });
   if (res.success) {
     toast('✅ 用户创建成功');
     document.getElementById('new-user-name').value = '';
     document.getElementById('new-user-pwd').value = '';
+    document.querySelectorAll('.new-user-module').forEach(c => c.checked = false);
     loadUsers();
   } else toast(res.message, 'error');
 }
 
+function editUserModules(id, name, current) {
+  const ALL = [
+    { key: 'accounts', label: '💰记账' }, { key: 'diaries', label: '📖日记' },
+    { key: 'meetings', label: '📋会议' }, { key: 'logs', label: '📝日志' },
+    { key: 'locations', label: '📍位置' }, { key: 'devices', label: '📱设备' },
+    { key: 'appupdate', label: '📦更新' }, { key: 'settings', label: '⚙️设置' }
+  ];
+  const cur = current.split(',').filter(Boolean);
+  const html = ALL.map(m => '<label style="display:block;margin:4px 0;cursor:pointer"><input type="checkbox" class="edit-mod" value="' + m.key + '" ' + (cur.includes(m.key) ? 'checked' : '') + '> ' + m.label + '</label>').join('');
+  const div = document.createElement('div');
+  div.innerHTML = '<div style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:1000;display:flex;align-items:center;justify-content:center" id="mod-edit-overlay">' +
+    '<div style="background:var(--card-bg);border-radius:16px;padding:24px;min-width:300px;max-width:400px">' +
+    '<h3 style="margin:0 0 16px">📝 分配模块 - ' + name + '</h3>' +
+    html +
+    '<div style="margin-top:16px;display:flex;gap:8px;justify-content:flex-end">' +
+    '<button class="btn btn-secondary" onclick="document.getElementById(\'mod-edit-overlay\').remove()">取消</button>' +
+    '<button class="btn btn-primary" onclick="saveUserModules(' + id + ')">💾 保存</button>' +
+    '</div></div></div>';
+  document.body.appendChild(div);
+}
+
+async function saveUserModules(id) {
+  const checks = document.querySelectorAll('.edit-mod:checked');
+  const modules = Array.from(checks).map(c => c.value).join(',');
+  const res = await api('/users/' + id + '/modules', { method: 'PUT', body: { allowed_modules: modules } });
+  const overlay = document.getElementById('mod-edit-overlay');
+  if (overlay) overlay.remove();
+  if (res.success) { toast('✅ 模块权限已更新'); loadUsers(); }
+  else toast(res.message, 'error');
+}
+
 async function deleteUser(id, name) {
-  if (!confirm(`确定删除用户 "${name}" 吗？`)) return;
-  const res = await api(`/users/${id}`, { method: 'DELETE' });
+  if (!confirm('确定删除用户 "' + name + '" 吗？')) return;
+  const res = await api('/users/' + id, { method: 'DELETE' });
   if (res.success) { toast('用户已删除'); loadUsers(); }
   else toast(res.message, 'error');
 }
