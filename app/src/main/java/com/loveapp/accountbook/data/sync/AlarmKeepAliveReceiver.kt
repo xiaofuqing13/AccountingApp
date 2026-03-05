@@ -17,7 +17,7 @@ import android.util.Log
 class AlarmKeepAliveReceiver : BroadcastReceiver() {
 
     companion object {
-        private const val INTERVAL = 15 * 60 * 1000L // 15分钟
+        private const val INTERVAL = 5 * 60 * 1000L // 5分钟
         private const val REQUEST_CODE = 2001
 
         fun schedule(context: Context) {

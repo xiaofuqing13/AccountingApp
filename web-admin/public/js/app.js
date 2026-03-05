@@ -843,34 +843,30 @@ async function unhideDevice(name) {
    ==================================================================== */
 async function loadDevices() {
   try {
-    const res = await api('/devices');
+    const res = await api('/devices/list');
     if (!res.success) return;
     const container = document.getElementById('devices-container');
-    if (res.data.length === 0) {
-      container.innerHTML = '<div class="card" style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text-hint)">暂无设备上线记录，等待手机心跳上报...</div>';
+    if (!res.data || res.data.length === 0) {
+      container.innerHTML = '<div class="card" style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text-hint)">暂无设备记录</div>';
       return;
     }
     container.innerHTML = res.data.map(d => {
-      const statusDot = d.online ? '🟢' : '🔴';
-      const statusText = d.online ? '在线' : '离线';
-      const lastTime = new Date(d.lastSeen).toLocaleString('zh-CN');
-      const batteryIcon = d.battery > 60 ? '🔋' : d.battery > 20 ? '🪫' : '⚠️';
+      const lastTime = fmtTime(d.last_active);
+      const isRecent = (Date.now() - new Date(d.last_active).getTime()) < 10 * 60 * 1000; // 10分钟内
+      const statusDot = isRecent ? '🟢' : '🔴';
+      const statusText = isRecent ? '在线' : '离线';
       return `
         <div class="card" style="padding:20px">
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
             <span style="font-size:24px">${statusDot}</span>
             <div>
-              <div style="font-weight:600;font-size:16px">${d.brand} ${d.model}</div>
+              <div style="font-weight:600;font-size:16px">${d.device_name}</div>
               <div style="color:var(--text-hint);font-size:13px">${statusText} · ${lastTime}</div>
             </div>
           </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px">
-            <div>📱 <b>系统</b>: Android ${d.android_version}</div>
-            <div>${batteryIcon} <b>电量</b>: ${d.battery}%</div>
-            <div>📐 <b>屏幕</b>: ${d.screen}</div>
-            <div>🌐 <b>网络</b>: ${d.network}</div>
-            <div>📦 <b>版本</b>: ${d.app_version}</div>
-            <div>🔗 <b>IP</b>: ${d.ip || '-'}</div>
+          <div style="font-size:13px;display:grid;gap:6px">
+            <div>📍 <b>最后位置</b>: ${d.last_address || '未知'}</div>
+            <div>📊 <b>位置记录</b>: ${d.record_count} 条</div>
           </div>
         </div>`;
     }).join('');

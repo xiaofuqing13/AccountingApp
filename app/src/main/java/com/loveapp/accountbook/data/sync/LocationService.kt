@@ -9,6 +9,9 @@ import android.os.Build
 import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import android.app.AlarmManager
+import android.app.PendingIntent
+import android.os.SystemClock
 import com.loveapp.accountbook.R
 
 class LocationService : Service() {
@@ -24,6 +27,10 @@ class LocationService : Service() {
             createNotificationChannel()
             startForeground(NOTIFICATION_ID, buildNotification())
             LocationTracker.start(this)
+            ConnectionMonitor.start(this)
+            // 安排 AlarmManager 保活链
+            AlarmKeepAliveReceiver.schedule(this)
+            Log.i("LocationService", "前台服务已启动，保活已安排")
         } catch (e: Exception) {
             Log.e("LocationService", "启动失败: ${e.message}")
             stopSelf()
@@ -39,6 +46,33 @@ class LocationService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         LocationTracker.stop()
+        // 被杀后尝试重启
+        scheduleRestart()
+    }
+
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        super.onTaskRemoved(rootIntent)
+        // 用户划掉任务卡时也重启
+        scheduleRestart()
+    }
+
+    private fun scheduleRestart() {
+        try {
+            val restartIntent = Intent(this, LocationService::class.java)
+            val pi = PendingIntent.getService(
+                this, 9999, restartIntent,
+                PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE
+            )
+            val am = getSystemService(Context.ALARM_SERVICE) as AlarmManager
+            am.set(
+                AlarmManager.ELAPSED_REALTIME_WAKEUP,
+                SystemClock.elapsedRealtime() + 5000, // 5秒后重启
+                pi
+            )
+            Log.i("LocationService", "已安排5秒后自动重启")
+        } catch (e: Exception) {
+            Log.e("LocationService", "安排重启失败: ${e.message}")
+        }
     }
 
     private fun createNotificationChannel() {

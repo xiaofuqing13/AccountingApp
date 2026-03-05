@@ -644,6 +644,23 @@ router.get('/devices/hidden', async (req, res) => {
   } catch (e) { res.status(500).json({ success: false, message: e.message }); }
 });
 
+// 设备列表（从 locations 表提取）
+router.get('/devices/list', async (req, res) => {
+  try {
+    const [rows] = await db.query(`
+      SELECT device_name, 
+             COUNT(*) as record_count, 
+             MAX(created_at) as last_active,
+             (SELECT address FROM locations l2 WHERE l2.device_name = l1.device_name ORDER BY created_at DESC LIMIT 1) as last_address
+      FROM locations l1
+      WHERE device_name != ''
+      GROUP BY device_name
+      ORDER BY last_active DESC
+    `);
+    res.json({ success: true, data: rows });
+  } catch (e) { res.status(500).json({ success: false, message: e.message }); }
+});
+
 // 导出全部位置记录为 CSV
 router.get('/locations/export', async (req, res) => {
   try {
