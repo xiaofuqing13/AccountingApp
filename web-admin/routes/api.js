@@ -788,6 +788,7 @@ router.get('/devices', (req, res) => {
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const ApkReader = require('adbkit-apkreader');
 
 const apkStorage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -808,21 +809,41 @@ const apkUpload = multer({
   limits: { fileSize: 200 * 1024 * 1024 } // 200MB
 });
 
-// 上传 APK
+// 上传 APK（自动检测版本号）
 router.post('/app/upload', apkUpload.single('apk'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ success: false, message: '请选择 APK 文件' });
-    const { versionCode, versionName, changelog = '' } = req.body;
+    const { changelog = '' } = req.body;
+
+    // 自动从 APK 解析版本号
+    let versionCode, versionName;
+    try {
+      const reader = await ApkReader.open(req.file.path);
+      const manifest = await reader.readManifest();
+      versionCode = manifest.versionCode;
+      versionName = manifest.versionName;
+    } catch (parseErr) {
+      // 解析失败则用前端传的值
+      versionCode = req.body.versionCode;
+      versionName = req.body.versionName;
+    }
+
     if (!versionCode || !versionName) {
       fs.unlinkSync(req.file.path);
-      return res.status(400).json({ success: false, message: '请填写版本号' });
+      return res.status(400).json({ success: false, message: 'APK 版本号解析失败，请确认文件有效' });
     }
+
+    // 重命名文件
+    const newFilename = `app_v${versionCode}_${Date.now()}.apk`;
+    const newPath = path.join(path.dirname(req.file.path), newFilename);
+    fs.renameSync(req.file.path, newPath);
+
     await db.query(
       'INSERT INTO app_versions (version_code, version_name, changelog, filename) VALUES (?,?,?,?)',
-      [Number(versionCode), versionName, changelog, req.file.filename]
+      [Number(versionCode), versionName, changelog, newFilename]
     );
     await log('CREATE', 'app', `上传APK v${versionName}(${versionCode})`, req.ip);
-    res.json({ success: true, message: `v${versionName} 上传成功` });
+    res.json({ success: true, message: `v${versionName}(code:${versionCode}) 上传成功`, versionCode, versionName });
   } catch (e) {
     if (req.file) try { fs.unlinkSync(req.file.path); } catch (_) {}
     res.status(500).json({ success: false, message: e.message });
