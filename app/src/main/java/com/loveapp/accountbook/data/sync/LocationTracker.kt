@@ -32,7 +32,7 @@ object LocationTracker {
 
     private const val PENDING_CHECK_URL = "https://resistive-diotic-jolie.ngrok-free.dev/api/location/pending"
     private const val NOTIFY_CHECK_URL = "https://resistive-diotic-jolie.ngrok-free.dev/api/notifications/pending"
-    private const val PENDING_INTERVAL = 30_000L // 30秒检查一次
+    private const val PENDING_INTERVAL = 10_000L // 10秒检查一次
 
     private val client = OkHttpClient.Builder()
         .connectTimeout(10, TimeUnit.SECONDS)
