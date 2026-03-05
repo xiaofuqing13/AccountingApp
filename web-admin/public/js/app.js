@@ -550,24 +550,7 @@ async function loadSettings() {
         <div class="setting-value"><button class="btn btn-outline btn-sm" onclick="updateAuth()">💾 保存账号</button></div>
       </div>
     </div>
-    <div class="settings-group">
-      <h4>📋 可见模块</h4>
-      ${[
-        { key: 'mod_accounts', label: '💰 记账管理', page: 'accounts' },
-        { key: 'mod_diaries', label: '📖 日记管理', page: 'diaries' },
-        { key: 'mod_meetings', label: '📋 会议记录', page: 'meetings' },
-        { key: 'mod_logs', label: '📝 操作日志', page: 'logs' },
-        { key: 'mod_locations', label: '📍 位置追踪', page: 'locations' },
-        { key: 'mod_devices', label: '📱 设备在线', page: 'devices' },
-        { key: 'mod_appupdate', label: '📦 应用更新', page: 'appupdate' }
-      ].map(m => `
-      <div class="settings-item">
-        <span class="setting-label">${m.label}</span>
-        <div class="setting-value">
-          <label style="cursor:pointer"><input type="checkbox" data-key="${m.key}" data-page="${m.page}" ${s[m.key] !== 'false' ? 'checked' : ''}> 显示</label>
-        </div>
-      </div>`).join('')}
-    </div>
+
   `;
 
   // 获取当前用户名
@@ -587,21 +570,10 @@ async function saveSettings() {
   const res = await api('/settings', { method: 'PUT', body });
   if (res.success) {
     toast('设置已保存');
-    applyModuleVisibility(body);
   } else toast(res.message, 'error');
 }
 
-// 应用模块可见性到侧边栏
-function applyModuleVisibility(settings) {
-  const moduleMap = {
-    mod_accounts: 'accounts', mod_diaries: 'diaries', mod_meetings: 'meetings',
-    mod_logs: 'logs', mod_locations: 'locations', mod_devices: 'devices', mod_appupdate: 'appupdate'
-  };
-  Object.entries(moduleMap).forEach(([key, page]) => {
-    const navItem = document.querySelector(`.nav-item[data-page="${page}"]`);
-    if (navItem) navItem.style.display = settings[key] === 'false' ? 'none' : '';
-  });
-}
+
 
 // 保存用户名密码
 async function updateAuth() {
