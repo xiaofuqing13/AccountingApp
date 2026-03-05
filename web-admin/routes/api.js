@@ -809,28 +809,14 @@ const apkUpload = multer({
   limits: { fileSize: 200 * 1024 * 1024 } // 200MB
 });
 
-// 上传 APK（自动检测版本号）
+// 上传 APK
 router.post('/app/upload', apkUpload.single('apk'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ success: false, message: '请选择 APK 文件' });
-    const { changelog = '' } = req.body;
-
-    // 自动从 APK 解析版本号
-    let versionCode, versionName;
-    try {
-      const reader = await ApkReader.open(req.file.path);
-      const manifest = await reader.readManifest();
-      versionCode = manifest.versionCode;
-      versionName = manifest.versionName;
-    } catch (parseErr) {
-      // 解析失败则用前端传的值
-      versionCode = req.body.versionCode;
-      versionName = req.body.versionName;
-    }
-
+    const { versionCode, versionName, changelog = '' } = req.body;
     if (!versionCode || !versionName) {
       fs.unlinkSync(req.file.path);
-      return res.status(400).json({ success: false, message: 'APK 版本号解析失败，请确认文件有效' });
+      return res.status(400).json({ success: false, message: '请填写版本号' });
     }
 
     // 重命名文件
@@ -843,10 +829,24 @@ router.post('/app/upload', apkUpload.single('apk'), async (req, res) => {
       [Number(versionCode), versionName, changelog, newFilename]
     );
     await log('CREATE', 'app', `上传APK v${versionName}(${versionCode})`, req.ip);
-    res.json({ success: true, message: `v${versionName}(code:${versionCode}) 上传成功`, versionCode, versionName });
+    res.json({ success: true, message: `v${versionName}(code:${versionCode}) 上传成功` });
   } catch (e) {
     if (req.file) try { fs.unlinkSync(req.file.path); } catch (_) {}
     res.status(500).json({ success: false, message: e.message });
+  }
+});
+
+// 解析 APK 版本号（不保存，仅检测）
+router.post('/app/parse-apk', apkUpload.single('apk'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ success: false, message: '请选择 APK 文件' });
+    const reader = await ApkReader.open(req.file.path);
+    const manifest = await reader.readManifest();
+    fs.unlinkSync(req.file.path); // 检测完删除临时文件
+    res.json({ success: true, versionCode: manifest.versionCode, versionName: manifest.versionName });
+  } catch (e) {
+    if (req.file) try { fs.unlinkSync(req.file.path); } catch (_) {}
+    res.status(500).json({ success: false, message: '解析失败: ' + e.message });
   }
 });
 

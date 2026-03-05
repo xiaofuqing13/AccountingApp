@@ -599,12 +599,17 @@ async function updateAuth() {
 /* ====== APK 版本管理 ====== */
 async function uploadApk() {
   const fileInput = document.getElementById('apk-file');
+  const versionCode = document.getElementById('apk-version-code').value;
+  const versionName = document.getElementById('apk-version-name').value;
   const changelog = document.getElementById('apk-changelog').value;
 
   if (!fileInput.files.length) return toast('请选择 APK 文件', 'error');
+  if (!versionCode || !versionName) return toast('请填写版本号', 'error');
 
   const formData = new FormData();
   formData.append('apk', fileInput.files[0]);
+  formData.append('versionCode', versionCode);
+  formData.append('versionName', versionName);
   formData.append('changelog', changelog);
 
   toast('正在上传...', 'info');
@@ -614,13 +619,36 @@ async function uploadApk() {
     if (res.success) {
       toast(res.message || '上传成功');
       fileInput.value = '';
+      document.getElementById('apk-version-code').value = '';
+      document.getElementById('apk-version-name').value = '';
       document.getElementById('apk-changelog').value = '';
+      document.getElementById('apk-detect-info').textContent = '';
       loadVersions();
     } else {
       toast(res.message || '上传失败', 'error');
     }
   } catch (e) {
     toast('上传失败: ' + e.message, 'error');
+  }
+}
+
+async function detectApkVersion() {
+  const fileInput = document.getElementById('apk-file');
+  const infoEl = document.getElementById('apk-detect-info');
+  if (!fileInput.files.length) { infoEl.textContent = ''; return; }
+  infoEl.innerHTML = '⏳ 正在检测版本号...';
+  const formData = new FormData();
+  formData.append('apk', fileInput.files[0]);
+  try {
+    const resp = await fetch(`${API}/app/parse-apk`, { method: 'POST', body: formData, credentials: 'include' });
+    const res = await resp.json();
+    if (res.success) {
+      infoEl.innerHTML = '✅ 检测到版本: <b>v' + res.versionName + '</b> (code: ' + res.versionCode + ')';
+    } else {
+      infoEl.innerHTML = '⚠️ 版本检测失败: ' + (res.message || '未知错误');
+    }
+  } catch (e) {
+    infoEl.innerHTML = '⚠️ 检测失败: ' + e.message;
   }
 }
 
