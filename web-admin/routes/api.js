@@ -408,6 +408,59 @@ router.post('/sync/upload', async (req, res) => {
   } catch (e) { res.status(500).json({ success: false, message: e.message }); }
 });
 
+/* ========== 恋爱暂停管理 ========== */
+router.get('/love/pauses', async (req, res) => {
+  try {
+    const [rows] = await db.query('SELECT * FROM love_pauses ORDER BY start_date DESC');
+    // 计算总暂停天数
+    let totalPaused = 0;
+    const today = new Date().toISOString().slice(0, 10);
+    rows.forEach(r => {
+      const start = new Date(r.start_date);
+      const end = r.end_date ? new Date(r.end_date) : new Date(today);
+      const days = Math.ceil((end - start) / 86400000);
+      totalPaused += Math.max(0, days);
+    });
+    res.json({ success: true, data: rows, totalPaused });
+  } catch (e) { res.status(500).json({ success: false, message: e.message }); }
+});
+
+router.post('/love/pauses', async (req, res) => {
+  try {
+    const { start_date, end_date, reason } = req.body;
+    if (!start_date) return res.status(400).json({ success: false, message: '请选择开始日期' });
+    await db.query(
+      'INSERT INTO love_pauses (start_date, end_date, reason) VALUES (?,?,?)',
+      [start_date, end_date || null, reason || '']
+    );
+    await log('CREATE', 'love', `添加暂停: ${start_date} ~ ${end_date || '至今'} ${reason || ''}`, req.ip);
+    res.json({ success: true, message: '暂停已添加' });
+  } catch (e) { res.status(500).json({ success: false, message: e.message }); }
+});
+
+router.delete('/love/pauses/:id', async (req, res) => {
+  try {
+    await db.query('DELETE FROM love_pauses WHERE id=?', [req.params.id]);
+    await log('DELETE', 'love', `删除暂停记录 #${req.params.id}`, req.ip);
+    res.json({ success: true, message: '已删除' });
+  } catch (e) { res.status(500).json({ success: false, message: e.message }); }
+});
+
+// Android 端获取暂停总天数
+router.get('/love/paused-days', async (req, res) => {
+  try {
+    const [rows] = await db.query('SELECT start_date, end_date FROM love_pauses');
+    let totalPaused = 0;
+    const today = new Date().toISOString().slice(0, 10);
+    rows.forEach(r => {
+      const start = new Date(r.start_date);
+      const end = r.end_date ? new Date(r.end_date) : new Date(today);
+      totalPaused += Math.max(0, Math.ceil((end - start) / 86400000));
+    });
+    res.json({ success: true, pausedDays: totalPaused });
+  } catch (e) { res.status(500).json({ success: false, message: e.message }); }
+});
+
 /* ========== 设置 ========== */
 router.get('/settings', async (req, res) => {
   try {

@@ -219,6 +219,29 @@
     <div class="card">
       <div class="card-body" id="settings-content"></div>
     </div>
+    <div class="card" style="margin-top:16px">
+      <div class="card-header"><h3>💕 恋爱天数管理 <span id="love-pause-summary" style="font-size:13px;font-weight:normal;color:var(--text-hint)"></span></h3></div>
+      <div class="card-body">
+        <div class="form-row" style="align-items:flex-end">
+          <div class="form-group">
+            <label>暂停开始</label>
+            <input type="date" id="pause-start" class="form-input">
+          </div>
+          <div class="form-group">
+            <label>暂停结束 <span style="font-size:11px;color:var(--text-hint)">（留空=至今）</span></label>
+            <input type="date" id="pause-end" class="form-input">
+          </div>
+          <div class="form-group">
+            <label>原因</label>
+            <input type="text" id="pause-reason" class="form-input" placeholder="可选" style="width:120px">
+          </div>
+          <div class="form-group">
+            <button class="btn btn-primary" onclick="addLovePause()">⏸️ 添加暂停</button>
+          </div>
+        </div>
+        <div id="love-pauses-list" style="margin-top:12px"></div>
+      </div>
+    </div>
 
   </section>
 

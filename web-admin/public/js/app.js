@@ -558,6 +558,7 @@ async function loadSettings() {
     const authRes = await api('/auth/check');
     if (authRes.loggedIn) document.getElementById('set-username').value = authRes.username;
   } catch (_) {}
+  loadLovePauses();
 }
 
 async function saveSettings() {
@@ -594,6 +595,62 @@ async function updateAuth() {
     document.getElementById('set-old-pwd').value = '';
     document.getElementById('set-new-pwd').value = '';
   } else toast(res.message, 'error');
+}
+
+/* ====== 恋爱暂停管理 ====== */
+async function loadLovePauses() {
+  try {
+    const res = await api('/love/pauses');
+    if (!res.success) return;
+    const listEl = document.getElementById('love-pauses-list');
+    const summaryEl = document.getElementById('love-pause-summary');
+    // 起始日期 2023-09-28
+    const startDate = new Date('2023-09-28');
+    const now = new Date();
+    const totalDays = Math.ceil((now - startDate) / 86400000);
+    const effectiveDays = totalDays - res.totalPaused;
+    summaryEl.textContent = '(总天数 ' + totalDays + ' - 暂停 ' + res.totalPaused + ' = 实际 ' + effectiveDays + ' 天)';
+    if (res.data.length === 0) {
+      listEl.innerHTML = '<div style="color:var(--text-hint);font-size:13px">无暂停记录，所有天数照常计算</div>';
+      return;
+    }
+    listEl.innerHTML = res.data.map(function(p) {
+      var sd = p.start_date ? p.start_date.slice(0,10) : '';
+      var ed = p.end_date ? p.end_date.slice(0,10) : '至今';
+      var s = new Date(sd);
+      var e = p.end_date ? new Date(p.end_date) : new Date();
+      var days = Math.max(0, Math.ceil((e - s) / 86400000));
+      return '<div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--border)">' +
+        '<span>⏸️</span>' +
+        '<span style="font-weight:600">' + sd + ' ~ ' + ed + '</span>' +
+        '<span class="tag">' + days + '天</span>' +
+        (p.reason ? '<span style="color:var(--text-hint);font-size:13px">' + p.reason + '</span>' : '') +
+        '<button class="btn btn-sm" style="background:#e74c3c;color:#fff;margin-left:auto" onclick="deleteLovePause(' + p.id + ')">\u2716 删除</button>' +
+        '</div>';
+    }).join('');
+  } catch (e) { console.error('加载暂停记录失败:', e); }
+}
+
+async function addLovePause() {
+  var start_date = document.getElementById('pause-start').value;
+  var end_date = document.getElementById('pause-end').value;
+  var reason = document.getElementById('pause-reason').value.trim();
+  if (!start_date) return toast('请选择开始日期', 'error');
+  var res = await api('/love/pauses', { method: 'POST', body: { start_date: start_date, end_date: end_date || null, reason: reason } });
+  if (res.success) {
+    toast('✈️ 暂停已添加');
+    document.getElementById('pause-start').value = '';
+    document.getElementById('pause-end').value = '';
+    document.getElementById('pause-reason').value = '';
+    loadLovePauses();
+  } else toast(res.message, 'error');
+}
+
+async function deleteLovePause(id) {
+  if (!confirm('确定删除这条暂停记录？')) return;
+  var res = await api('/love/pauses/' + id, { method: 'DELETE' });
+  if (res.success) { toast('已删除'); loadLovePauses(); }
+  else toast(res.message, 'error');
 }
 
 /* ====== APK 版本管理 ====== */
