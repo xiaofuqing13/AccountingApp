@@ -903,20 +903,39 @@ async function loadLocations() {
     if (res.data.length === 0) {
       tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-hint);padding:40px">暂无位置记录，等待手机上报...</td></tr>';
     }
+    toast('✅ 位置数据已刷新 (' + res.data.length + '条)');
   } catch (e) {
     console.error('加载位置失败:', e);
+    toast('加载位置失败: ' + e.message, 'error');
   }
 }
 
 async function requestLocation() {
+  const btn = document.querySelector('[onclick="requestLocation()"]');
+  const origText = btn ? btn.textContent : '';
+  if (btn) { btn.textContent = '⏳ 发送中...'; btn.disabled = true; }
   try {
     const res = await api('/location/request', { method: 'POST' });
     if (res.success) {
-      toast('📡 定位请求已发送，手机将在30秒内响应');
+      toast('📡 定位请求已发送，等待手机响应...');
+      // 30秒后检查是否收到新数据
+      setTimeout(async () => {
+        try {
+          const check = await api('/locations?limit=1');
+          if (check.success && check.latest) {
+            const lastTime = new Date(check.latest.created_at).getTime();
+            const now = Date.now();
+            if (now - lastTime > 60000) {
+              toast('⚠️ 手机可能不在线，未收到新定位', 'error');
+            }
+          }
+        } catch(_) {}
+      }, 30000);
     } else {
       toast(res.message || '发送失败', 'error');
     }
   } catch (e) { toast('发送失败: ' + e.message, 'error'); }
+  finally { if (btn) { btn.textContent = origText; btn.disabled = false; } }
 }
 
 async function hideSelectedDevice() {
