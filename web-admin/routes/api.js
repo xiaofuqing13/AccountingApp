@@ -616,6 +616,9 @@ router.post('/location', async (req, res) => {
       [latitude, longitude, address, device_name]
     );
     await log('UPLOAD', 'location', `手机定位上报: ${device_name || '未知设备'} | ${address || '无地址'} (${latitude}, ${longitude})`, req.ip);
+    // 广播通知 web 端刷新
+    const broadcast = req.app.get('broadcast');
+    if (broadcast) broadcast({ type: 'location_update', device: device_name, address });
     res.json({ success: true });
   } catch (e) { res.status(500).json({ success: false, message: e.message }); }
 });

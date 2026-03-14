@@ -5,6 +5,27 @@ let currentMonth = (() => { const d = new Date(); return `${d.getFullYear()}-${S
 let accountPage = 1, diaryPage = 1, meetingPage = 1, logPage = 1;
 let confirmResolve = null;
 
+// WebSocket 客户端 - 实时接收服务器推送
+(function initWS() {
+  const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const ws = new WebSocket(proto + '//' + location.host + '/ws');
+  ws.onmessage = function(e) {
+    try {
+      const msg = JSON.parse(e.data);
+      if (msg.type === 'location_update') {
+        toast('📍 收到新位置: ' + (msg.address || msg.device || '设备上报'));
+        // 如果当前在位置页面则自动刷新
+        if (document.getElementById('page-locations') &&
+            document.getElementById('page-locations').style.display !== 'none') {
+          loadLocations();
+        }
+      }
+    } catch (_) {}
+  };
+  ws.onclose = function() { setTimeout(initWS, 5000); }; // 断线重连
+  ws.onerror = function() { ws.close(); };
+})();
+
 const EXPENSE_CATS = ['餐饮','交通','购物','住房','通讯','娱乐','医疗','教育','服饰','更多'];
 const INCOME_CATS = ['工资','奖金','理财','兼职','其他'];
 
